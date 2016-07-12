@@ -1,0 +1,48 @@
+apply plugin: 'idea'
+
+
+idea {
+    project {
+        vcs = 'git'
+        jdkName = '1.8'
+        languageLevel = '1.8'
+    }
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'checkstyle'
+    apply plugin: 'pmd'
+
+    def localEnv = new Properties();
+    localEnv.load(new FileInputStream(file("${projectDir}/../env/local.properties")))
+
+    repositories {
+        mavenCentral()
+    }
+
+    checkstyle {
+        configFile file("${project.projectDir}/../config/checkstyle/checkstyle.xml")
+    }
+
+    pmd {
+        toolVersion = '5.0.5'
+        ruleSetFiles = files("${project.projectDir}/../config/pmd/rulesets.xml")
+    }
+
+    test {
+        environment localEnv
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.12'
+}
+
+ext.libraries = [
+]
+
+ext.testLibraries = [
+        junit      : "junit:junit:4.10",
+]
