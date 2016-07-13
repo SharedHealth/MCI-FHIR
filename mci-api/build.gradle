@@ -22,6 +22,8 @@ compileTestJava {
 }
 
 dependencies {
+    compile libraries.apache_log4j
+
     testCompile testLibraries.junit
 }
 
@@ -49,8 +51,8 @@ configurations {
 }
 
 jar {
-    baseName = 'mci-api'
-    version = '2.5-SNAPSHOT'
+    baseName = 'mci-registry'
+    version = '0.1-SNAPSHOT'
 }
 
 private Properties loadConfig() {
@@ -64,7 +66,7 @@ task assembly(dependsOn: 'build') << {
 }
 
 task exportProperties(dependsOn: 'assembly') << {
-    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/mci")));
+    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/mci-registry")));
     Properties properties = loadConfig()
     properties.each { prop, val ->
         output.println("export " + prop + "=" + val)
@@ -72,13 +74,13 @@ task exportProperties(dependsOn: 'assembly') << {
 }
 
 task dist(dependsOn: ['exportProperties'], type: Rpm) {
-    packageName = 'mci'
-    version = '2.5'
+    packageName = 'mci-registry'
+    version = '0.1'
     release = project.hasProperty('release') ? project.release : '1'
     arch = NOARCH
     os = LINUX
 
-    into '/opt/mci'
+    into '/opt/mci-registry'
 
     postInstall = file('scripts/utils/postInstall.sh')
     preUninstall = file('scripts/utils/preUninstall.sh')
@@ -106,15 +108,21 @@ task dist(dependsOn: ['exportProperties'], type: Rpm) {
     from("scripts/rpm") {
         fileMode = 0755
         createDirectoryEntry true
-        exclude 'mci'
+        exclude 'mci-registry'
         exclude 'start.sh'
         into 'var'
     }
 }
 
 war {
-    from sourceSets.main.resources
+    /*should be removed once we start using as web-server*/
     from "$buildDir/classes/main"
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    /*should be removed once we start using as web-server*/
+    baseName = 'mci-registry'
+    from sourceSets.main.resources
     manifest {
         attributes('Main-Class': mainClassName)
     }

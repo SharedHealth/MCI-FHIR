@@ -1,3 +1,3 @@
 #!/bin/sh
 
-service mci stop &> /dev/null || :;
+service mci-registry stop &> /dev/null || :;

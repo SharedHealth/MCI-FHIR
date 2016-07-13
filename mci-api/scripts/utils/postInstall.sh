@@ -1,12 +1,12 @@
 #!/bin/sh
 
-ln -s /opt/mci/bin/mci /etc/init.d/mci
-ln -s /opt/mci/etc/mci /etc/default/mci
-ln -s /opt/mci/var /var/run/mci
+ln -s /opt/mci-registry/bin/mci-registry /etc/init.d/mci-registry
+ln -s /opt/mci-registry/etc/mci-registry /etc/default/mci-registry
+ln -s /opt/mci-registry/var /var/run/mci-registry
 
-if [ ! -e /var/log/mci ]; then
-    mkdir /var/log/mci
+if [ ! -e /var/log/mci-registry ]; then
+    mkdir /var/log/mci-registry
 fi
 
-# Add mci service to chkconfig
-chkconfig --add mci
+# Add mci-registry service to chkconfig
+chkconfig --add mci-registry
