@@ -4,7 +4,7 @@ apply plugin: 'war'
 apply plugin: 'rpm'
 apply plugin: 'idea'
 
-mainClassName = "org.sharedhealth.mci.web.launch.Main"
+mainClassName = "org.sharedhealth.mci.web.launch.Application"
 
 repositories {
     mavenCentral()
@@ -22,7 +22,7 @@ compileTestJava {
 }
 
 dependencies {
-    compile libraries.apache_log4j
+    compile libraries.spark_core,libraries.apache_log4j
 
     testCompile testLibraries.junit
 }
