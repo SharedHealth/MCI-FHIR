@@ -22,7 +22,10 @@ compileTestJava {
 }
 
 dependencies {
-    compile libraries.spark_core,libraries.apache_log4j
+    compile libraries.spark_core,libraries.apache_log4j,libraries.cassandra_driver_core,libraries.cassandra_all
+
+    testCompile project(":schema")
+    testCompile project(":schema").sourceSets.test.output
 
     testCompile testLibraries.junit
 }
@@ -48,6 +51,7 @@ configurations {
     migration {
         extendsFrom compile
     }
+    all *.exclude group: 'log4j', module: "log4j"
 }
 
 jar {
@@ -73,7 +77,10 @@ task exportProperties(dependsOn: 'assembly') << {
     }
 }
 
-task dist(dependsOn: ['exportProperties'], type: Rpm) {
+task dist(dependsOn: [
+        project(":schema").tasks.build,
+        'exportProperties'],
+        type: Rpm) {
     packageName = 'mci-registry'
     version = '0.1'
     release = project.hasProperty('release') ? project.release : '1'
@@ -112,6 +119,17 @@ task dist(dependsOn: ['exportProperties'], type: Rpm) {
         exclude 'start.sh'
         into 'var'
     }
+
+    from("${rootDir}/schema/scripts/rpm") {
+        fileMode = 0755
+        into 'bin'
+    }
+
+    from("${rootDir}/schema/build/libs") {
+        fileMode = 0755
+        into 'lib'
+    }
+
 }
 
 war {

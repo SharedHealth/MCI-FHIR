@@ -1,0 +1,1 @@
+INSERT INTO approval_fields ("field", "option") VALUES ('gender', 'NA');

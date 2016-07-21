@@ -40,8 +40,13 @@ task wrapper(type: Wrapper) {
 }
 
 ext.libraries = [
-        apache_log4j  : "log4j:log4j:1.2.17",
-        spark_core    : "com.sparkjava:spark-core:2.5"
+        apache_log4j            : "log4j:log4j:1.2.17",
+        spark_core              : "com.sparkjava:spark-core:2.5",
+        cassandra_driver_core   : "com.datastax.cassandra:cassandra-driver-core:3.0.3",
+        cassandra_all           : "org.apache.cassandra:cassandra-all:3.7",
+        mutagen                 : "com.toddfast.mutagen:mutagen:0.3.0",
+        mutagen_cassandra       : "com.toddfast.mutagen:mutagen-cassandra-0.4.2-SNAPSHOT",
+        apache_lang             : "org.apache.commons:commons-lang3:3.3.2",
 ]
 
 ext.testLibraries = [
