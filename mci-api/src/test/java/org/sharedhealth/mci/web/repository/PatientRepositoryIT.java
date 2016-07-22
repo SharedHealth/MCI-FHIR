@@ -3,27 +3,24 @@ package org.sharedhealth.mci.web.repository;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
-import org.sharedhealth.mci.web.TestMigrations;
+import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
+import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
 
-import java.io.InputStream;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
-public class PatientRepositoryTest {
-    private boolean isSetupDone = false;
-
+public class PatientRepositoryIT extends BaseIntegrationTest {
+    private Session session;
     private PatientRepository patientRepository;
 
     private final String healthId = "HID";
@@ -39,46 +36,31 @@ public class PatientRepositoryTest {
     private final String urbanWardId = "01";
     private final String ruralWardId = "04";
     private final String addressLine = "Will Street";
-    private Session session;
-
-    @Rule
-    public final EnvironmentVariables environmentVariables
-            = new EnvironmentVariables();
 
     @Before
     public void setUp() throws Exception {
-        doOneTimeSetup();
         session = MCICassandraConfig.getInstance().getOrCreateSession();
         patientRepository = new PatientRepository(session);
-    }
-
-    private void doOneTimeSetup() throws Exception {
-        if (isSetupDone) return;
-        EmbeddedCassandraServerHelper.startEmbeddedCassandra("cassandra-template.yaml");
-        new TestMigrations(mockPropertySources()).migrate();
-        isSetupDone = true;
     }
 
     @Test
     public void shouldRetrievePatientByHealthID() throws Exception {
         Patient expectedPatient = createPatient();
-
         List<String> columns = asList(HEALTH_ID, GIVEN_NAME, SUR_NAME, GENDER, DATE_OF_BIRTH, COUNTRY_CODE,
                 DIVISION_ID, DISTRICT_ID, UPAZILA_ID, CITY_CORPORATION,
                 UNION_OR_URBAN_WARD_ID, RURAL_WARD_ID, ADDRESS_LINE);
-
         List<Object> values = asList(healthId, givenName, surName, gender, dateOfBirth, countryCode,
                 divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId, addressLine);
-
         Insert insert = QueryBuilder.insertInto(CF_PATIENT).values(columns, values);
         session.execute(insert);
 
         Patient patient = patientRepository.findByHealthId("HID");
+
         assertNotNull(patient);
         assertEquals(expectedPatient, patient);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = PatientNotFoundException.class)
     public void shouldThrowErrorWhenPatientNotFound() throws Exception {
         patientRepository.findByHealthId("HID1");
     }
@@ -100,23 +82,4 @@ public class PatientRepositoryTest {
         expectedPatient.setAddressLine(addressLine);
         return expectedPatient;
     }
-
-    private Map<String, String> mockPropertySources() {
-        Map<String, String> env = new HashMap<>();
-
-        try {
-            InputStream inputStream = this.getClass().getResourceAsStream("/test.properties");
-            Properties properties = new Properties();
-            properties.load(inputStream);
-
-            for (Object key : properties.keySet()) {
-                environmentVariables.set(key.toString(), properties.getProperty(key.toString()));
-                env.put(key.toString(), properties.getProperty(key.toString()));
-            }
-        } catch (Exception ignored) {
-            System.out.print("Error ignored!");
-        }
-        return env;
-    }
-
 }
