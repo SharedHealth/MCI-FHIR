@@ -1,4 +1,4 @@
-package org.sharedhealth.mci.web.launch;
+package org.sharedhealth.mci.web;
 
 
 import com.datastax.driver.core.*;

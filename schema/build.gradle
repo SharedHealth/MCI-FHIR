@@ -17,7 +17,7 @@ configurations.all {
     }
 }
 
-def mainClassName = "org.sharedhealth.mci.web.launch.Migrations"
+def mainClassName = "Migrations"
 
 jar {
     baseName = 'mci-registry-schema'

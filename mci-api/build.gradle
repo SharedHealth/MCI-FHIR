@@ -22,12 +22,13 @@ compileTestJava {
 }
 
 dependencies {
-    compile libraries.spark_core,libraries.apache_log4j,libraries.cassandra_driver_core,libraries.cassandra_all
+    compile libraries.spark_core,libraries.apache_log4j,libraries.cassandra_driver_core,libraries.cassandra_driver_mapping,
+            libraries.cassandra_all
 
     testCompile project(":schema")
     testCompile project(":schema").sourceSets.test.output
 
-    testCompile testLibraries.junit
+    testCompile testLibraries.junit,testLibraries.cassandra_unit,testLibraries.system_rules
 }
 
 test {
