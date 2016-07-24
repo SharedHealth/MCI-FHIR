@@ -1,15 +1,15 @@
 package org.sharedhealth.mci.web.launch;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.controller.PatientController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.lang.System.getenv;
 import static spark.Spark.port;
 
 public class Application {
 
-    private static final Logger logger = LoggerFactory.getLogger(Application.class);
+    private static final Logger logger = LogManager.getLogger(Application.class);
 
     public static void main(String[] args) {
         logger.info("MCI Java 8");

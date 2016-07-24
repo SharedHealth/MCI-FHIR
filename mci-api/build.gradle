@@ -22,7 +22,7 @@ compileTestJava {
 }
 
 dependencies {
-    compile libraries.spark_core,libraries.apache_log4j,libraries.cassandra_driver_core,libraries.cassandra_driver_mapping,
+    compile libraries.spark_core,libraries.apache_log4j_core,libraries.cassandra_driver_core,libraries.cassandra_driver_mapping,
             libraries.cassandra_all
 
     testCompile project(":schema")
@@ -52,7 +52,7 @@ configurations {
     migration {
         extendsFrom compile
     }
-    all *.exclude group: 'log4j', module: "log4j"
+    all*.exclude group: 'org.slf4j', module: "log4j-over-slf4j"
 }
 
 jar {
