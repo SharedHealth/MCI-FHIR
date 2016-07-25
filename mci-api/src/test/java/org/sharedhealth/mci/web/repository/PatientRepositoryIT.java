@@ -1,8 +1,7 @@
 package org.sharedhealth.mci.web.repository;
 
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.Insert;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
@@ -12,16 +11,14 @@ import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
 
 import java.util.Date;
-import java.util.List;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
 public class PatientRepositoryIT extends BaseIntegrationTest {
-    private Session session;
+    private MappingManager mappingManager;
     private PatientRepository patientRepository;
+    private Mapper<Patient> patientMapper;
 
     private final String healthId = "HID";
     private final String givenName = "Bob the";
@@ -39,22 +36,17 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        session = MCICassandraConfig.getInstance().getOrCreateSession();
-        patientRepository = new PatientRepository(session);
+        mappingManager = MCICassandraConfig.getInstance().getMappingManager();
+        patientRepository = new PatientRepository(mappingManager);
+        patientMapper = mappingManager.mapper(Patient.class);
     }
 
     @Test
     public void shouldRetrievePatientByHealthID() throws Exception {
         Patient expectedPatient = createPatient();
-        List<String> columns = asList(HEALTH_ID, GIVEN_NAME, SUR_NAME, GENDER, DATE_OF_BIRTH, COUNTRY_CODE,
-                DIVISION_ID, DISTRICT_ID, UPAZILA_ID, CITY_CORPORATION,
-                UNION_OR_URBAN_WARD_ID, RURAL_WARD_ID, ADDRESS_LINE);
-        List<Object> values = asList(healthId, givenName, surName, gender, dateOfBirth, countryCode,
-                divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId, addressLine);
-        Insert insert = QueryBuilder.insertInto(CF_PATIENT).values(columns, values);
-        session.execute(insert);
+        patientMapper.save(expectedPatient);
 
-        Patient patient = patientRepository.findByHealthId("HID");
+        Patient patient = patientRepository.findByHealthId(healthId);
 
         assertNotNull(patient);
         assertEquals(expectedPatient, patient);

@@ -3,23 +3,26 @@ package org.sharedhealth.mci.web.config;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.mapping.MappingManager;
 
 public class MCICassandraConfig {
     private static final MCICassandraConfig mciCassandraConfig = new MCICassandraConfig();
-    private Session session;
+    private static MappingManager mappingManager;
     private static final int ONE_MINUTE = 6000;
 
     private MCICassandraConfig() {
-        this.session = getOrCreateSession();
+        mappingManager = new MappingManager(getOrCreateSession());
     }
 
     public static MCICassandraConfig getInstance() {
         return mciCassandraConfig;
     }
 
-    public Session getOrCreateSession() {
-        if (this.session != null) return this.session;
+    public MappingManager getMappingManager() {
+        return mappingManager;
+    }
 
+    private Session getOrCreateSession() {
         MCIProperties mciProperties = MCIProperties.getInstance();
         Cluster.Builder clusterBuilder = new Cluster.Builder();
 
@@ -42,7 +45,6 @@ public class MCICassandraConfig {
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(ONE_MINUTE))
                 .addContactPoint(mciProperties.getCassandraHost());
 
-        this.session = clusterBuilder.build().connect(mciProperties.getCassandraKeySpace());
-        return this.session;
+        return clusterBuilder.build().connect(mciProperties.getCassandraKeySpace());
     }
 }

@@ -7,21 +7,25 @@ public class MCIProperties {
 
     private String cassandraKeySpace;
     private String cassandraHost;
-    private int cassandraPort;
+    private String cassandraPort;
     private String cassandraUser;
     private String cassandraPassword;
-    private int cassandraTimeout;
-    private int cassandraVersion;
+    private String cassandraTimeout;
+    private String cassandraVersion;
+    private String serverUri;
+    private String patientLinkUri;
 
     private MCIProperties() {
         Map<String, String> env = System.getenv();
         this.cassandraKeySpace = env.get("CASSANDRA_KEYSPACE");
         this.cassandraHost = env.get("CASSANDRA_HOST");
-        this.cassandraPort = Integer.parseInt(env.get("CASSANDRA_PORT"));
+        this.cassandraPort = env.get("CASSANDRA_PORT");
         this.cassandraPassword = env.get("CASSANDRA_PASSWORD");
         this.cassandraUser = env.get("CASSANDRA_USER");
-        this.cassandraTimeout = Integer.parseInt(env.get("CASSANDRA_TIMEOUT"));
-        this.cassandraVersion = Integer.parseInt(env.get("CASSANDRA_VERSION"));
+        this.cassandraTimeout = env.get("CASSANDRA_TIMEOUT");
+        this.cassandraVersion = env.get("CASSANDRA_VERSION");
+        this.serverUri = env.get("SERVER_URI");
+        this.patientLinkUri = env.get("PATIENT_LINK_URI");
     }
 
     public String getCassandraKeySpace() {
@@ -33,7 +37,7 @@ public class MCIProperties {
     }
 
     public int getCassandraPort() {
-        return cassandraPort;
+        return Integer.parseInt(cassandraPort);
     }
 
     public String getCassandraUser() {
@@ -45,11 +49,19 @@ public class MCIProperties {
     }
 
     public int getCassandraTimeout() {
-        return cassandraTimeout;
+        return Integer.parseInt(cassandraTimeout);
     }
 
     public int getCassandraVersion() {
-        return cassandraVersion;
+        return Integer.parseInt(cassandraVersion);
+    }
+
+    public String getServerUri() {
+        return serverUri;
+    }
+
+    public String getPatientLinkUri() {
+        return patientLinkUri;
     }
 
     public static MCIProperties getInstance() {
