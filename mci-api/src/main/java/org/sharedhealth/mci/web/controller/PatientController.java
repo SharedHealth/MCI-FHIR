@@ -2,6 +2,7 @@ package org.sharedhealth.mci.web.controller;
 
 
 import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.parser.IParser;
 import org.sharedhealth.mci.web.service.PatientService;
 import org.sharedhealth.mci.web.util.FhirContextHelper;
 
@@ -17,7 +18,13 @@ public class PatientController {
         get(patientURIPath, (request, response) -> {
             String healthId = request.params(hidParam);
             Patient patient = patientService.findPatientByHealthId(healthId);
-            return FhirContextHelper.getFhirContext().newXmlParser().encodeResourceToString(patient);
+            response.status(200);
+            return formatPatient(patient);
         });
+    }
+
+    private String formatPatient(Patient patient) {
+        IParser xmlParser = FhirContextHelper.getFhirContext().newXmlParser();
+        return xmlParser.encodeResourceToString(patient);
     }
 }

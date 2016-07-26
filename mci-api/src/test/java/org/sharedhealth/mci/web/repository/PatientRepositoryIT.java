@@ -9,6 +9,7 @@ import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
+import org.sharedhealth.mci.web.util.TestUtil;
 
 import java.util.Date;
 
@@ -16,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class PatientRepositoryIT extends BaseIntegrationTest {
-    private MappingManager mappingManager;
     private PatientRepository patientRepository;
     private Mapper<Patient> patientMapper;
 
@@ -36,10 +36,16 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        mappingManager = MCICassandraConfig.getInstance().getMappingManager();
+        MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
         patientRepository = new PatientRepository(mappingManager);
         patientMapper = mappingManager.mapper(Patient.class);
     }
+
+    @Test
+    public void tearDown() throws Exception {
+        TestUtil.truncateAllColumnFamilies();
+    }
+
 
     @Test
     public void shouldRetrievePatientByHealthID() throws Exception {
