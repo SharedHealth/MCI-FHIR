@@ -1,11 +1,10 @@
 package org.sharedhealth.mci.web.service;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.dstu2.composite.AddressDt;
-import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
-import ca.uhn.fhir.model.dstu2.composite.IdentifierDt;
+import ca.uhn.fhir.model.dstu2.composite.*;
 import ca.uhn.fhir.model.dstu2.resource.Patient.Link;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
+import ca.uhn.fhir.model.dstu2.valueset.IdentifierTypeCodesEnum;
 import ca.uhn.fhir.model.dstu2.valueset.LinkTypeEnum;
 import ca.uhn.fhir.model.primitive.StringDt;
 import org.junit.Before;
@@ -23,8 +22,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.sharedhealth.mci.web.util.FHIRConstants.ADDRESS_CODE_EXTENSION_NAME;
-import static org.sharedhealth.mci.web.util.FHIRConstants.getFhirExtensionUrl;
+import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.util.MCIConstants.getMCIPatientURI;
 
 public class PatientServiceTest {
     private PatientService patientService;
@@ -55,10 +54,10 @@ public class PatientServiceTest {
 
     @Test
     public void shouldMapMCIPatientToFHIRPatient() throws Exception {
-        String serverUri = "https://mci-registry.com/api/v2/patients/";
+        String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
         when(patientRepository.findByHealthId(healthId)).thenReturn(createPatient());
-        when(mciProperties.getServerUri()).thenReturn(serverUri);
+        when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
         when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
 
         ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientService.findPatientByHealthId(healthId);
@@ -68,7 +67,12 @@ public class PatientServiceTest {
         assertEquals(1, identifiers.size());
         IdentifierDt hidIdentifier = identifiers.get(0);
         assertEquals(healthId, hidIdentifier.getValue());
-        assertEquals(serverUri + healthId, hidIdentifier.getSystem());
+        assertEquals(getMCIPatientURI(mciBaseUrl) + healthId, hidIdentifier.getSystem());
+
+        BoundCodeableConceptDt<IdentifierTypeCodesEnum> type = hidIdentifier.getType();
+        CodingDt codingDt = type.getCodingFirstRep();
+        assertEquals(getMCIValuesetURI(mciBaseUrl), codingDt.getSystem());
+        assertEquals(MCI_IDENTIFIER_HID_CODE, codingDt.getCode());
 
         HumanNameDt name = fhirPatient.getNameFirstRep();
         assertEquals(givenName, name.getGivenFirstRep().getValue());
@@ -87,7 +91,7 @@ public class PatientServiceTest {
 
         Link link = fhirPatient.getLinkFirstRep();
         assertEquals(LinkTypeEnum.SEE_ALSO.getCode(), link.getType());
-        assertEquals(patientLinkUri+healthId, link.getOther().getReference().getValue());
+        assertEquals(patientLinkUri + healthId, link.getOther().getReference().getValue());
     }
 
     private Patient createPatient() {

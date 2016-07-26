@@ -12,7 +12,7 @@ public class MCIProperties {
     private String cassandraPassword;
     private String cassandraTimeout;
     private String cassandraVersion;
-    private String serverUri;
+    private String mciBaseUrl;
     private String patientLinkUri;
 
     private MCIProperties() {
@@ -24,7 +24,7 @@ public class MCIProperties {
         this.cassandraUser = env.get("CASSANDRA_USER");
         this.cassandraTimeout = env.get("CASSANDRA_TIMEOUT");
         this.cassandraVersion = env.get("CASSANDRA_VERSION");
-        this.serverUri = env.get("SERVER_URI");
+        this.mciBaseUrl = env.get("MCI_BASE_URL");
         this.patientLinkUri = env.get("PATIENT_LINK_URI");
     }
 
@@ -56,8 +56,8 @@ public class MCIProperties {
         return Integer.parseInt(cassandraVersion);
     }
 
-    public String getServerUri() {
-        return serverUri;
+    public String getMciBaseUrl() {
+        return mciBaseUrl;
     }
 
     public String getPatientLinkUri() {

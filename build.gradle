@@ -51,6 +51,8 @@ ext.libraries = [
         apache_lang             : "org.apache.commons:commons-lang3:3.3.2",
         hapi_fhir_base          : "ca.uhn.hapi.fhir:hapi-fhir-base:1.5",
         hapi_fhir_structures    : "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:1.5",
+        jackson_core            : "com.fasterxml.jackson.core:jackson-core:2.8.1",
+        jackson_annotations     : "com.fasterxml.jackson.core:jackson-annotations:2.8.1",
 ]
 
 ext.testLibraries = [

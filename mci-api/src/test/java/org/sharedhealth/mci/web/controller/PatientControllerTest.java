@@ -20,7 +20,6 @@ public class PatientControllerTest {
     @BeforeClass
     public static void setUp() throws Exception {
         Spark.init();
-        new PatientController(patientService);
         Spark.awaitInitialization();
     }
 

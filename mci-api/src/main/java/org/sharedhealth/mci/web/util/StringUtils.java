@@ -1,16 +1,8 @@
 package org.sharedhealth.mci.web.util;
 
-import java.util.regex.Matcher;
-
-import static java.lang.String.format;
-import static java.lang.String.valueOf;
-import static java.util.regex.Pattern.compile;
-import static org.apache.commons.lang3.StringUtils.defaultString;
-
 public class StringUtils {
-
-    public static String ensureSuffix(String input, String pattern) {
-        String trimmedValue = defaultString(input).trim();
+    public static String ensureSuffix(String value, String pattern) {
+        String trimmedValue = value.trim();
         if (trimmedValue.endsWith(pattern)) {
             return trimmedValue;
         } else {
@@ -18,18 +10,22 @@ public class StringUtils {
         }
     }
 
-    public static boolean containsRepeatingDigits(long input, int times) {
-        Matcher matcher = buildMatcherForRepeatingDigits(input, times);
-        return matcher.find();
+    public static String removeSuffix(String value, String pattern) {
+        String trimmedValue = value.trim();
+        if (trimmedValue.endsWith(pattern)) {
+            return trimmedValue.substring(0, trimmedValue.lastIndexOf(pattern));
+        } else {
+            return trimmedValue;
+        }
     }
 
-    public static boolean containsMultipleGroupsOfRepeatingDigits(long input, int times) {
-        Matcher matcher = buildMatcherForRepeatingDigits(input, times);
-        return matcher.find() && matcher.find();
+    public static String removePrefix(String value, String prefix) {
+        String trimmedValue = value.trim();
+        if (trimmedValue.startsWith(prefix)) {
+            return trimmedValue.substring(prefix.length());
+        } else {
+            return trimmedValue;
+        }
     }
 
-    private static Matcher buildMatcherForRepeatingDigits(long input, int times) {
-        String regex = format("(\\d)\\1{%s}", times - 1);
-        return compile(regex).matcher(valueOf(input));
-    }
 }

@@ -1,10 +1,7 @@
 package org.sharedhealth.mci.web.service;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.dstu2.composite.AddressDt;
-import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
-import ca.uhn.fhir.model.dstu2.composite.IdentifierDt;
-import ca.uhn.fhir.model.dstu2.composite.ResourceReferenceDt;
+import ca.uhn.fhir.model.dstu2.composite.*;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.resource.Patient.Link;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
@@ -15,18 +12,18 @@ import ca.uhn.fhir.model.primitive.StringDt;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.sharedhealth.mci.web.config.MCIProperties;
+import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
 import org.sharedhealth.mci.web.repository.PatientRepository;
+import org.sharedhealth.mci.web.util.FHIRConstants;
 import org.sharedhealth.mci.web.util.MCIConstants;
-import org.sharedhealth.mci.web.util.StringUtils;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.sharedhealth.mci.web.util.FHIRConstants.ADDRESS_CODE_EXTENSION_NAME;
-import static org.sharedhealth.mci.web.util.FHIRConstants.BIRTH_TIME_EXTENSION_URL;
-import static org.sharedhealth.mci.web.util.FHIRConstants.getFhirExtensionUrl;
+import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.util.MCIConstants.URI_SEPARATOR;
+import static org.sharedhealth.mci.web.util.StringUtils.ensureSuffix;
 
 public class PatientService {
-
     private PatientRepository patientRepository;
     private MCIProperties mciProperties;
     BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
@@ -62,7 +59,7 @@ public class PatientService {
     private Link mapPatientReferenceLink(String healthId) {
         Link link = new Link();
         link.setType(LinkTypeEnum.SEE_ALSO);
-        String patientLinkUri = StringUtils.ensureSuffix(mciProperties.getPatientLinkUri(), "/");
+        String patientLinkUri = ensureSuffix(mciProperties.getPatientLinkUri(), URI_SEPARATOR);
         ResourceReferenceDt patientReference = new ResourceReferenceDt(String.format("%s%s", patientLinkUri, healthId));
         link.setOther(patientReference);
         return link;
@@ -72,9 +69,18 @@ public class PatientService {
         IdentifierDt healthIdIdentifierDt = new IdentifierDt();
         String healthId = mciPatient.getHealthId();
         healthIdIdentifierDt.setValue(healthId);
-        String serverUri = StringUtils.ensureSuffix(mciProperties.getServerUri(), "/");
-        healthIdIdentifierDt.setSystem(String.format("%s%s", serverUri, healthId));
+        String mciPatientURI = MCIConstants.getMCIPatientURI(mciProperties.getMciBaseUrl());
+        setIdentifierType(healthIdIdentifierDt, MCI_IDENTIFIER_HID_CODE);
+        healthIdIdentifierDt.setSystem(String.format("%s%s", mciPatientURI, healthId));
         return healthIdIdentifierDt;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setIdentifierType(IdentifierDt identifierDt, String hidCode) {
+        BoundCodeableConceptDt identifierType = new BoundCodeableConceptDt<>(new MCIIdentifierEnumBinder());
+        String system = FHIRConstants.getMCIValuesetURI(mciProperties.getMciBaseUrl());
+        identifierType.addCoding(new CodingDt(system, hidCode));
+        identifierDt.setType(identifierType);
     }
 
     private HumanNameDt mapName(org.sharedhealth.mci.web.model.Patient mciPatient) {
