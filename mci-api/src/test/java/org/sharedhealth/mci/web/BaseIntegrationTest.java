@@ -1,6 +1,7 @@
 package org.sharedhealth.mci.web;
 
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
@@ -16,9 +17,14 @@ public class BaseIntegrationTest {
             = new EnvironmentVariables();
 
     @BeforeClass
-    public static void baseSetup() throws Exception {
+    public static void setupBaseIntegration() throws Exception {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra("cassandra-template.yaml");
         new TestMigrations(mockPropertySources()).migrate();
+    }
+
+    @AfterClass
+    public static void tearDownIntegration() throws Exception {
+        EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
     }
 
     private static Map<String, String> mockPropertySources() {

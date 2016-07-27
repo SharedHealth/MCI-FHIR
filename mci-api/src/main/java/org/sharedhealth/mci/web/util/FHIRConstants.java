@@ -1,6 +1,8 @@
 package org.sharedhealth.mci.web.util;
 
-import static org.sharedhealth.mci.web.util.MCIConstants.URI_SEPARATOR;
+import static org.sharedhealth.mci.web.util.MCIConstants.URL_SEPARATOR;
+import static org.sharedhealth.mci.web.util.StringUtils.ensureSuffix;
+import static org.sharedhealth.mci.web.util.StringUtils.removePrefix;
 
 public class FHIRConstants {
     public static final String MCI_IDENTIFIER_VALUESET_URI_PATH = "/api/v2/vs/patient-identifiers";
@@ -14,9 +16,9 @@ public class FHIRConstants {
         return FHIR_EXTENSION_URL + "#" + extensionName;
     }
 
-    public static String getMCIValuesetURI(String mciBaseUrl){
-        String baseUrl = StringUtils.ensureSuffix(mciBaseUrl, URI_SEPARATOR);
-        String identifierURI = StringUtils.removePrefix(MCI_IDENTIFIER_VALUESET_URI_PATH, URI_SEPARATOR);
+    public static String getMCIValuesetURI(String mciBaseUrl) {
+        String baseUrl = ensureSuffix(mciBaseUrl, URL_SEPARATOR);
+        String identifierURI = removePrefix(MCI_IDENTIFIER_VALUESET_URI_PATH, URL_SEPARATOR);
         return String.format("%s%s", baseUrl, identifierURI);
     }
 

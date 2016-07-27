@@ -14,13 +14,13 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
 import org.sharedhealth.mci.web.repository.PatientRepository;
-import org.sharedhealth.mci.web.util.FHIRConstants;
 import org.sharedhealth.mci.web.util.MCIConstants;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
-import static org.sharedhealth.mci.web.util.MCIConstants.URI_SEPARATOR;
+import static org.sharedhealth.mci.web.util.MCIConstants.URL_SEPARATOR;
+import static org.sharedhealth.mci.web.util.MCIConstants.getMCIPatientURI;
 import static org.sharedhealth.mci.web.util.StringUtils.ensureSuffix;
 
 public class PatientService {
@@ -59,7 +59,7 @@ public class PatientService {
     private Link mapPatientReferenceLink(String healthId) {
         Link link = new Link();
         link.setType(LinkTypeEnum.SEE_ALSO);
-        String patientLinkUri = ensureSuffix(mciProperties.getPatientLinkUri(), URI_SEPARATOR);
+        String patientLinkUri = ensureSuffix(mciProperties.getPatientLinkUri(), URL_SEPARATOR);
         ResourceReferenceDt patientReference = new ResourceReferenceDt(String.format("%s%s", patientLinkUri, healthId));
         link.setOther(patientReference);
         return link;
@@ -69,7 +69,7 @@ public class PatientService {
         IdentifierDt healthIdIdentifierDt = new IdentifierDt();
         String healthId = mciPatient.getHealthId();
         healthIdIdentifierDt.setValue(healthId);
-        String mciPatientURI = MCIConstants.getMCIPatientURI(mciProperties.getMciBaseUrl());
+        String mciPatientURI = getMCIPatientURI(mciProperties.getMciBaseUrl());
         setIdentifierType(healthIdIdentifierDt, MCI_IDENTIFIER_HID_CODE);
         healthIdIdentifierDt.setSystem(String.format("%s%s", mciPatientURI, healthId));
         return healthIdIdentifierDt;
@@ -78,7 +78,7 @@ public class PatientService {
     @SuppressWarnings("unchecked")
     private void setIdentifierType(IdentifierDt identifierDt, String hidCode) {
         BoundCodeableConceptDt identifierType = new BoundCodeableConceptDt<>(new MCIIdentifierEnumBinder());
-        String system = FHIRConstants.getMCIValuesetURI(mciProperties.getMciBaseUrl());
+        String system = getMCIValuesetURI(mciProperties.getMciBaseUrl());
         identifierType.addCoding(new CodingDt(system, hidCode));
         identifierDt.setType(identifierType);
     }

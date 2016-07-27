@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web.controller;
 
+import ca.uhn.fhir.parser.IParser;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import org.apache.http.Header;
@@ -9,16 +10,15 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.junit.*;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
+import org.sharedhealth.mci.web.util.FhirContextHelper;
 import org.sharedhealth.mci.web.util.TestUtil;
 import spark.Spark;
 
@@ -29,12 +29,12 @@ import java.util.Map;
 
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class PatientControllerIT extends BaseIntegrationTest {
     private static final String GET = "GET";
     private static CloseableHttpClient httpClient;
+    private final IParser xmlParser = FhirContextHelper.getFhirContext().newXmlParser();
     private Mapper<Patient> patientMapper;
 
     private final String healthId = "HID";
@@ -51,11 +51,15 @@ public class PatientControllerIT extends BaseIntegrationTest {
     private final String ruralWardId = "04";
     private final String addressLine = "Will Street";
 
-
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setupBaseController() throws Exception {
         Application.main(null);
         Spark.awaitInitialization();
+    }
+
+    @AfterClass
+    public static void tearDownBaseController() throws Exception {
+        Spark.stop();
     }
 
     @Before
@@ -78,7 +82,10 @@ public class PatientControllerIT extends BaseIntegrationTest {
 
         assertNotNull(urlResponse);
         assertEquals(SC_OK, urlResponse.status);
-        assertNotNull(urlResponse.body);
+        String body = urlResponse.body;
+        assertNotNull(body);
+        IBaseResource resource = xmlParser.parseResource(body);
+        assertTrue(resource instanceof ca.uhn.fhir.model.dstu2.resource.Patient);
     }
 
     @Test
