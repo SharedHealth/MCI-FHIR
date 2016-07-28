@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# mci-server        start/stop/status script
+# mci-registry        start/stop/status script
 #
 # chkconfig: - 64 36
-# description: The mci-server shared health record system
-# processname: mci-server
-# config: /etc/default/mci-server
-# pidfile: /var/run/mci-server/mci-server.pid
+# description: The mci-registry shared health record system
+# processname: mci-registry
+# config: /etc/default/mci-registry
+# pidfile: /var/run/mci-registry/mci-registry.pid
 ### BEGIN INIT INFO
 # Provides: mci-registry
 # Required-Start: $local_fs $remote_fs $network $named $syslog $time

@@ -1,4 +1,4 @@
 #!/bin/sh
-. /etc/default/mci
+. /etc/default/mci-registry
 
-java -jar /opt/mci/lib/mci-registry-schema-0.1-SNAPSHOT.jar
+java -jar /opt/mci-registry/lib/mci-registry-schema-0.1-SNAPSHOT.jar
