@@ -5,19 +5,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.runner.RunWith;
-import org.sharedhealth.mci.web.launch.Application;
-import spark.Spark;
 
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-@RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({".*IT"})
-public class IntegrationTestSuite {
+public class BaseIntegrationTest {
     @ClassRule
     public static final EnvironmentVariables environmentVariables
             = new EnvironmentVariables();
@@ -26,13 +20,10 @@ public class IntegrationTestSuite {
     public static void setupBaseIntegration() throws Exception {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra("cassandra-template.yaml");
         new TestMigrations(mockPropertySources()).migrate();
-        Application.main(null);
-        Spark.awaitInitialization();
     }
 
     @AfterClass
     public static void tearDownIntegration() throws Exception {
-        Spark.stop();
         EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
     }
 
@@ -40,7 +31,7 @@ public class IntegrationTestSuite {
         Map<String, String> env = new HashMap<>();
 
         try {
-            InputStream inputStream = IntegrationTestSuite.class.getResourceAsStream("/test.properties");
+            InputStream inputStream = BaseIntegrationTest.class.getResourceAsStream("/test.properties");
             Properties properties = new Properties();
             properties.load(inputStream);
 

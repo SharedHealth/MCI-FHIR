@@ -5,6 +5,7 @@ import com.datastax.driver.mapping.MappingManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.model.Patient;
@@ -16,7 +17,7 @@ import java.util.Date;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class PatientRepositoryIT{
+public class PatientRepositoryIT extends BaseIntegrationTest {
     private PatientRepository patientRepository;
     private Mapper<Patient> patientMapper;
 

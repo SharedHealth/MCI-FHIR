@@ -29,8 +29,7 @@ dependencies {
     testCompile project(":schema")
     testCompile project(":schema").sourceSets.test.output
 
-    testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules,
-            testLibraries.cp_suite
+    testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules
 }
 
 test {
@@ -46,7 +45,8 @@ test {
     minHeapSize = "512m"
     maxHeapSize = "1024m"
 
-    exclude '**/*IT.class'
+    // set JVM arguments for the test JVM(s)
+    jvmArgs '-XX:MaxPermSize=256m'
 }
 
 configurations {

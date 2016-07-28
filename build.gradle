@@ -56,9 +56,9 @@ ext.libraries = [
 ]
 
 ext.testLibraries = [
-        junit                   : "junit:junit:4.10",
-        mockito                 : "org.mockito:mockito-all:1.8.4",
-        cassandra_unit          : "org.cassandraunit:cassandra-unit:2.0.2.2",
-        system_rules            : "com.github.stefanbirkner:system-rules:1.16.0",
-        cp_suite                : "io.takari.junit:takari-cpsuite:1.2.7"
+        junit         : "junit:junit:4.10",
+        mockito       : "org.mockito:mockito-all:1.8.4",
+        cassandra_unit: "org.cassandraunit:cassandra-unit:2.0.2.2",
+        system_rules  : "com.github.stefanbirkner:system-rules:1.16.0",
+
 ]

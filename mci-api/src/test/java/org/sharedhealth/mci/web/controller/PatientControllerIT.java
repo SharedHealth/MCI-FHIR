@@ -11,15 +11,16 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
+import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.FhirContextHelper;
 import org.sharedhealth.mci.web.util.TestUtil;
+import spark.Spark;
 
 import java.io.IOException;
 import java.util.Date;
@@ -30,7 +31,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.junit.Assert.*;
 
-public class PatientControllerIT {
+public class PatientControllerIT extends BaseIntegrationTest {
     private static final String GET = "GET";
     private static CloseableHttpClient httpClient;
     private final IParser xmlParser = FhirContextHelper.getFhirContext().newXmlParser();
@@ -49,6 +50,17 @@ public class PatientControllerIT {
     private final String urbanWardId = "01";
     private final String ruralWardId = "04";
     private final String addressLine = "Will Street";
+
+    @BeforeClass
+    public static void setupBaseController() throws Exception {
+        Application.main(null);
+        Spark.awaitInitialization();
+    }
+
+    @AfterClass
+    public static void tearDownBaseController() throws Exception {
+        Spark.stop();
+    }
 
     @Before
     public void setUp() throws Exception {
