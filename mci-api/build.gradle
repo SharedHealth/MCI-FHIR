@@ -26,10 +26,8 @@ dependencies {
             libraries.cassandra_all,libraries.hapi_fhir_base,libraries.hapi_fhir_structures,libraries.apache_collections,
             libraries.jackson_core,libraries.jackson_annotations
 
-    testCompile project(":schema")
-    testCompile project(":schema").sourceSets.test.output
-
-    testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules
+    testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules,
+            testLibraries.mutagen, testLibraries.mutagen_cassandra
 }
 
 test {
@@ -79,9 +77,7 @@ task exportProperties(dependsOn: 'assembly') << {
     }
 }
 
-task dist(dependsOn: [
-        project(":schema").tasks.build,
-        'exportProperties'],
+task dist(dependsOn: ['exportProperties'],
         type: Rpm) {
     packageName = 'mci-registry'
     version = '0.1'
@@ -121,17 +117,6 @@ task dist(dependsOn: [
         exclude 'start.sh'
         into 'var'
     }
-
-    from("${rootDir}/schema/scripts/rpm") {
-        fileMode = 0755
-        into 'bin'
-    }
-
-    from("${rootDir}/schema/build/libs") {
-        fileMode = 0755
-        into 'lib'
-    }
-
 }
 
 war {
