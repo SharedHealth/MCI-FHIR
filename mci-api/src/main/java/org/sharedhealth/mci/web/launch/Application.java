@@ -18,7 +18,7 @@ public class Application {
     private static final Logger logger = LogManager.getLogger(Application.class);
 
     public static void main(String[] args) {
-        logger.info("MCI Java 8");
+        logger.info("Starting MCI Registry");
         String mci_port = getenv().get("MCI_PORT");
         port(Integer.parseInt(mci_port));
 

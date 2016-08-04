@@ -2,10 +2,12 @@ package org.sharedhealth.mci.web.repository;
 
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
+import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.launch.Application;
+import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 
 public class PatientRepository {
@@ -23,5 +25,12 @@ public class PatientRepository {
             throw new PatientNotFoundException("No patient found with health id: " + healthId);
         }
         return patient;
+    }
+
+    public MCIResponse createPatient(Patient patient) {
+        patientMapper.save(patient);
+        MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_CREATED);
+        mciResponse.setId(patient.getHealthId());
+        return mciResponse;
     }
 }

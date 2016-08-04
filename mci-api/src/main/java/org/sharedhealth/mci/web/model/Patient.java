@@ -197,4 +197,23 @@ public class Patient {
         result = 31 * result + (countryCode != null ? countryCode.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Patient{" +
+                "addressLine='" + addressLine + '\'' +
+                ", healthId='" + healthId + '\'' +
+                ", givenName='" + givenName + '\'' +
+                ", surName='" + surName + '\'' +
+                ", gender='" + gender + '\'' +
+                ", dateOfBirth=" + dateOfBirth +
+                ", divisionId='" + divisionId + '\'' +
+                ", districtId='" + districtId + '\'' +
+                ", upazilaId='" + upazilaId + '\'' +
+                ", unionOrUrbanWardId='" + unionOrUrbanWardId + '\'' +
+                ", ruralWardId='" + ruralWardId + '\'' +
+                ", cityCorporationId='" + cityCorporationId + '\'' +
+                ", countryCode='" + countryCode + '\'' +
+                '}';
+    }
 }

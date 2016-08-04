@@ -6,11 +6,16 @@ import ca.uhn.fhir.model.dstu2.resource.Patient.Link;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
 import ca.uhn.fhir.model.dstu2.valueset.IdentifierTypeCodesEnum;
 import ca.uhn.fhir.model.dstu2.valueset.LinkTypeEnum;
+import ca.uhn.fhir.model.primitive.DateDt;
+import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.StringDt;
+import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.sharedhealth.mci.web.config.MCIProperties;
+import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.util.DateUtil;
@@ -20,6 +25,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
@@ -36,7 +43,7 @@ public class PatientServiceTest {
     private final String givenName = "Bob the";
     private final String surName = "Builder";
     private final String gender = "M";
-    private final Date dateOfBirth = DateUtil.parseDate("1995-07-01 00:00:00+0530");
+    private final Date dateOfBirth = DateUtil.parseDate("1995-07-01 14:20:00+0530");
     private final String countryCode = "050";
     private final String divisionId = "30";
     private final String districtId = "26";
@@ -56,12 +63,15 @@ public class PatientServiceTest {
     public void shouldMapMCIPatientToFHIRPatient() throws Exception {
         String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
+
         when(patientRepository.findByHealthId(healthId)).thenReturn(createPatient());
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
         when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
 
         ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientService.findPatientByHealthId(healthId);
         assertNotNull(fhirPatient);
+
+        verify(patientRepository).findByHealthId(healthId);
 
         List<IdentifierDt> identifiers = fhirPatient.getIdentifier();
         assertEquals(1, identifiers.size());
@@ -92,6 +102,44 @@ public class PatientServiceTest {
         Link link = fhirPatient.getLinkFirstRep();
         assertEquals(LinkTypeEnum.SEE_ALSO.getCode(), link.getType());
         assertEquals(patientLinkUri + healthId, link.getOther().getReference().getValue());
+    }
+
+    @Test
+    public void shouldCreateAPatient() throws Exception {
+        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+        patient.addName().addGiven(givenName).addFamily(surName);
+        patient.setGender(AdministrativeGenderEnum.MALE);
+        setDOB(patient);
+        setAddress(patient);
+
+        MCIResponse response = new MCIResponse(HttpStatus.SC_CREATED);
+        response.setId(healthId);
+        when(patientRepository.createPatient(any(Patient.class))).thenReturn(response);
+
+        MCIResponse mciResponse = patientService.createPatient(patient);
+        assertEquals(response, mciResponse);
+
+        ArgumentCaptor<Patient> argumentCaptor = ArgumentCaptor.forClass(Patient.class);
+        verify(patientRepository).createPatient(argumentCaptor.capture());
+        Patient patientToBeCreated = argumentCaptor.getValue();
+        assertEquals(createPatient(), patientToBeCreated);
+    }
+
+    private void setAddress(ca.uhn.fhir.model.dstu2.resource.Patient patient) {
+        AddressDt addressDt = new AddressDt().addLine(addressLine);
+        addressDt.setCountry(countryCode);
+        String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
+        ExtensionDt addressCodeExtension = new ExtensionDt().
+                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
+        addressDt.addUndeclaredExtension(addressCodeExtension);
+        patient.addAddress(addressDt);
+    }
+
+    private void setDOB(ca.uhn.fhir.model.dstu2.resource.Patient patient) {
+        DateDt date = new DateDt(dateOfBirth);
+        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
+        date.addUndeclaredExtension(extensionDt);
+        patient.setBirthDate(date);
     }
 
     private Patient createPatient() {

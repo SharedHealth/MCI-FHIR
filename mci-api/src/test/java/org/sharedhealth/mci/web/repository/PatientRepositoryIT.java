@@ -2,12 +2,14 @@ package org.sharedhealth.mci.web.repository;
 
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
+import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
+import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.TestUtil;
@@ -47,10 +49,9 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         TestUtil.truncateAllColumnFamilies();
     }
 
-
     @Test
     public void shouldRetrievePatientByHealthID() throws Exception {
-        Patient expectedPatient = createPatient();
+        Patient expectedPatient = preparePatientData();
         patientMapper.save(expectedPatient);
 
         Patient patient = patientRepository.findByHealthId(healthId);
@@ -64,7 +65,19 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         patientRepository.findByHealthId("HID1");
     }
 
-    private Patient createPatient() {
+    @Test
+    public void shouldCreatePatientInDatabase() throws Exception {
+        Patient patient = preparePatientData();
+
+        MCIResponse mciResponse = patientRepository.createPatient(patient);
+
+        Patient byHealthId = patientMapper.get(patient.getHealthId());
+        assertEquals(patient, byHealthId);
+        assertEquals(patient.getHealthId(),mciResponse.getId());
+        assertEquals(HttpStatus.SC_CREATED,mciResponse.getHttpStatus());
+    }
+
+    private Patient preparePatientData() {
         Patient expectedPatient = new Patient();
         expectedPatient.setHealthId(healthId);
         expectedPatient.setGivenName(givenName);

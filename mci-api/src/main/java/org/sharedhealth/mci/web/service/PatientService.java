@@ -13,8 +13,11 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
+import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.util.MCIConstants;
+
+import java.util.List;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -116,4 +119,31 @@ public class PatientService {
         }
     }
 
+    public MCIResponse createPatient(Patient fhirPatient) {
+        org.sharedhealth.mci.web.model.Patient mciPatient = new org.sharedhealth.mci.web.model.Patient();
+        // todo get HID from database and assign to patient
+        mciPatient.setHealthId("HID");
+        HumanNameDt name = fhirPatient.getNameFirstRep();
+        mciPatient.setGivenName(name.getGivenFirstRep().getValue());
+        mciPatient.setSurName(name.getFamilyFirstRep().getValue());
+        mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValueAsEnum()));
+        mciPatient.setDateOfBirth(fhirPatient.getBirthDate());
+        AddressDt address = fhirPatient.getAddressFirstRep();
+        mciPatient.setAddressLine(address.getLineFirstRep().getValue());
+        mciPatient.setCountryCode(address.getCountry());
+
+        // todo get a nicer way of doing it
+        List<ExtensionDt> extensions = address.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
+        StringDt addressCode = (StringDt) extensions.get(0).getValue();
+        String[] codes = addressCode.getValue().split("(?<=\\G..)");
+        mciPatient.setDivisionId(codes[0]);
+        mciPatient.setDistrictId(codes[1]);
+        mciPatient.setUpazilaId(codes[2]);
+        mciPatient.setCityCorporationId(codes[3]);
+        mciPatient.setUnionOrUrbanWardId(codes[4]);
+        mciPatient.setRuralWardId(codes[5]);
+
+
+        return patientRepository.createPatient(mciPatient);
+    }
 }

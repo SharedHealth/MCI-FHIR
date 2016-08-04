@@ -18,7 +18,7 @@ public class MCIResponse {
 
     private int httpStatus;
     private String id;
-        private String message;
+    private String message;
 
     public MCIResponse(int httpStatus) {
         this.httpStatus = httpStatus;
