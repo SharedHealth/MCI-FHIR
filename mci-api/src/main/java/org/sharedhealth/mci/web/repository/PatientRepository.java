@@ -28,9 +28,11 @@ public class PatientRepository {
     }
 
     public MCIResponse createPatient(Patient patient) {
+        String healthId = patient.getHealthId();
+        logger.info(String.format("Creating patient with healthId: %s", healthId));
         patientMapper.save(patient);
         MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_CREATED);
-        mciResponse.setId(patient.getHealthId());
+        mciResponse.setId(healthId);
         return mciResponse;
     }
 }

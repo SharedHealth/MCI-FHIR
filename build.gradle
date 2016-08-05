@@ -51,6 +51,7 @@ ext.libraries = [
         hapi_fhir_structures    : "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:1.5",
         jackson_core            : "com.fasterxml.jackson.core:jackson-core:2.8.1",
         jackson_annotations     : "com.fasterxml.jackson.core:jackson-annotations:2.8.1",
+        hector_core             : "me.prettyprint:hector-core:1.0-5"
 ]
 
 ext.testLibraries = [

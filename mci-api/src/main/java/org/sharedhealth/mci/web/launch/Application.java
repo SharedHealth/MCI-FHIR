@@ -8,6 +8,7 @@ import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.controller.GlobalExceptionHandler;
 import org.sharedhealth.mci.web.controller.PatientController;
 import org.sharedhealth.mci.web.repository.PatientRepository;
+import org.sharedhealth.mci.web.service.HealthIdService;
 import org.sharedhealth.mci.web.service.PatientService;
 
 import static java.lang.System.getenv;
@@ -26,7 +27,8 @@ public class Application {
 
         MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
         PatientRepository patientRepository = new PatientRepository(mappingManager);
-        PatientService patientService = new PatientService(patientRepository, MCIProperties.getInstance());
+        HealthIdService healthIdService = new HealthIdService(mappingManager);
+        PatientService patientService = new PatientService(healthIdService, patientRepository, MCIProperties.getInstance());
         new PatientController(patientService);
     }
 }

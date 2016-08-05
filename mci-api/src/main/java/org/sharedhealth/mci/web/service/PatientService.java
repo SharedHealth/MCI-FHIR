@@ -9,11 +9,15 @@ import ca.uhn.fhir.model.dstu2.valueset.LinkTypeEnum;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.StringDt;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.apache.http.HttpStatus;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
 import org.sharedhealth.mci.web.model.MCIResponse;
+import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.util.MCIConstants;
 
@@ -27,11 +31,14 @@ import static org.sharedhealth.mci.web.util.MCIConstants.getMCIPatientURI;
 import static org.sharedhealth.mci.web.util.StringUtils.ensureSuffix;
 
 public class PatientService {
+    private final int ADDRESS_CODE_EACH_LEVEL_LENGTH = 2;
     private PatientRepository patientRepository;
     private MCIProperties mciProperties;
+    private HealthIdService healthIdService;
     BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
 
-    public PatientService(PatientRepository patientRepository, MCIProperties mciProperties) {
+    public PatientService(HealthIdService healthIdService, PatientRepository patientRepository, MCIProperties mciProperties) {
+        this.healthIdService = healthIdService;
         this.patientRepository = patientRepository;
         this.mciProperties = mciProperties;
         mciToFhirGenderMap.put(MCIConstants.MALE, AdministrativeGenderEnum.MALE);
@@ -49,6 +56,46 @@ public class PatientService {
         fhirPatient.addIdentifier(mapHealthIdIdentifier(mciPatient));
         fhirPatient.addLink(mapPatientReferenceLink(healthId));
         return fhirPatient;
+    }
+
+    public MCIResponse createPatient(Patient fhirPatient) {
+        org.sharedhealth.mci.web.model.Patient mciPatient = new org.sharedhealth.mci.web.model.Patient();
+        MciHealthId healthId;
+        try {
+            healthId = healthIdService.getNextHealthId();
+            mciPatient.setHealthId(healthId.getHid());
+        } catch (Exception e) {
+            MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_BAD_REQUEST);
+            mciResponse.setMessage(e.getMessage());
+            return mciResponse;
+        }
+
+        HumanNameDt name = fhirPatient.getNameFirstRep();
+        mciPatient.setGivenName(name.getGivenFirstRep().getValue());
+        mciPatient.setSurName(name.getFamilyFirstRep().getValue());
+        mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValueAsEnum()));
+
+        List<ExtensionDt> birthExtensions = fhirPatient.getBirthDateElement().getUndeclaredExtensionsByUrl(BIRTH_TIME_EXTENSION_URL);
+        DateTimeDt birthTime = (DateTimeDt) birthExtensions.get(0).getValue();
+        mciPatient.setDateOfBirth(birthTime.getValue());
+
+        AddressDt address = fhirPatient.getAddressFirstRep();
+        mciPatient.setAddressLine(address.getLineFirstRep().getValue());
+        mciPatient.setCountryCode(address.getCountry());
+        List<ExtensionDt> extensions = address.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
+        StringDt addressCode = (StringDt) extensions.get(0).getValue();
+        Iterable<String> codes = Splitter.fixedLength(ADDRESS_CODE_EACH_LEVEL_LENGTH).split(addressCode.getValue());
+        List<String> addressLevels = Lists.newArrayList(codes);
+
+        mciPatient.setDivisionId(addressLevels.get(0));
+        mciPatient.setDistrictId(addressLevels.get(1));
+        mciPatient.setUpazilaId(addressLevels.get(2));
+        setCityCorporation(mciPatient, addressLevels);
+        setUnionWard(mciPatient, addressLevels);
+        setRuralWard(mciPatient, addressLevels);
+
+        healthIdService.markUsed(healthId);
+        return patientRepository.createPatient(mciPatient);
     }
 
     private DateDt mapDateOfBirth(org.sharedhealth.mci.web.model.Patient mciPatient) {
@@ -119,31 +166,22 @@ public class PatientService {
         }
     }
 
-    public MCIResponse createPatient(Patient fhirPatient) {
-        org.sharedhealth.mci.web.model.Patient mciPatient = new org.sharedhealth.mci.web.model.Patient();
-        // todo get HID from database and assign to patient
-        mciPatient.setHealthId("HID");
-        HumanNameDt name = fhirPatient.getNameFirstRep();
-        mciPatient.setGivenName(name.getGivenFirstRep().getValue());
-        mciPatient.setSurName(name.getFamilyFirstRep().getValue());
-        mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValueAsEnum()));
-        mciPatient.setDateOfBirth(fhirPatient.getBirthDate());
-        AddressDt address = fhirPatient.getAddressFirstRep();
-        mciPatient.setAddressLine(address.getLineFirstRep().getValue());
-        mciPatient.setCountryCode(address.getCountry());
-
-        // todo get a nicer way of doing it
-        List<ExtensionDt> extensions = address.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
-        StringDt addressCode = (StringDt) extensions.get(0).getValue();
-        String[] codes = addressCode.getValue().split("(?<=\\G..)");
-        mciPatient.setDivisionId(codes[0]);
-        mciPatient.setDistrictId(codes[1]);
-        mciPatient.setUpazilaId(codes[2]);
-        mciPatient.setCityCorporationId(codes[3]);
-        mciPatient.setUnionOrUrbanWardId(codes[4]);
-        mciPatient.setRuralWardId(codes[5]);
-
-
-        return patientRepository.createPatient(mciPatient);
+    private void setRuralWard(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
+        if (addressLevels.size() > 5) {
+            mciPatient.setRuralWardId(addressLevels.get(5));
+        }
     }
+
+    private void setUnionWard(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
+        if (addressLevels.size() > 4) {
+            mciPatient.setUnionOrUrbanWardId(addressLevels.get(4));
+        }
+    }
+
+    private void setCityCorporation(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
+        if (addressLevels.size() > 3) {
+            mciPatient.setCityCorporationId(addressLevels.get(3));
+        }
+    }
+
 }

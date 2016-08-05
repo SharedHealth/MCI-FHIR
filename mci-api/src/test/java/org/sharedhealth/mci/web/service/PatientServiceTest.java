@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIResponse;
+import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.util.DateUtil;
@@ -38,6 +39,8 @@ public class PatientServiceTest {
     private PatientRepository patientRepository;
     @Mock
     private MCIProperties mciProperties;
+    @Mock
+    private HealthIdService healthIdService;
 
     private final String healthId = "HID";
     private final String givenName = "Bob the";
@@ -56,7 +59,7 @@ public class PatientServiceTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        patientService = new PatientService(patientRepository, mciProperties);
+        patientService = new PatientService(healthIdService, patientRepository, mciProperties);
     }
 
     @Test
@@ -64,7 +67,7 @@ public class PatientServiceTest {
         String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
-        when(patientRepository.findByHealthId(healthId)).thenReturn(createPatient());
+        when(patientRepository.findByHealthId(healthId)).thenReturn(createMCIPatient());
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
         when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
 
@@ -106,26 +109,33 @@ public class PatientServiceTest {
 
     @Test
     public void shouldCreateAPatient() throws Exception {
-        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
-        patient.addName().addGiven(givenName).addFamily(surName);
-        patient.setGender(AdministrativeGenderEnum.MALE);
-        setDOB(patient);
-        setAddress(patient);
-
+        MciHealthId mciHealthId = new MciHealthId(healthId);
         MCIResponse response = new MCIResponse(HttpStatus.SC_CREATED);
         response.setId(healthId);
         when(patientRepository.createPatient(any(Patient.class))).thenReturn(response);
+        when(healthIdService.getNextHealthId()).thenReturn(mciHealthId);
 
-        MCIResponse mciResponse = patientService.createPatient(patient);
+        MCIResponse mciResponse = patientService.createPatient(createFHIRPatient());
         assertEquals(response, mciResponse);
 
         ArgumentCaptor<Patient> argumentCaptor = ArgumentCaptor.forClass(Patient.class);
         verify(patientRepository).createPatient(argumentCaptor.capture());
         Patient patientToBeCreated = argumentCaptor.getValue();
-        assertEquals(createPatient(), patientToBeCreated);
+        assertEquals(createMCIPatient(), patientToBeCreated);
+
+        verify(healthIdService).markUsed(mciHealthId);
     }
 
-    private void setAddress(ca.uhn.fhir.model.dstu2.resource.Patient patient) {
+    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient() {
+        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+        patient.addName().addGiven(givenName).addFamily(surName);
+        patient.setGender(AdministrativeGenderEnum.MALE);
+
+        DateDt date = new DateDt(dateOfBirth);
+        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
+        date.addUndeclaredExtension(extensionDt);
+        patient.setBirthDate(date);
+
         AddressDt addressDt = new AddressDt().addLine(addressLine);
         addressDt.setCountry(countryCode);
         String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
@@ -133,16 +143,10 @@ public class PatientServiceTest {
                 setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
         addressDt.addUndeclaredExtension(addressCodeExtension);
         patient.addAddress(addressDt);
+        return patient;
     }
 
-    private void setDOB(ca.uhn.fhir.model.dstu2.resource.Patient patient) {
-        DateDt date = new DateDt(dateOfBirth);
-        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
-        date.addUndeclaredExtension(extensionDt);
-        patient.setBirthDate(date);
-    }
-
-    private Patient createPatient() {
+    private Patient createMCIPatient() {
         Patient expectedPatient = new Patient();
         expectedPatient.setHealthId(healthId);
         expectedPatient.setGivenName(givenName);

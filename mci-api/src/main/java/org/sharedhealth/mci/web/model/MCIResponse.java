@@ -20,6 +20,9 @@ public class MCIResponse {
     private String id;
     private String message;
 
+    public MCIResponse() {
+    }
+
     public MCIResponse(int httpStatus) {
         this.httpStatus = httpStatus;
     }

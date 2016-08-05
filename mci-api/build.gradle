@@ -24,7 +24,7 @@ compileTestJava {
 dependencies {
     compile libraries.spark_core,libraries.apache_log4j_core,libraries.cassandra_driver_core,libraries.cassandra_driver_mapping,
             libraries.cassandra_all,libraries.hapi_fhir_base,libraries.hapi_fhir_structures,libraries.apache_collections,
-            libraries.jackson_core,libraries.jackson_annotations
+            libraries.jackson_core,libraries.jackson_annotations,libraries.hector_core
 
     testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules,
             testLibraries.mutagen, testLibraries.mutagen_cassandra
