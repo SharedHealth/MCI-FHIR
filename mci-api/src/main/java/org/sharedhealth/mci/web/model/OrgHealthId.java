@@ -30,6 +30,8 @@ public class OrgHealthId {
     @Column(name = IS_USED)
     private boolean isUsed;
 
+    public OrgHealthId() {
+    }
 
     public OrgHealthId(String healthId, String allocatedFor, UUID generatedAt, UUID usedAt) {
         this.healthId = healthId;
@@ -37,6 +39,10 @@ public class OrgHealthId {
         this.generatedAt = generatedAt;
         this.usedAt = usedAt;
         this.isUsed = false;
+    }
+
+    public UUID getGeneratedAt() {
+        return generatedAt;
     }
 
     public String getHealthId() {
@@ -51,7 +57,7 @@ public class OrgHealthId {
         return usedAt;
     }
 
-    public boolean isUsed() {
+    public boolean getIsUsed() {
         return isUsed;
     }
 
@@ -62,6 +68,22 @@ public class OrgHealthId {
 
     public void setUsedAt(UUID uuid) {
         this.usedAt = uuid;
+    }
+
+    public void setAllocatedFor(String allocatedFor) {
+        this.allocatedFor = allocatedFor;
+    }
+
+    public void setGeneratedAt(UUID generatedAt) {
+        this.generatedAt = generatedAt;
+    }
+
+    public void setHealthId(String healthId) {
+        this.healthId = healthId;
+    }
+
+    public void setIsUsed(boolean isUsed) {
+        this.isUsed = isUsed;
     }
 
     @Override

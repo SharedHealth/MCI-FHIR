@@ -9,19 +9,26 @@ import com.datastax.driver.mapping.MappingManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.model.MciHealthId;
+import org.sharedhealth.mci.web.model.OrgHealthId;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
+
+import java.util.Date;
 
 import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_MCI_HEALTH_ID;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.HID;
 
 public class HealthIdService {
     private static final Logger logger = LogManager.getLogger(HealthIdService.class);
+    private final String MCI_ORG_CODE = "MCI";
 
     private Session session;
-    private Mapper<MciHealthId> healthIdMapper;
+    private Mapper<MciHealthId> mciHealthIdMapper;
+    private Mapper<OrgHealthId> orgHealthIdMapper;
 
     public HealthIdService(MappingManager mappingManager) {
         this.session = mappingManager.getSession();
-        this.healthIdMapper = mappingManager.mapper(MciHealthId.class);
+        this.mciHealthIdMapper = mappingManager.mapper(MciHealthId.class);
+        this.orgHealthIdMapper = mappingManager.mapper(OrgHealthId.class);
     }
 
     public MciHealthId getNextHealthId() {
@@ -37,6 +44,9 @@ public class HealthIdService {
     }
 
     public void markUsed(MciHealthId healthId) {
-        healthIdMapper.delete(healthId);
+        OrgHealthId orgHealthId = new OrgHealthId(healthId.getHid(), MCI_ORG_CODE, null, TimeUuidUtil.uuidForDate(new Date()));
+        orgHealthId.markUsed();
+        orgHealthIdMapper.save(orgHealthId);
+        mciHealthIdMapper.delete(healthId);
     }
 }

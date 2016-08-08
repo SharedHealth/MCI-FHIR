@@ -7,6 +7,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_MCI_HEALTH_ID;
+import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_ORG_HEALTH_ID;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_PATIENT;
 
 public class TestUtil {
@@ -22,7 +23,8 @@ public class TestUtil {
     private static List<String> getAllColumnFamilies() {
         return asList(
                 CF_PATIENT,
-                CF_MCI_HEALTH_ID
+                CF_MCI_HEALTH_ID,
+                CF_ORG_HEALTH_ID
         );
     }
 

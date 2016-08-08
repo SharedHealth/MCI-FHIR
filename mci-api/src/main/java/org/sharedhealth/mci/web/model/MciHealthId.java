@@ -16,6 +16,9 @@ public class MciHealthId {
     @Column(name = HID)
     private String hid;
 
+    public MciHealthId() {
+    }
+
     public MciHealthId(String hid) {
         this.hid = hid;
     }

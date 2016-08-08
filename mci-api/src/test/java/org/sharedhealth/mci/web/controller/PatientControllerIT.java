@@ -26,6 +26,7 @@ import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
+import org.sharedhealth.mci.web.model.OrgHealthId;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.FhirContextHelper;
@@ -48,7 +49,8 @@ public class PatientControllerIT extends BaseIntegrationTest {
     private static final String POST = "post";
     private static CloseableHttpClient httpClient;
     private final IParser xmlParser = FhirContextHelper.getFhirContext().newXmlParser();
-    private Mapper<MciHealthId> hidMapper;
+    private Mapper<MciHealthId> mciHealthIdMapper;
+    private Mapper<OrgHealthId> orgHealthIdMapper;
     private Mapper<Patient> patientMapper;
 
     private final String healthId = "HID";
@@ -80,7 +82,8 @@ public class PatientControllerIT extends BaseIntegrationTest {
     public void setUp() throws Exception {
         MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
         patientMapper = mappingManager.mapper(Patient.class);
-        hidMapper = mappingManager.mapper(MciHealthId.class);
+        mciHealthIdMapper = mappingManager.mapper(MciHealthId.class);
+        orgHealthIdMapper = mappingManager.mapper(OrgHealthId.class);
         httpClient = HttpClientBuilder.create().build();
     }
 
@@ -117,7 +120,7 @@ public class PatientControllerIT extends BaseIntegrationTest {
 
     @Test
     public void shouldCreateAPatientForGivenData() throws Exception {
-        hidMapper.save(new MciHealthId(healthId));
+        mciHealthIdMapper.save(new MciHealthId(healthId));
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, xmlParser.encodeResourceToString(createFHIRPatient()));
 
         assertNotNull(urlResponse);
@@ -132,13 +135,16 @@ public class PatientControllerIT extends BaseIntegrationTest {
 
     @Test
     public void shouldDeleteTheHealthIdAssignedToCreatedPatient() throws Exception {
-        hidMapper.save(new MciHealthId(healthId));
+        mciHealthIdMapper.save(new MciHealthId(healthId));
+        assertNotNull(mciHealthIdMapper.get(healthId));
+        assertNull(orgHealthIdMapper.get(healthId));
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, xmlParser.encodeResourceToString(createFHIRPatient()));
 
         assertNotNull(urlResponse);
         assertEquals(SC_CREATED, urlResponse.status);
 
-        assertNull(hidMapper.get(healthId));
+        assertNull(mciHealthIdMapper.get(healthId));
+        assertNotNull(orgHealthIdMapper.get(healthId));
     }
 
     @Test
