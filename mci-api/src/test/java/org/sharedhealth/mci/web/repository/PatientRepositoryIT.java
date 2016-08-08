@@ -60,11 +60,6 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(expectedPatient, patient);
     }
 
-    @Test(expected = PatientNotFoundException.class)
-    public void shouldThrowErrorWhenPatientNotFound() throws Exception {
-        patientRepository.findByHealthId("HID1");
-    }
-
     @Test
     public void shouldCreatePatientInDatabase() throws Exception {
         Patient patient = preparePatientData();
@@ -75,6 +70,11 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(patient, byHealthId);
         assertEquals(patient.getHealthId(),mciResponse.getId());
         assertEquals(HttpStatus.SC_CREATED,mciResponse.getHttpStatus());
+    }
+
+    @Test(expected = PatientNotFoundException.class)
+    public void shouldThrowErrorWhenPatientNotFound() throws Exception {
+        patientRepository.findByHealthId("HID1");
     }
 
     private Patient preparePatientData() {
