@@ -2,12 +2,9 @@ package org.sharedhealth.mci.web.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
-import java.io.IOException;
 
 import static org.sharedhealth.mci.web.util.MCIConstants.HTTP_STATUS;
 
@@ -49,13 +46,6 @@ public class MCIResponse {
 
     @Override
     public String toString() {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
-            return objectMapper.writeValueAsString(this);
-        } catch (IOException e) {
-            logger.error("Error while mapping MCI response to string ", e);
-        }
-        return null;
+        return new Gson().toJson(this);
     }
 }

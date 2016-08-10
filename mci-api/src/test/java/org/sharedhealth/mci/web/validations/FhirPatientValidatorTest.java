@@ -1,18 +1,18 @@
 package org.sharedhealth.mci.web.validations;
 
 import ca.uhn.fhir.model.dstu2.resource.Patient;
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import org.junit.Before;
 import org.junit.Test;
-import org.sharedhealth.mci.web.util.FhirContextHelper;
 import org.sharedhealth.mci.web.util.FileUtil;
 
+import java.util.zip.DataFormatException;
+
 import static junit.framework.Assert.*;
+import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 
 public class FhirPatientValidatorTest {
     private FhirPatientValidator fhirPatientValidator;
-    private IParser xmlParser = FhirContextHelper.getFhirContext().newXmlParser();
 
     @Before
     public void setUp() throws Exception {
@@ -37,7 +37,7 @@ public class FhirPatientValidatorTest {
         assertEquals("The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender (http://hl7.org/fhir/ValueSet/administrative-gender, and a code is required from this value set", message.getMessage());
     }
 
-    private Patient createPatientFromFile(String filePath) {
-        return (Patient) xmlParser.parseResource(FileUtil.asString(filePath));
+    private Patient createPatientFromFile(String filePath) throws DataFormatException {
+        return (Patient) parseResource(FileUtil.asString(filePath));
     }
 }

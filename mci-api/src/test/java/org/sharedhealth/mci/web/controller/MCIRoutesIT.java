@@ -1,14 +1,8 @@
 package org.sharedhealth.mci.web.controller;
 
-import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.dstu2.composite.AddressDt;
-import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
-import ca.uhn.fhir.model.primitive.DateDt;
-import ca.uhn.fhir.model.primitive.DateTimeDt;
-import ca.uhn.fhir.model.primitive.StringDt;
-import ca.uhn.fhir.parser.IParser;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
+import com.google.gson.Gson;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -18,7 +12,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.*;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
@@ -29,7 +22,7 @@ import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.OrgHealthId;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
-import org.sharedhealth.mci.web.util.FhirContextHelper;
+import org.sharedhealth.mci.web.util.FileUtil;
 import org.sharedhealth.mci.web.util.TestUtil;
 import spark.Spark;
 
@@ -39,16 +32,15 @@ import java.util.Map;
 
 import static org.apache.http.HttpStatus.*;
 import static org.junit.Assert.*;
-import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
 import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_URI_PATH;
 
-public class PatientControllerIT extends BaseIntegrationTest {
+public class MCIRoutesIT extends BaseIntegrationTest {
     private static final String GET = "GET";
     private static final String HOST_NAME = "http://localhost:9997";
     private static final String POST = "post";
     private static CloseableHttpClient httpClient;
-    private final IParser xmlParser = FhirContextHelper.getFhirContext().newXmlParser();
     private Mapper<MciHealthId> mciHealthIdMapper;
     private Mapper<OrgHealthId> orgHealthIdMapper;
     private Mapper<Patient> patientMapper;
@@ -102,7 +94,7 @@ public class PatientControllerIT extends BaseIntegrationTest {
         assertEquals(SC_OK, urlResponse.status);
         String body = urlResponse.body;
         assertNotNull(body);
-        IBaseResource resource = xmlParser.parseResource(body);
+        IBaseResource resource = parseResource(body);
         assertTrue(resource instanceof ca.uhn.fhir.model.dstu2.resource.Patient);
     }
 
@@ -121,14 +113,16 @@ public class PatientControllerIT extends BaseIntegrationTest {
     @Test
     public void shouldCreateAPatientForGivenData() throws Exception {
         mciHealthIdMapper.save(new MciHealthId(healthId));
-        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, xmlParser.encodeResourceToString(createFHIRPatient()));
+        String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
+
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
 
         assertNotNull(urlResponse);
         assertEquals(SC_CREATED, urlResponse.status);
         String body = urlResponse.body;
         assertNotNull(body);
 
-        MCIResponse mciResponse = new ObjectMapper().readValue(body, MCIResponse.class);
+        MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
         assertEquals(healthId, mciResponse.getId());
         assertNull(mciResponse.getMessage());
     }
@@ -138,7 +132,9 @@ public class PatientControllerIT extends BaseIntegrationTest {
         mciHealthIdMapper.save(new MciHealthId(healthId));
         assertNotNull(mciHealthIdMapper.get(healthId));
         assertNull(orgHealthIdMapper.get(healthId));
-        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, xmlParser.encodeResourceToString(createFHIRPatient()));
+
+        String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
 
         assertNotNull(urlResponse);
         assertEquals(SC_CREATED, urlResponse.status);
@@ -149,18 +145,45 @@ public class PatientControllerIT extends BaseIntegrationTest {
 
     @Test
     public void shouldThrowAnErrorWhenThereIsNoHIDLeft() throws Exception {
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = createFHIRPatient();
-
-        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, xmlParser.encodeResourceToString(fhirPatient));
+        String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
 
         assertNotNull(urlResponse);
         assertEquals(SC_BAD_REQUEST, urlResponse.status);
         String body = urlResponse.body;
         assertNotNull(body);
 
-        MCIResponse mciResponse = new ObjectMapper().readValue(body, MCIResponse.class);
+        MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
         assertEquals("No HIDs available to assign", mciResponse.getMessage());
         assertNull(mciResponse.getId());
+    }
+
+    @Test
+    public void shouldThrowErrorWhenCanNotParsePatientData() throws Exception {
+        String content = FileUtil.asString("patients/patient_with_unknown_elements.xml");
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
+
+        assertNotNull(urlResponse);
+        assertEquals(SC_UNPROCESSABLE_ENTITY, urlResponse.status);
+        String body = urlResponse.body;
+        assertNotNull(body);
+
+        MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
+        assertTrue(mciResponse.getMessage().contains("Unknown element 'newElement' found during parse"));
+    }
+
+    @Test
+    public void shouldThrowErrorWhenPatientDataHasInvalidValue() throws Exception {
+        String content = FileUtil.asString("patients/patient_with_invalid_gender.xml");
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
+
+        assertNotNull(urlResponse);
+        assertEquals(SC_UNPROCESSABLE_ENTITY, urlResponse.status);
+        String body = urlResponse.body;
+        assertNotNull(body);
+
+        MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
+        assertTrue(mciResponse.getMessage().contains("The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender "));
     }
 
     private static UrlResponse doMethod(String requestMethod, String path, String body) throws Exception {
@@ -213,25 +236,4 @@ public class PatientControllerIT extends BaseIntegrationTest {
         expectedPatient.setAddressLine(addressLine);
         return expectedPatient;
     }
-
-    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient() {
-        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
-        patient.addName().addGiven(givenName).addFamily(surName);
-        patient.setGender(AdministrativeGenderEnum.MALE);
-
-        DateDt date = new DateDt(dateOfBirth);
-        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
-        date.addUndeclaredExtension(extensionDt);
-        patient.setBirthDate(date);
-
-        AddressDt addressDt = new AddressDt().addLine(addressLine);
-        addressDt.setCountry(countryCode);
-        String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
-        ExtensionDt addressCodeExtension = new ExtensionDt().
-                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
-        addressDt.addUndeclaredExtension(addressCodeExtension);
-        patient.addAddress(addressDt);
-        return patient;
-    }
-
 }
