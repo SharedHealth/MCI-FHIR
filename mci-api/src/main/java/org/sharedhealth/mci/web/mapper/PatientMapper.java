@@ -69,9 +69,9 @@ public class PatientMapper {
         Iterable<String> codes = Splitter.fixedLength(ADDRESS_CODE_EACH_LEVEL_LENGTH).split(addressCode.getValue());
         List<String> addressLevels = Lists.newArrayList(codes);
 
-        mciPatient.setDivisionId(addressLevels.get(0));
-        mciPatient.setDistrictId(addressLevels.get(1));
-        mciPatient.setUpazilaId(addressLevels.get(2));
+        setDivision(mciPatient, addressLevels);
+        setDistrict(mciPatient, addressLevels);
+        setUpazila(mciPatient, addressLevels);
         setCityCorporation(mciPatient, addressLevels);
         setUnionWard(mciPatient, addressLevels);
         setRuralWard(mciPatient, addressLevels);
@@ -93,6 +93,24 @@ public class PatientMapper {
     private void setCityCorporation(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
         if (addressLevels.size() > 3) {
             mciPatient.setCityCorporationId(addressLevels.get(3));
+        }
+    }
+
+    private void setUpazila(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
+        if (addressLevels.size() > 2) {
+            mciPatient.setUpazilaId(addressLevels.get(2));
+        }
+    }
+
+    private void setDistrict(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
+        if (addressLevels.size() > 1) {
+            mciPatient.setDistrictId(addressLevels.get(1));
+        }
+    }
+
+    private void setDivision(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {
+        if (addressLevels.size() > 0) {
+            mciPatient.setDivisionId(addressLevels.get(0));
         }
     }
 

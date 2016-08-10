@@ -40,25 +40,26 @@ task wrapper(type: Wrapper) {
 }
 
 ext.libraries = [
-        apache_log4j_core       : "org.apache.logging.log4j:log4j-core:2.6.2",
-        spark_core              : "com.sparkjava:spark-core:2.5",
-        cassandra_driver_core   : "com.datastax.cassandra:cassandra-driver-core:3.0.3",
-        cassandra_driver_mapping: "com.datastax.cassandra:cassandra-driver-mapping:3.0.3",
-        cassandra_all           : "org.apache.cassandra:cassandra-all:2.1.0",
-        apache_collections      : "org.apache.commons:commons-collections4:4.0",
-        apache_lang             : "org.apache.commons:commons-lang3:3.3.2",
-        hapi_fhir_base          : "ca.uhn.hapi.fhir:hapi-fhir-base:1.5",
-        hapi_fhir_structures    : "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:1.5",
-        jackson_core            : "com.fasterxml.jackson.core:jackson-core:2.8.1",
-        jackson_annotations     : "com.fasterxml.jackson.core:jackson-annotations:2.8.1",
-        hector_core             : "me.prettyprint:hector-core:1.0-5"
+        apache_log4j_core           : "org.apache.logging.log4j:log4j-core:2.6.2",
+        spark_core                  : "com.sparkjava:spark-core:2.5",
+        cassandra_driver_core       : "com.datastax.cassandra:cassandra-driver-core:3.0.3",
+        cassandra_driver_mapping    : "com.datastax.cassandra:cassandra-driver-mapping:3.0.3",
+        cassandra_all               : "org.apache.cassandra:cassandra-all:2.1.0",
+        apache_collections          : "org.apache.commons:commons-collections4:4.0",
+        apache_lang                 : "org.apache.commons:commons-lang3:3.3.2",
+        hapi_fhir_base              : "ca.uhn.hapi.fhir:hapi-fhir-base:1.5",
+        hapi_fhir_structures        : "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:1.5",
+        hapi_fhir_validation        : "ca.uhn.hapi.fhir:hapi-fhir-validation-resources-dstu2:1.5",
+        hapi_fhir_structures_hl7    : 'ca.uhn.hapi.fhir:hapi-fhir-structures-hl7org-dstu2:1.5',
+        jackson_core                : "com.fasterxml.jackson.core:jackson-core:2.8.1",
+        jackson_annotations         : "com.fasterxml.jackson.core:jackson-annotations:2.8.1",
+        hector_core                 : "me.prettyprint:hector-core:1.0-5"
 ]
-
 ext.testLibraries = [
-        junit                   : "junit:junit:4.10",
-        mockito                 : "org.mockito:mockito-all:1.8.4",
-        mutagen                 : "com.toddfast.mutagen:mutagen:0.3.0",
-        mutagen_cassandra       : "com.toddfast.mutagen:mutagen-cassandra-0.4.2-SNAPSHOT",
-        cassandra_unit          : "org.cassandraunit:cassandra-unit:2.0.2.2",
-        system_rules            : "com.github.stefanbirkner:system-rules:1.16.0",
+        junit                       : "junit:junit:4.10",
+        mockito                     : "org.mockito:mockito-all:1.8.4",
+        mutagen                     : "com.toddfast.mutagen:mutagen:0.3.0",
+        mutagen_cassandra           : "com.toddfast.mutagen:mutagen-cassandra-0.4.2-SNAPSHOT",
+        cassandra_unit              : "org.cassandraunit:cassandra-unit:2.0.2.2",
+        system_rules                : "com.github.stefanbirkner:system-rules:1.16.0",
 ]
