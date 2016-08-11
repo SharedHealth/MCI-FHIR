@@ -28,7 +28,7 @@ public class MCIResponse {
     private int httpStatus;
     private String id;
     private String message;
-    private List<Error> errors = new ArrayList<>();
+    private List<Error> errors;
 
     public MCIResponse() {
     }
@@ -58,6 +58,9 @@ public class MCIResponse {
     }
 
     public void addError(Error error) {
+        if (this.errors == null) {
+            this.errors = new ArrayList<>();
+        }
         this.errors.add(error);
     }
 
