@@ -1,8 +1,8 @@
 package org.sharedhealth.mci.web.controller;
 
 import ca.uhn.fhir.model.dstu2.resource.Patient;
+import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -60,7 +60,7 @@ public class PatientControllerTest {
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
 
-        MCIResponse mciResponse = new ObjectMapper().readValue(result, MCIResponse.class);
+        MCIResponse mciResponse = new Gson().fromJson(result, MCIResponse.class);
         assertEquals(SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
         assertTrue(mciResponse.getMessage().contains("Unknown element 'newElement' found during parse"));
 
@@ -76,7 +76,7 @@ public class PatientControllerTest {
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
 
-        MCIResponse mciResponse = new ObjectMapper().readValue(result, MCIResponse.class);
+        MCIResponse mciResponse = new Gson().fromJson(result, MCIResponse.class);
         assertEquals(SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
         assertNotNull(mciResponse.getMessage());
         assertTrue(mciResponse.getMessage().contains("Unknown attribute 'newAttribute' found during parse"));
@@ -93,7 +93,7 @@ public class PatientControllerTest {
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
 
-        MCIResponse mciResponse = new ObjectMapper().readValue(result, MCIResponse.class);
+        MCIResponse mciResponse = new Gson().fromJson(result, MCIResponse.class);
         assertEquals(SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
         assertNotNull(mciResponse.getMessage());
         assertTrue(mciResponse.getMessage().contains("Multiple repetitions of non-repeatable element 'birthDate' found during parse"));
