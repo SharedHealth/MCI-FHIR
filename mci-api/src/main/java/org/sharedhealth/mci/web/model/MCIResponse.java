@@ -6,6 +6,9 @@ import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.sharedhealth.mci.web.util.MCIConstants.HTTP_STATUS;
 
 @JsonIgnoreProperties(value = {"httpStatusObject"})
@@ -13,9 +16,19 @@ import static org.sharedhealth.mci.web.util.MCIConstants.HTTP_STATUS;
 public class MCIResponse {
     private static final Logger logger = LogManager.getLogger(MCIResponse.class);
 
+    /*
+        MCI response will be passed as response to HTTP calls in MCI
+
+        httpStatus the status of HTTP response
+        id will be used to return HID after create/update request
+        message is an error message whenever there is a generic failure while processing request
+        errors should be used while FHIR validation failure
+    * */
+
     private int httpStatus;
     private String id;
     private String message;
+    private List<Error> errors = new ArrayList<>();
 
     public MCIResponse() {
     }
@@ -42,6 +55,14 @@ public class MCIResponse {
 
     public String getMessage() {
         return message;
+    }
+
+    public void addError(Error error) {
+        this.errors.add(error);
+    }
+
+    public List<Error> getErrors() {
+        return new ArrayList<>(errors);
     }
 
     @Override

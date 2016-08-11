@@ -10,9 +10,6 @@ import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class PatientService {
     private PatientMapper patientMapper;
     private PatientRepository patientRepository;
@@ -53,12 +50,10 @@ public class PatientService {
 
     private MCIResponse createMCIResponseForValidationFailure(MCIValidationResult validationResult) {
         MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_UNPROCESSABLE_ENTITY);
-
-        List<Error> errors = validationResult.getMessages().stream().map(message ->
-                        new Error(message.getLocationString(), message.getSeverity().getCode(), message.getMessage())
-        ).collect(Collectors.<Error>toList());
-
-        mciResponse.setMessage(errors.toString());
+        mciResponse.setMessage("Validation Failed");
+        validationResult.getMessages().stream().forEach(message ->
+                mciResponse.addError(new Error(message.getLocationString(), message.getSeverity().getCode(), message.getMessage()))
+        );
         return mciResponse;
     }
 }

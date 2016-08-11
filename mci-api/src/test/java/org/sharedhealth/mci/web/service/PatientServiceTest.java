@@ -16,6 +16,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
+import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.Patient;
@@ -148,7 +149,11 @@ public class PatientServiceTest {
     @Test
     public void shouldThrowAnErrorIfPatientDataIsNotValid() throws Exception {
         ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = new ca.uhn.fhir.model.dstu2.resource.Patient();
-        List<SingleValidationMessage> validationMessages = asList(createMessage("Invalid gender", "/f:Patient/f:gender"), createMessage("Invalid DOB", "/f:Patient/f:DOB"));
+        String invalidGender = "Invalid gender";
+        String genderLocation = "/f:Patient/f:gender";
+        String invalidDOB = "Invalid DOB";
+        String dobLocation = "/f:Patient/f:DOB";
+        List<SingleValidationMessage> validationMessages = asList(createMessage(invalidGender, genderLocation), createMessage(invalidDOB, dobLocation));
         MCIValidationResult mockValidationResult = mock(MCIValidationResult.class);
 
         when(fhirPatientValidator.validate(fhirPatient)).thenReturn(mockValidationResult);
@@ -159,8 +164,10 @@ public class PatientServiceTest {
 
         assertNotNull(mciResponse);
         assertEquals(HttpStatus.SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
-        assertTrue(mciResponse.getMessage().contains("{\"field\":\"/f:Patient/f:gender\",\"type\":\"error\",\"reason\":\"Invalid gender\"}"));
-        assertTrue(mciResponse.getMessage().contains("{\"field\":\"/f:Patient/f:DOB\",\"type\":\"error\",\"reason\":\"Invalid DOB\"}"));
+        Error genderError = new Error(genderLocation, "error", invalidGender);
+        Error dobError = new Error(dobLocation, "error", invalidDOB);
+        assertTrue(mciResponse.getErrors().contains(genderError));
+        assertTrue(mciResponse.getErrors().contains(dobError));
 
     }
 

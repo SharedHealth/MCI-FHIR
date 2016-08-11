@@ -17,10 +17,8 @@ import org.junit.*;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.launch.Application;
-import org.sharedhealth.mci.web.model.MCIResponse;
-import org.sharedhealth.mci.web.model.MciHealthId;
-import org.sharedhealth.mci.web.model.OrgHealthId;
-import org.sharedhealth.mci.web.model.Patient;
+import org.sharedhealth.mci.web.model.*;
+import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.FileUtil;
 import org.sharedhealth.mci.web.util.TestUtil;
@@ -28,6 +26,7 @@ import spark.Spark;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.http.HttpStatus.*;
@@ -183,7 +182,11 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         assertNotNull(body);
 
         MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
-        assertTrue(mciResponse.getMessage().contains("The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender "));
+
+        String message = "The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender (http://hl7.org/fhir/ValueSet/administrative-gender, and a code is required from this value set";
+        List<Error> errors = mciResponse.getErrors();
+        assertEquals(1, errors.size());
+        assertTrue(errors.contains(new Error("/f:Patient/f:gender", "error", message)));
     }
 
     private static UrlResponse doMethod(String requestMethod, String path, String body) throws Exception {
