@@ -1,4 +1,5 @@
 <Patient xmlns="http://hl7.org/fhir">
+    <nid value="2avav"/>
     <name>
         <family value="Raichand"/>
         <given value="Yashvardhan"/>
