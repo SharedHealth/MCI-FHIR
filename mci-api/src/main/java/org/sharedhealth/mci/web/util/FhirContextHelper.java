@@ -10,7 +10,7 @@ public class FhirContextHelper {
 
     private static FhirContext getFhirContext() {
         FhirContext context = FhirContext.forDstu2();
-//        context.setParserErrorHandler(new StrictErrorHandler());
+        context.setParserErrorHandler(new StrictErrorHandler());
         return context;
     }
 

@@ -5,12 +5,13 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
 import org.apache.commons.io.IOUtils;
+import org.hl7.fhir.instance.hapi.validation.DefaultProfileValidationSupport;
 import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
+import org.hl7.fhir.instance.hapi.validation.ValidationSupportChain;
 import org.hl7.fhir.instance.model.StructureDefinition;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -20,7 +21,7 @@ import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirContext;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirHL7Context;
 
 public class FhirPatientValidator {
-    private static final String PATH_TO_PATIENT_PROFILE = "/Users/anjalyj/IdeaProjects/SHR/MCI-Registry/fhirPatient.json";
+    public static final String PATH_TO_PROFILES_FOLDER = "/Users/mritunjd/Documents/projects/bdshr/MCI-Registry/profiles/";
 
     private List<Pattern> patientFieldErrors = new ArrayList<>();
     private volatile FhirValidator fhirValidator;
@@ -30,14 +31,15 @@ public class FhirPatientValidator {
     }
 
     public MCIValidationResult validate(Patient patient) {
-        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
+        FhirValidator fhirValidator = validatorInstance();
+        ValidationResult validationResult = fhirValidator.validateWithResult(patient);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
         return mciValidationResult;
     }
 
     private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {
-        validationResult.getMessages().stream().forEach(validationMessage -> {
+        validationResult.getMessages().forEach(validationMessage -> {
             if (isPossiblePatientFieldError(validationMessage.getLocationString())) {
                 if (validationMessage.getSeverity().ordinal() <= ResultSeverityEnum.WARNING.ordinal()) {
                     validationMessage.setSeverity(ResultSeverityEnum.ERROR);
@@ -59,27 +61,30 @@ public class FhirPatientValidator {
             synchronized (FhirValidator.class) {
                 if (fhirValidator == null) {
                     fhirValidator = fhirContext.newValidator();
-                    fhirValidator.registerValidatorModule(createInstanceValidator());
+                    FhirInstanceValidator validator = new FhirInstanceValidator();
+
+                    // loadProfileOrReturnNull reads from file mypatient.profile.xml and give StructureDefinition for that
+                    StructureDefinition patient = loadProfileOrReturnNull("mypatient");
+                    validator.setStructureDefintion(patient);
+
+                    //SharedHealthSupport is IValidationSupport which gives definition of custom extensions
+                    validator.setValidationSupport(new ValidationSupportChain(new DefaultProfileValidationSupport(), new SharedHealthSupport()));
+                    fhirValidator.registerValidatorModule(validator);
                 }
             }
         }
         return fhirValidator;
     }
 
-    private FhirInstanceValidator createInstanceValidator() {
-        FhirInstanceValidator validator = new FhirInstanceValidator();
-        validator.setStructureDefintion(loadProfileOrReturnNull());
-        return validator;
-    }
-
-    private StructureDefinition loadProfileOrReturnNull() {
+    public static StructureDefinition loadProfileOrReturnNull(String profileName) {
         String profileText;
         try {
-            profileText = IOUtils.toString(new FileInputStream(PATH_TO_PATIENT_PROFILE), "UTF-8");
+            String pathToProfile = PATH_TO_PROFILES_FOLDER + profileName.toLowerCase() + ".profile.xml";
+            profileText = IOUtils.toString(new FileInputStream(pathToProfile), "UTF-8");
         } catch (IOException e1) {
             throw new RuntimeException("No profile found for patient");
         }
-        return fhirHL7Context.newJsonParser().parseResource(StructureDefinition.class,
+        return fhirHL7Context.newXmlParser().parseResource(StructureDefinition.class,
                 profileText);
     }
 

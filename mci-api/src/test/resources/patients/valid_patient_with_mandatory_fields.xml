@@ -1,5 +1,4 @@
 <Patient xmlns="http://hl7.org/fhir">
-    <nid value="2avav"/>
     <name>
         <family value="Raichand"/>
         <given value="Yashvardhan"/>
@@ -12,10 +11,10 @@
         </extension>
     </birthDate>
     <address>
-        <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
-            <valueString value="201918991101"/>
-        </extension>
         <line value="3rd lane"/>
         <country value="050"/>
     </address>
+    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
+        <valueString value="201918991101"/>
+    </extension>
 </Patient>
