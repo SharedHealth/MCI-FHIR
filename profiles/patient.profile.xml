@@ -2,12 +2,9 @@
 <StructureDefinition xmlns="http://hl7.org/fhir">
   <id value="mciPatient" />
   <meta>
-    <lastUpdated value="2016-08-22T17:48:18.755+05:30" />
+    <lastUpdated value="2016-08-23T14:34:16.826+05:30" />
   </meta>
-  <extension url="http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm">
-    <valueInteger value="5" />
-  </extension>
-  <url value="StructureDefinition/MCIPatient" />
+  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#MciPatient" />
   <version value="1.0" />
   <name value="MCIPatient" />
   <status value="draft" />
@@ -44,25 +41,6 @@
         <identity value="w5" />
         <map value="administrative.individual" />
       </mapping>
-    </element>
-    <element>
-      <path value="Patient.extension" />
-      <slicing>
-        <discriminator value="url" />
-        <rules value="openAtEnd" />
-      </slicing>
-    </element>
-    <element>
-      <path value="Patient.extension" />
-      <name value="addressCode" />
-      <short value="Extension to capture catchment code" />
-      <definition value="Optional Extensions Element - found in all resources." />
-      <min value="1" />
-      <max value="1" />
-      <type>
-        <code value="Extension" />
-        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode" />
-      </type>
     </element>
     <element>
       <path value="Patient.id" />
@@ -2344,8 +2322,8 @@
       <definition value="The part of a name that links to the genealogy. In some cultures (e.g. Eritrea) the family name of a son is the first name of his father." />
       <comments value="For family name, hyphenated names such as &quot;Smith-Jones&quot; are a single name, but names with spaces such as &quot;Smith Jones&quot; are broken into multiple parts." />
       <alias value="surname" />
-      <min value="0" />
-      <max value="*" />
+      <min value="1" />
+      <max value="1" />
       <base>
         <path value="Patient.name.family" />
         <min value="0" />
@@ -2375,8 +2353,8 @@
       <comments value="If only initials are recorded, they may be used in place of the full name.  Not called &quot;first name&quot; since given names do not always come first." />
       <alias value="first name" />
       <alias value="middle name" />
-      <min value="0" />
-      <max value="*" />
+      <min value="1" />
+      <max value="1" />
       <base>
         <path value="Patient.name.given" />
         <min value="0" />
@@ -3011,7 +2989,7 @@
       <comments value="Patient may have multiple addresses with different uses or applicable periods." />
       <requirements value="May need to keep track of patient addresses for contacting, billing or reporting requirements and also to help with identification." />
       <min value="1" />
-      <max value="*" />
+      <max value="1" />
       <base>
         <path value="Patient.address" />
         <min value="0" />
@@ -7955,25 +7933,6 @@
       </mapping>
     </element>
     <element>
-      <path value="Patient.extension" />
-      <slicing>
-        <discriminator value="url" />
-        <rules value="openAtEnd" />
-      </slicing>
-    </element>
-    <element>
-      <path value="Patient.extension" />
-      <name value="addressCode" />
-      <short value="Extension to capture catchment code" />
-      <definition value="Optional Extensions Element - found in all resources." />
-      <min value="1" />
-      <max value="1" />
-      <type>
-        <code value="Extension" />
-        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode" />
-      </type>
-    </element>
-    <element>
       <path value="Patient.name" />
       <short value="A name associated with the patient" />
       <definition value="A name associated with the individual." />
@@ -8001,6 +7960,67 @@
       <mapping>
         <identity value="cda" />
         <map value=".patient.name" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.name.family" />
+      <short value="Family name (often called 'Surname')" />
+      <definition value="The part of a name that links to the genealogy. In some cultures (e.g. Eritrea) the family name of a son is the first name of his father." />
+      <comments value="For family name, hyphenated names such as &quot;Smith-Jones&quot; are a single name, but names with spaces such as &quot;Smith Jones&quot; are broken into multiple parts." />
+      <alias value="surname" />
+      <min value="1" />
+      <max value="1" />
+      <base>
+        <path value="Patient.name.family" />
+        <min value="0" />
+        <max value="*" />
+      </base>
+      <type>
+        <code value="string" />
+      </type>
+      <isSummary value="true" />
+      <mapping>
+        <identity value="v2" />
+        <map value="XPN.1" />
+      </mapping>
+      <mapping>
+        <identity value="rim" />
+        <map value="./part[partType = FAM]" />
+      </mapping>
+      <mapping>
+        <identity value="servd" />
+        <map value="./FamilyName" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.name.given" />
+      <short value="Given names (not always 'first'). Includes middle names" />
+      <definition value="Given name." />
+      <comments value="If only initials are recorded, they may be used in place of the full name.  Not called &quot;first name&quot; since given names do not always come first." />
+      <alias value="first name" />
+      <alias value="middle name" />
+      <min value="1" />
+      <max value="1" />
+      <base>
+        <path value="Patient.name.given" />
+        <min value="0" />
+        <max value="*" />
+      </base>
+      <type>
+        <code value="string" />
+      </type>
+      <isSummary value="true" />
+      <mapping>
+        <identity value="v2" />
+        <map value="XPN.2 + XPN.3" />
+      </mapping>
+      <mapping>
+        <identity value="rim" />
+        <map value="./part[partType = GIV]" />
+      </mapping>
+      <mapping>
+        <identity value="servd" />
+        <map value="./GivenNames" />
       </mapping>
     </element>
     <element>
@@ -8081,7 +8101,7 @@
       <comments value="Patient may have multiple addresses with different uses or applicable periods." />
       <requirements value="May need to keep track of patient addresses for contacting, billing or reporting requirements and also to help with identification." />
       <min value="1" />
-      <max value="*" />
+      <max value="1" />
       <base>
         <path value="Patient.address" />
         <min value="0" />

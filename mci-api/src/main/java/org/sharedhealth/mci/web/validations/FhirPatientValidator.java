@@ -64,7 +64,7 @@ public class FhirPatientValidator {
                     FhirInstanceValidator validator = new FhirInstanceValidator();
 
                     // loadProfileOrReturnNull reads from file mypatient.profile.xml and give StructureDefinition for that
-                    StructureDefinition patient = loadProfileOrReturnNull("mypatient");
+                    StructureDefinition patient = loadProfileOrReturnNull("patient");
                     validator.setStructureDefintion(patient);
 
                     //SharedHealthSupport is IValidationSupport which gives definition of custom extensions

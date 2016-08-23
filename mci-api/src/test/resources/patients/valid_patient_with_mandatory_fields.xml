@@ -1,6 +1,5 @@
 <Patient xmlns="http://hl7.org/fhir">
     <name>
-        <family value="Raichand"/>
         <given value="Yashvardhan"/>
     </name>
     <gender value="male"/>
