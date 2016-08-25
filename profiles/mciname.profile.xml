@@ -1,12 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <StructureDefinition xmlns="http://hl7.org/fhir">
-  <id value="bloodGroup" />
+  <id value="MCIName" />
   <meta>
-    <lastUpdated value="2016-08-23T17:54:49.533+05:30" />
+    <lastUpdated value="2016-08-24T14:31:46.268+05:30" />
   </meta>
-  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup" />
-  <version value="1.0" />
-  <name value="BloodGroup" />
+  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#MCIName" />
+  <name value="MCIName" />
   <status value="draft" />
   <description value="Base StructureDefinition for Extension Type" />
   <requirements value="The ability to add extensions in a structured way is what keeps FHIR resources simple." />
@@ -20,8 +19,7 @@
   <snapshot>
     <element>
       <path value="Extension" />
-      <short value="An extension for blood group of patient" />
-      <definition value="An extension for blood group of patient" />
+      <definition value="Optional Extensions Element - found in all resources." />
       <min value="0" />
       <max value="*" />
       <base>
@@ -32,12 +30,6 @@
       <type>
         <code value="Element" />
       </type>
-      <constraint>
-        <key value="pat-001" />
-        <severity value="error" />
-        <human value="error" />
-        <xpath value="f:valueString/@value = 10" />
-      </constraint>
       <mapping>
         <identity value="rim" />
         <map value="N/A" />
@@ -101,15 +93,14 @@
       <type>
         <code value="uri" />
       </type>
-      <fixedUri value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup" />
+      <fixedUri value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#MCIName" />
       <mapping>
         <identity value="rim" />
         <map value="N/A" />
       </mapping>
     </element>
     <element>
-      <path value="Extension.valueString" />
-      <name value="value" />
+      <path value="Extension.valueHumanName" />
       <short value="Value of extension" />
       <definition value="Value of extension - may be a resource or one of a constrained set of the data types (see Extensibility in the spec for list)." />
       <min value="1" />
@@ -120,7 +111,8 @@
         <max value="1" />
       </base>
       <type>
-        <code value="string" />
+        <code value="HumanName" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#PatientName" />
       </type>
       <mapping>
         <identity value="rim" />
@@ -131,8 +123,7 @@
   <differential>
     <element>
       <path value="Extension" />
-      <short value="An extension for blood group of patient" />
-      <definition value="An extension for blood group of patient" />
+      <definition value="Optional Extensions Element - found in all resources." />
       <min value="0" />
       <max value="*" />
       <base>
@@ -143,12 +134,6 @@
       <type>
         <code value="Element" />
       </type>
-      <constraint>
-        <key value="pat-001" />
-        <severity value="error" />
-        <human value="error" />
-        <xpath value="f:valueString/@value = 10" />
-      </constraint>
       <mapping>
         <identity value="rim" />
         <map value="N/A" />
@@ -170,15 +155,14 @@
       <type>
         <code value="uri" />
       </type>
-      <fixedUri value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup" />
+      <fixedUri value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#MCIName" />
       <mapping>
         <identity value="rim" />
         <map value="N/A" />
       </mapping>
     </element>
     <element>
-      <path value="Extension.valueString" />
-      <name value="value" />
+      <path value="Extension.valueHumanName" />
       <short value="Value of extension" />
       <definition value="Value of extension - may be a resource or one of a constrained set of the data types (see Extensibility in the spec for list)." />
       <min value="1" />
@@ -189,7 +173,8 @@
         <max value="1" />
       </base>
       <type>
-        <code value="string" />
+        <code value="HumanName" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#PatientName" />
       </type>
       <mapping>
         <identity value="rim" />

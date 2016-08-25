@@ -23,6 +23,10 @@ import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirHL7Context;
 public class FhirPatientValidator {
     public static final String PATH_TO_PROFILES_FOLDER = "/Users/mritunjd/Documents/projects/bdshr/MCI-Registry/profiles/";
 
+    //should be removed once forge bug is fixed
+    private static final Pattern IGNORE_EXTENSION_SLICE_ERROR_LOCATION = Pattern.compile("/f:Patient/f:extension(\\[\\d+\\])*");
+    private static final String IGNORE_EXTENSION_SLICE_ERROR_MESSAGE = "Element matches more than one slice";
+
     private List<Pattern> patientFieldErrors = new ArrayList<>();
     private volatile FhirValidator fhirValidator;
 
@@ -35,7 +39,18 @@ public class FhirPatientValidator {
         ValidationResult validationResult = fhirValidator.validateWithResult(patient);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
+        ignoreErrors(mciValidationResult);
         return mciValidationResult;
+    }
+
+    //should be removed once forge bug is fixed
+    private void ignoreErrors(MCIValidationResult validationResult) {
+        validationResult.getMessages().forEach(singleValidationMessage -> {
+            Matcher matcher = IGNORE_EXTENSION_SLICE_ERROR_LOCATION.matcher(singleValidationMessage.getLocationString());
+            if (matcher.matches() && IGNORE_EXTENSION_SLICE_ERROR_MESSAGE.equals(singleValidationMessage.getMessage())) {
+                singleValidationMessage.setSeverity(ResultSeverityEnum.WARNING);
+            }
+        });
     }
 
     private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {

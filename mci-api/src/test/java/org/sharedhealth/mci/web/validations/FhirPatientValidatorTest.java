@@ -8,7 +8,7 @@ import org.sharedhealth.mci.web.util.FileUtil;
 
 import java.util.zip.DataFormatException;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 
 public class FhirPatientValidatorTest {
