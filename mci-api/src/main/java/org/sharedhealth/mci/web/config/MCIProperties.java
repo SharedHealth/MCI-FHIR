@@ -1,11 +1,13 @@
 package org.sharedhealth.mci.web.config;
 
+import org.sharedhealth.mci.web.util.StringUtils;
+
 import java.util.Map;
 
 public class MCIProperties {
     private static final MCIProperties mciProperties = new MCIProperties();
-
     private String cassandraKeySpace;
+
     private String cassandraHost;
     private String cassandraPort;
     private String cassandraUser;
@@ -14,6 +16,7 @@ public class MCIProperties {
     private String cassandraVersion;
     private String mciBaseUrl;
     private String patientLinkUri;
+    private String profilesFolderPath;
 
     private MCIProperties() {
         Map<String, String> env = System.getenv();
@@ -26,6 +29,7 @@ public class MCIProperties {
         this.cassandraVersion = env.get("CASSANDRA_VERSION");
         this.mciBaseUrl = env.get("MCI_BASE_URL");
         this.patientLinkUri = env.get("PATIENT_LINK_URI");
+        this.profilesFolderPath = env.get("PROFILES_FOLDER_PATH");
     }
 
     public String getCassandraKeySpace() {
@@ -62,6 +66,10 @@ public class MCIProperties {
 
     public String getPatientLinkUri() {
         return patientLinkUri;
+    }
+
+    public String getProfilesFolderPath() {
+        return StringUtils.ensureSuffix(profilesFolderPath, "/");
     }
 
     public static MCIProperties getInstance() {

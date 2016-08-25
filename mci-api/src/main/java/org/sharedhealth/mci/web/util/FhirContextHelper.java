@@ -6,6 +6,8 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 public class FhirContextHelper {
     public static FhirContext fhirContext = getFhirContext();
+    public static FhirContext fhirHL7Context = FhirContext.forDstu2Hl7Org();
+
 
     private static FhirContext getFhirContext() {
         FhirContext context = FhirContext.forDstu2();

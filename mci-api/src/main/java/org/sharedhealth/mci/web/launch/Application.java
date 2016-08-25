@@ -41,7 +41,7 @@ public class Application {
         //instantiate all services/mappers/ here
         PatientMapper patientMapper = new PatientMapper(mciProperties);
         HealthIdService healthIdService = new HealthIdService(mappingManager);
-        FhirPatientValidator fhirPatientValidator = new FhirPatientValidator();
+        FhirPatientValidator fhirPatientValidator = new FhirPatientValidator(mciProperties);
         PatientService patientService = new PatientService(patientMapper, healthIdService, patientRepository, fhirPatientValidator);
         //instantiate all services/mappers/ here
 

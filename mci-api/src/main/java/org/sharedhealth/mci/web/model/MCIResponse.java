@@ -14,7 +14,6 @@ import static org.sharedhealth.mci.web.util.MCIConstants.HTTP_STATUS;
 @JsonIgnoreProperties(value = {"httpStatusObject"})
 @JsonPropertyOrder({HTTP_STATUS, "id", "message"})
 public class MCIResponse {
-    private static final Logger logger = LogManager.getLogger(MCIResponse.class);
 
     /*
         MCI response will be passed as response to HTTP calls in MCI

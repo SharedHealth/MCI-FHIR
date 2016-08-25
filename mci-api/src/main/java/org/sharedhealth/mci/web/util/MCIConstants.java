@@ -5,7 +5,7 @@ import static org.sharedhealth.mci.web.util.StringUtils.removePrefix;
 
 public class MCIConstants {
     public static final String API_VERSION = "/api/v2";
-    public static final String PATIENT_URI_PATH = "/patients/";
+    public static final String PATIENT_URI_PATH = "/patients";
     public static final String URL_SEPARATOR = "/";
 
     public static final String MALE = "M";
