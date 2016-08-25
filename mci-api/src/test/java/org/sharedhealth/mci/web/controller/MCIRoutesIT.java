@@ -17,8 +17,8 @@ import org.junit.*;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.launch.Application;
-import org.sharedhealth.mci.web.model.*;
 import org.sharedhealth.mci.web.model.Error;
+import org.sharedhealth.mci.web.model.*;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.FileUtil;
 import org.sharedhealth.mci.web.util.TestUtil;
@@ -87,7 +87,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     public void shouldGetThePatient() throws Exception {
         patientMapper.save(createMCIPatient());
 
-        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + healthId, null);
+        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null);
 
         assertNotNull(urlResponse);
         assertEquals(SC_OK, urlResponse.status);
@@ -102,7 +102,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         MCIResponse mciResponse = new MCIResponse(404);
         mciResponse.setMessage("No patient found with health id: HID");
 
-        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + healthId, null);
+        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null);
 
         assertNotNull(urlResponse);
         assertEquals(SC_NOT_FOUND, urlResponse.status);

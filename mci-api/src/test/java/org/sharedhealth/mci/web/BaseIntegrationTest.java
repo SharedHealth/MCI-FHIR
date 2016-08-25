@@ -35,6 +35,8 @@ public class BaseIntegrationTest {
             Properties properties = new Properties();
             properties.load(inputStream);
 
+            setPathForProfileFolder(properties);
+
             for (Object key : properties.keySet()) {
                 environmentVariables.set(key.toString(), properties.getProperty(key.toString()));
                 env.put(key.toString(), properties.getProperty(key.toString()));
@@ -43,6 +45,11 @@ public class BaseIntegrationTest {
             System.out.print("Error ignored!");
         }
         return env;
+    }
+
+    private static void setPathForProfileFolder(Properties properties) {
+        String path = BaseIntegrationTest.class.getResource("/profiles/").getPath();
+        properties.put("PROFILES_FOLDER_PATH", path);
     }
 
 }

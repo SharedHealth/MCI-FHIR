@@ -1,5 +1,7 @@
 package org.sharedhealth.mci.web.controller;
 
+import org.sharedhealth.mci.web.util.MCIConstants;
+
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
 import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_URI_PATH;
 import static spark.Spark.get;
@@ -12,7 +14,7 @@ public class MCIRoutes {
         post(patientURIPath, patientController::createPatient);
 
         String hidParam = ":hid";
-        String patientByHIDURIPath = String.format("%s%s", patientURIPath, hidParam);
+        String patientByHIDURIPath = String.format("%s%s%s", patientURIPath, MCIConstants.URL_SEPARATOR, hidParam);
         get(patientByHIDURIPath, (request, response) -> patientController.getPatient(hidParam, request, response));
     }
 }
