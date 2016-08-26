@@ -21,7 +21,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest{
     @Before
     public void setUp() throws Exception {
         MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
-        healthIdService = new HealthIdService(mappingManager);
+        healthIdService = new HealthIdService(mappingManager, identityProviderService);
         mciHealthIdMapper = mappingManager.mapper(MciHealthId.class);
         orgHealthIdMapper = mappingManager.mapper(OrgHealthId.class);
     }

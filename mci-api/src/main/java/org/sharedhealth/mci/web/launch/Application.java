@@ -11,8 +11,14 @@ import org.sharedhealth.mci.web.controller.PatientController;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.service.HealthIdService;
+import org.sharedhealth.mci.web.service.IdentityProviderService;
 import org.sharedhealth.mci.web.service.PatientService;
+import org.sharedhealth.mci.web.task.HealthIdReplenishTask;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.System.getenv;
 import static spark.Spark.port;
@@ -40,8 +46,10 @@ public class Application {
 
         //instantiate all services/mappers/ here
         PatientMapper patientMapper = new PatientMapper(mciProperties);
-        HealthIdService healthIdService = new HealthIdService(mappingManager);
+
         FhirPatientValidator fhirPatientValidator = new FhirPatientValidator(mciProperties);
+        IdentityProviderService identityProviderService = new IdentityProviderService();
+        HealthIdService healthIdService = new HealthIdService(mappingManager, identityProviderService);
         PatientService patientService = new PatientService(patientMapper, healthIdService, patientRepository, fhirPatientValidator);
         //instantiate all services/mappers/ here
 
@@ -52,5 +60,15 @@ public class Application {
         //instantiate MCIRoutes with all controllers here
         new MCIRoutes(patientController);
         //instantiate MCIRoutes with all controllers here
+
+        //instantiate a scheduler to replenish healthIds
+        createHealthIdReplenishScheduler(mciProperties, healthIdService);
+        //instantiate a scheduler to replenish healthIds
+    }
+
+    private static void createHealthIdReplenishScheduler(MCIProperties mciProperties, HealthIdService healthIdService) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(new HealthIdReplenishTask(healthIdService), mciProperties.getHealthIdReplenishInitialDelay(),
+                mciProperties.getHealthIdReplenishDelay(), TimeUnit.MILLISECONDS);
     }
 }

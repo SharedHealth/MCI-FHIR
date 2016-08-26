@@ -8,11 +8,16 @@ import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.sharedhealth.mci.web.WebClient;
+import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.OrgHealthId;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
-import java.util.Date;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_MCI_HEALTH_ID;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.HID;
@@ -21,11 +26,19 @@ public class HealthIdService {
     private static final Logger logger = LogManager.getLogger(HealthIdService.class);
     private final String MCI_ORG_CODE = "MCI";
 
+    private static final String X_AUTH_TOKEN_KEY = "X-Auth-Token";
+    private static final String CLIENT_ID_KEY = "client_id";
+    private static final String FROM_KEY = "From";
+    private static final String HEALTH_ID_LIST_KEY = "hids";
+
+    private IdentityProviderService identityProviderService;
     private Session session;
     private Mapper<MciHealthId> mciHealthIdMapper;
     private Mapper<OrgHealthId> orgHealthIdMapper;
+    private Queue<String> mciHealthIds = new ConcurrentLinkedQueue<>();
 
-    public HealthIdService(MappingManager mappingManager) {
+    public HealthIdService(MappingManager mappingManager, IdentityProviderService identityProviderService) {
+        this.identityProviderService = identityProviderService;
         this.session = mappingManager.getSession();
         this.mciHealthIdMapper = mappingManager.mapper(MciHealthId.class);
         this.orgHealthIdMapper = mappingManager.mapper(OrgHealthId.class);
@@ -48,5 +61,36 @@ public class HealthIdService {
         orgHealthId.markUsed();
         orgHealthIdMapper.save(orgHealthId);
         mciHealthIdMapper.delete(healthId);
+    }
+
+    public void replenishIfNeeded() throws IOException {
+        if (mciHealthIds.size() <= MCIProperties.getInstance().getHealthIdReplenishThreshold()) {
+            MCIProperties mciProperties = MCIProperties.getInstance();
+            List nextBlock = getNextBlockFromHidService(mciProperties);
+            if (nextBlock != null)
+                mciHealthIds.addAll(nextBlock);
+        }
+    }
+
+    private List getNextBlockFromHidService(MCIProperties mciProperties) throws IOException {
+        String idpToken = identityProviderService.getOrCreateIdentityToken(mciProperties);
+
+        String hidServiceNextBlockURL = getHidServiceNextBlockURL(mciProperties);
+        Map<String, String> healthIdServiceHeader = new HashMap<>();
+        healthIdServiceHeader.put(X_AUTH_TOKEN_KEY, idpToken);
+        healthIdServiceHeader.put(CLIENT_ID_KEY, mciProperties.getIdpClientId());
+        healthIdServiceHeader.put(FROM_KEY, mciProperties.getIdpEmail());
+
+        String response = new WebClient().get(hidServiceNextBlockURL, healthIdServiceHeader);
+        if (response != null) {
+            Map map = new ObjectMapper().readValue(response, Map.class);
+            return (List) map.get(HEALTH_ID_LIST_KEY);
+        }
+        return null;
+    }
+
+    private String getHidServiceNextBlockURL(MCIProperties mciProperties) {
+        return mciProperties.getHidServiceBaseUrl() + String.format(mciProperties.getHidServiceNextBlockUrlPattern(),
+                mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
     }
 }
