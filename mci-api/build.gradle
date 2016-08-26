@@ -29,7 +29,7 @@ dependencies {
             libraries.hector_core
 
     testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules,
-            testLibraries.mutagen, testLibraries.mutagen_cassandra
+            testLibraries.mutagen, testLibraries.mutagen_cassandra, testLibraries.wiremock
 }
 
 test {

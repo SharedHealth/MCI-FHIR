@@ -12,12 +12,12 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.sharedhealth.mci.web.WebClient;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MciHealthId;
+import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.model.OrgHealthId;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_MCI_HEALTH_ID;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.HID;
@@ -32,13 +32,14 @@ public class HealthIdService {
     private static final String HEALTH_ID_LIST_KEY = "hids";
 
     private IdentityProviderService identityProviderService;
+    private MciHealthIdStore mciHealthIdStore;
     private Session session;
     private Mapper<MciHealthId> mciHealthIdMapper;
     private Mapper<OrgHealthId> orgHealthIdMapper;
-    private Queue<String> mciHealthIds = new ConcurrentLinkedQueue<>();
 
-    public HealthIdService(MappingManager mappingManager, IdentityProviderService identityProviderService) {
+    public HealthIdService(MappingManager mappingManager, IdentityProviderService identityProviderService, MciHealthIdStore mciHealthIdStore) {
         this.identityProviderService = identityProviderService;
+        this.mciHealthIdStore = mciHealthIdStore;
         this.session = mappingManager.getSession();
         this.mciHealthIdMapper = mappingManager.mapper(MciHealthId.class);
         this.orgHealthIdMapper = mappingManager.mapper(OrgHealthId.class);
@@ -64,11 +65,11 @@ public class HealthIdService {
     }
 
     public void replenishIfNeeded() throws IOException {
-        if (mciHealthIds.size() <= MCIProperties.getInstance().getHealthIdReplenishThreshold()) {
+        if (mciHealthIdStore.noOfHidsLeft() <= MCIProperties.getInstance().getHealthIdReplenishThreshold()) {
             MCIProperties mciProperties = MCIProperties.getInstance();
             List nextBlock = getNextBlockFromHidService(mciProperties);
             if (nextBlock != null)
-                mciHealthIds.addAll(nextBlock);
+                mciHealthIdStore.addMciHealthIds(nextBlock);
         }
     }
 

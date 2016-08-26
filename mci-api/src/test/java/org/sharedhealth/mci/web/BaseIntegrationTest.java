@@ -13,13 +13,13 @@ import java.util.Properties;
 
 public class BaseIntegrationTest {
     @ClassRule
-    public static final EnvironmentVariables environmentVariables
-            = new EnvironmentVariables();
+    public static final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     @BeforeClass
     public static void setupBaseIntegration() throws Exception {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra("cassandra-template.yaml");
-        new TestMigrations(mockPropertySources()).migrate();
+        Map<String, String> mockPropertySources = mockPropertySources();
+        new TestMigrations(mockPropertySources).migrate();
     }
 
     @AfterClass

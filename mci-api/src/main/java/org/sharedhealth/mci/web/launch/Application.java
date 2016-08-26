@@ -9,6 +9,8 @@ import org.sharedhealth.mci.web.controller.GlobalExceptionHandler;
 import org.sharedhealth.mci.web.controller.MCIRoutes;
 import org.sharedhealth.mci.web.controller.PatientController;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
+import org.sharedhealth.mci.web.model.IdentityStore;
+import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.service.HealthIdService;
 import org.sharedhealth.mci.web.service.IdentityProviderService;
@@ -48,8 +50,11 @@ public class Application {
         PatientMapper patientMapper = new PatientMapper(mciProperties);
 
         FhirPatientValidator fhirPatientValidator = new FhirPatientValidator(mciProperties);
-        IdentityProviderService identityProviderService = new IdentityProviderService();
-        HealthIdService healthIdService = new HealthIdService(mappingManager, identityProviderService);
+        IdentityStore identityStore = new IdentityStore();
+
+        IdentityProviderService identityProviderService = new IdentityProviderService(identityStore);
+        MciHealthIdStore mciHealthIdStore = new MciHealthIdStore();
+        HealthIdService healthIdService = new HealthIdService(mappingManager, identityProviderService, mciHealthIdStore);
         PatientService patientService = new PatientService(patientMapper, healthIdService, patientRepository, fhirPatientValidator);
         //instantiate all services/mappers/ here
 

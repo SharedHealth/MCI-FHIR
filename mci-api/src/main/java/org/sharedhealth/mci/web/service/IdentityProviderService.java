@@ -6,6 +6,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.sharedhealth.mci.web.WebClient;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.exception.IdentityUnauthorizedException;
+import org.sharedhealth.mci.web.model.IdentityStore;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,19 +20,22 @@ public class IdentityProviderService {
     private static final String EMAIL_KEY = "email";
     private static final String CLIENT_KEY = "client_id";
     private static final String X_AUTH_TOKEN_KEY = "X-Auth-Token";
+    private IdentityStore identityStore;
 
-    private String identityToken;
+    public IdentityProviderService(IdentityStore identityStore) {
+        this.identityStore = identityStore;
+    }
 
     public String getOrCreateIdentityToken(MCIProperties mciProperties) throws IOException {
-        if (identityToken == null) {
+        if (!identityStore.hasIdentityToken()) {
             try {
-                identityToken = getIdentityTokenFromIdp(mciProperties);
+                identityStore.setIdentityToken(getIdentityTokenFromIdp(mciProperties));
             } catch (IdentityUnauthorizedException e) {
                 logger.info("Refreshing Identity Token.");
-                identityToken = null;
+                identityStore.clearIdentityToken();
             }
         }
-        return identityToken;
+        return identityStore.getIdentityToken();
     }
 
     private String getIdentityTokenFromIdp(MCIProperties mciProperties) throws IOException {
