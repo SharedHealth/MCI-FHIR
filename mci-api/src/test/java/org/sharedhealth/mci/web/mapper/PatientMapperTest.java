@@ -34,7 +34,8 @@ public class PatientMapperTest {
     private final String givenName = "Bob the";
     private final String surName = "Builder";
     private final String gender = "M";
-    private final Date dateOfBirth = DateUtil.parseDate("1995-07-01 14:20:00+0530");
+    private final Date dateTimeOfBirth = DateUtil.parseDate("1995-07-01 14:20:00+0530");
+    private final Date dateOfBirth = DateUtil.parseDate("1995-07-01");
     private final String countryCode = "050";
     private final String divisionId = "30";
     private final String districtId = "26";
@@ -79,7 +80,7 @@ public class PatientMapperTest {
         assertEquals(surName, name.getFamilyFirstRep().getValue());
 
         assertEquals(AdministrativeGenderEnum.MALE.getCode(), fhirPatient.getGender());
-        assertEquals(dateOfBirth, fhirPatient.getBirthDate());
+        assertEquals(dateTimeOfBirth, fhirPatient.getBirthDate());
 
         AddressDt address = fhirPatient.getAddressFirstRep();
         List<ExtensionDt> extensions = address.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
@@ -96,19 +97,32 @@ public class PatientMapperTest {
 
     @Test
     public void shouldMapFHIRPatientToMCIPatient() throws Exception {
-        org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(createFHIRPatient());
+        org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(createFHIRPatient(true));
         assertEquals(createMCIPatient(), mciPatient);
     }
 
-    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient() {
+    @Test
+    public void shouldMapFhirPatientNotHavingBirthTime() throws Exception {
+        Patient fhirPatient = createFHIRPatient(false);
+        org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(fhirPatient);
+        org.sharedhealth.mci.web.model.Patient expectedMCIPatient = createMCIPatient();
+        expectedMCIPatient.setDateOfBirth(dateOfBirth);
+        assertEquals(expectedMCIPatient, mciPatient);
+    }
+
+    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient(boolean timeOfBirthIncluded) {
         ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
         patient.addName().addGiven(givenName).addFamily(surName);
         patient.setGender(AdministrativeGenderEnum.MALE);
 
-        DateDt date = new DateDt(dateOfBirth);
-        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
-        date.addUndeclaredExtension(extensionDt);
-        patient.setBirthDate(date);
+        if (timeOfBirthIncluded) {
+            DateDt date = new DateDt(dateTimeOfBirth);
+            ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateTimeOfBirth));
+            date.addUndeclaredExtension(extensionDt);
+            patient.setBirthDate(date);
+        } else {
+            patient.setBirthDate(new DateDt(dateOfBirth));
+        }
 
         AddressDt addressDt = new AddressDt().addLine(addressLine);
         addressDt.setCountry(countryCode);
@@ -126,7 +140,7 @@ public class PatientMapperTest {
         expectedPatient.setGivenName(givenName);
         expectedPatient.setSurName(surName);
         expectedPatient.setGender(gender);
-        expectedPatient.setDateOfBirth(dateOfBirth);
+        expectedPatient.setDateOfBirth(dateTimeOfBirth);
         expectedPatient.setCountryCode(countryCode);
         expectedPatient.setDivisionId(divisionId);
         expectedPatient.setDistrictId(districtId);

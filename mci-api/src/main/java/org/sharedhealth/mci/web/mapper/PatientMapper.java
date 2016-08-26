@@ -11,6 +11,7 @@ import ca.uhn.fhir.model.primitive.StringDt;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
@@ -58,7 +59,12 @@ public class PatientMapper {
         mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValueAsEnum()));
 
         List<ExtensionDt> birthExtensions = fhirPatient.getBirthDateElement().getUndeclaredExtensionsByUrl(BIRTH_TIME_EXTENSION_URL);
-        DateTimeDt birthTime = (DateTimeDt) birthExtensions.get(0).getValue();
+        DateTimeDt birthTime;
+        if (CollectionUtils.isEmpty(birthExtensions)) {
+            birthTime = new DateTimeDt(fhirPatient.getBirthDate());
+        } else {
+            birthTime = (DateTimeDt) birthExtensions.get(0).getValue();
+        }
         mciPatient.setDateOfBirth(birthTime.getValue());
 
         AddressDt address = fhirPatient.getAddressFirstRep();
