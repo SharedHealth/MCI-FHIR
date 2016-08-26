@@ -5,7 +5,7 @@ import org.sharedhealth.mci.web.util.StringUtils;
 import java.util.Map;
 
 public class MCIProperties {
-    private static final MCIProperties mciProperties = new MCIProperties();
+    private static MCIProperties mciProperties;
     private String cassandraKeySpace;
 
     private String cassandraHost;
@@ -73,6 +73,8 @@ public class MCIProperties {
     }
 
     public static MCIProperties getInstance() {
+        if (mciProperties != null) return mciProperties;
+        mciProperties = new MCIProperties();
         return mciProperties;
     }
 }

@@ -6,7 +6,7 @@ import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.mapping.MappingManager;
 
 public class MCICassandraConfig {
-    private static final MCICassandraConfig mciCassandraConfig = new MCICassandraConfig();
+    private static MCICassandraConfig mciCassandraConfig;
     private static MappingManager mappingManager;
     private static final int ONE_MINUTE = 6000;
 
@@ -15,6 +15,8 @@ public class MCICassandraConfig {
     }
 
     public static MCICassandraConfig getInstance() {
+        if (mciCassandraConfig != null) return mciCassandraConfig;
+        mciCassandraConfig = new MCICassandraConfig();
         return mciCassandraConfig;
     }
 
