@@ -51,6 +51,8 @@ configurations {
         extendsFrom compile
     }
     all*.exclude group: 'org.slf4j', module: "log4j-over-slf4j"
+    all*.exclude group: 'ch.qos.logback', module: "logback-classic"
+    all*.exclude group: 'ch.qos.logback', module: "logback-core"
 }
 
 jar {
