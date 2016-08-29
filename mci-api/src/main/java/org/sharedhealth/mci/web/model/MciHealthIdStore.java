@@ -1,22 +1,34 @@
 package org.sharedhealth.mci.web.model;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MciHealthIdStore {
     private Queue<String> mciHealthIds;
 
+    public MciHealthIdStore() {
+        this.mciHealthIds = new ConcurrentLinkedQueue<>();
+    }
+
     public void addMciHealthIds(Collection<String> mciHealthIds) {
-        if (this.mciHealthIds == null) this.mciHealthIds = new ConcurrentLinkedQueue<>();
         this.mciHealthIds.addAll(mciHealthIds);
     }
 
-    public String getMciHealthId() {
+    public void clear() {
+        this.mciHealthIds.clear();
+    }
+
+    public Collection<String> getAll() {
+        return Collections.unmodifiableCollection(mciHealthIds);
+    }
+
+    public String getNextHealthId() {
         return this.mciHealthIds.remove();
     }
 
-    public int noOfHidsLeft() {
+    public int noOfHIDsLeft() {
         return this.mciHealthIds.size();
     }
 }

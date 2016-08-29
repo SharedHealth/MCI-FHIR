@@ -1,11 +1,14 @@
 package org.sharedhealth.mci.web;
 
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
+import org.sharedhealth.mci.web.config.MCIProperties;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +28,14 @@ public class BaseIntegrationTest {
     @AfterClass
     public static void tearDownIntegration() throws Exception {
         EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
+    }
+
+    @After
+    public void tearDownBase() throws Exception {
+        File file = new File(MCIProperties.getInstance().getHidLocalStoragePath());
+        if (file.exists()) {
+            file.delete();
+        }
     }
 
     private static Map<String, String> mockPropertySources() {

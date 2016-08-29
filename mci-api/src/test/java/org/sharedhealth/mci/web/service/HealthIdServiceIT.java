@@ -3,24 +3,32 @@ package org.sharedhealth.mci.web.service;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.gson.Gson;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpStatus;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
+import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.IdentityStore;
 import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.model.OrgHealthId;
 import org.sharedhealth.mci.web.util.TestUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.*;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
+import static org.sharedhealth.mci.web.util.HttpUtil.*;
 
 public class HealthIdServiceIT extends BaseIntegrationTest {
     private Mapper<MciHealthId> mciHealthIdMapper;
@@ -76,6 +84,8 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
 
     @Test
     public void shouldNotReplenishIfTheThresholdIsNotReached() throws Exception {
+        MCIProperties mciProperties = MCIProperties.getInstance();
+
         List<String> healthIdBlock = new ArrayList<>();
         healthIdBlock.add("healthId1");
         healthIdBlock.add("healthId2");
@@ -85,20 +95,105 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
 
         healthIdService.replenishIfNeeded();
 
-        assertThat(mciHealthIdStore.noOfHidsLeft(), is(4));
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(4));
+
+        verify(0, postRequestedFor(urlMatching("/signin"))
+                        .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
+                        .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                        .withRequestBody(containing("password=password&email=shrSysAdmin%40gmail.com"))
+        );
+
+        verify(0, getRequestedFor(urlPathMatching("/healthIds"))
+                        .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                        .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
+        );
     }
 
     @Test
-    public void shouldReplenishIfTheThresholdIsReached() throws Exception {
+    public void shouldAskHIDServiceForTheFirstEverStartup() throws Exception {
+        MCIProperties mciProperties = MCIProperties.getInstance();
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
+        File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
+        assertFalse(hidLocalStorageFile.exists());
+
+        setupStub(mciProperties);
+        healthIdService.replenishIfNeeded();
+
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(mciProperties.getHealthIdReplenishBlockSize()));
+        verify(1, postRequestedFor(urlMatching("/signin")));
+        verify(1, getRequestedFor(urlPathMatching("/healthIds")));
+
+        assertTrue(hidLocalStorageFile.exists());
+        String content = IOUtils.toString(new FileInputStream(hidLocalStorageFile), "UTF-8");
+        List<String> hids = Arrays.asList(new ObjectMapper().readValue(content, String[].class));
+
+        List<String> expectedHIDs = getHIDs();
+        assertEquals(hids.size(), expectedHIDs.size());
+        assertTrue(hids.containsAll(expectedHIDs));
+    }
+
+    @Test
+    public void shouldReplenishFromHIDServiceHIDCountReachesToThreshold() throws Exception {
+        MCIProperties mciProperties = MCIProperties.getInstance();
         List<String> healthIdBlock = new ArrayList<>();
         healthIdBlock.add("healthId1");
         healthIdBlock.add("healthId2");
         mciHealthIdStore.addMciHealthIds(healthIdBlock);
 
-        stubFor(get(urlMatching("/signin")))
+        setupStub(mciProperties);
 
         healthIdService.replenishIfNeeded();
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(2 + mciProperties.getHealthIdReplenishBlockSize()));
 
-        assertThat(mciHealthIdStore.noOfHidsLeft(), is(4));
+        verify(1, postRequestedFor(urlMatching("/signin")));
+        verify(1, getRequestedFor(urlPathMatching("/healthIds")));
+    }
+
+    private void setupStub(MCIProperties mciProperties) {
+        String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
+                mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
+
+        UUID token = UUID.randomUUID();
+        String idpResponse = "{\"access_token\" : \"" + token.toString() + "\"}";
+        String hidResponse = getHidResponse();
+
+        stubFor(post(urlMatching("/signin"))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withRequestBody(containing("password=password&email=shrSysAdmin%40gmail.com"))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody(idpResponse)
+                ));
+
+        stubFor(get(urlPathEqualTo(nextHIDBlockUrl))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody(hidResponse)
+                ));
+    }
+
+    private String getHidResponse() {
+        HashMap<String, Object> hidResponse = new HashMap<>();
+
+        hidResponse.put("total", "10");
+        hidResponse.put("hids", getHIDs());
+        return new Gson().toJson(hidResponse);
+    }
+
+    private List<String> getHIDs() {
+        return asList("98000430630",
+                "98000429756",
+                "98000430531",
+                "98000430507",
+                "98000430341",
+                "98000430564",
+                "98000429145",
+                "98000430911",
+                "98000429061",
+                "98000430333");
     }
 }

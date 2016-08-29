@@ -28,6 +28,7 @@ public class MCIProperties {
     private String healthIdReplenishDelay;
     private String healthIdReplenishBlockSize;
     private String healthIdReplenishThreshold;
+    private String hidLocalStoragePath;
 
     private MCIProperties() {
         Map<String, String> env = System.getenv();
@@ -52,6 +53,7 @@ public class MCIProperties {
         this.healthIdReplenishDelay = env.get("HID_REPLENISH_DELAY");
         this.healthIdReplenishBlockSize = env.get("HID_REPLENISH_BLOCK_SIZE");
         this.healthIdReplenishThreshold = env.get("HID_REPLENISH_THRESHOLD");
+        this.hidLocalStoragePath = env.get("HID_LOCAL_STORAGE_PATH");
     }
 
     public static MCIProperties getInstance() {
@@ -100,8 +102,8 @@ public class MCIProperties {
         return StringUtils.ensureSuffix(profilesFolderPath, "/");
     }
 
-    public String getHealthIdReplenishBlockSize() {
-        return healthIdReplenishBlockSize;
+    public Integer getHealthIdReplenishBlockSize() {
+        return Integer.parseInt(healthIdReplenishBlockSize);
     }
 
     public String getHidServiceBaseUrl() {
@@ -142,5 +144,9 @@ public class MCIProperties {
 
     public String getIdpUrl() {
         return idpUrl;
+    }
+
+    public String getHidLocalStoragePath() {
+        return hidLocalStoragePath;
     }
 }
