@@ -24,6 +24,7 @@ public class MCIProperties {
     private String idpPassword;
     private String hidServiceBaseUrl;
     private String hidServiceNextBlockUrlPattern;
+    private String hidServiceMarkUsedUrlPattern;
     private String healthIdReplenishInitialDelay;
     private String healthIdReplenishDelay;
     private String healthIdReplenishBlockSize;
@@ -49,6 +50,7 @@ public class MCIProperties {
         this.idpPassword = env.get("IDP_PASSWORD");
         this.hidServiceBaseUrl = env.get("HID_SERVICE_BASE_URL");
         this.hidServiceNextBlockUrlPattern = env.get("HID_SERVICE_NEXT_BLOCK_URL");
+        this.hidServiceMarkUsedUrlPattern = env.get("HID_SERVICE_MARK_USED_URL");
         this.healthIdReplenishInitialDelay = env.get("HID_REPLENISH_INITIAL_DELAY");
         this.healthIdReplenishDelay = env.get("HID_REPLENISH_DELAY");
         this.healthIdReplenishBlockSize = env.get("HID_REPLENISH_BLOCK_SIZE");
@@ -112,6 +114,10 @@ public class MCIProperties {
 
     public String getHidServiceNextBlockUrlPattern() {
         return hidServiceNextBlockUrlPattern;
+    }
+
+    public String getHidServiceMarkUsedUrlPattern() {
+        return hidServiceMarkUsedUrlPattern;
     }
 
     public String getIdpClientId() {

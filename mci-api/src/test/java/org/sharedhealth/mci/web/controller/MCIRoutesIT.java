@@ -2,10 +2,13 @@ package org.sharedhealth.mci.web.controller;
 
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -16,6 +19,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.*;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
+import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.*;
@@ -24,25 +28,28 @@ import org.sharedhealth.mci.web.util.FileUtil;
 import org.sharedhealth.mci.web.util.TestUtil;
 import spark.Spark;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.apache.http.HttpStatus.*;
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
+import static org.sharedhealth.mci.web.util.HttpUtil.*;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
 import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_URI_PATH;
 
 public class MCIRoutesIT extends BaseIntegrationTest {
     private static final String GET = "GET";
-    private static final String HOST_NAME = "http://localhost:9997";
+    private static final String HOST_NAME = "http://localhost:9990";
     private static final String POST = "post";
     private static CloseableHttpClient httpClient;
     private Mapper<MciHealthId> mciHealthIdMapper;
     private Mapper<OrgHealthId> orgHealthIdMapper;
     private Mapper<Patient> patientMapper;
+
+    @Rule
+    public WireMockRule idpService = new WireMockRule(9997);
+
 
     private final String healthId = "HID";
     private final String givenName = "Bob the";
@@ -111,7 +118,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
 
     @Test
     public void shouldCreateAPatientForGivenData() throws Exception {
-        mciHealthIdMapper.save(new MciHealthId(healthId));
+        setupStub();
         String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
 
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
@@ -122,8 +129,13 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         assertNotNull(body);
 
         MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
-        assertEquals(healthId, mciResponse.getId());
+        assertNotNull(mciResponse.getId());
+        assertTrue(getHIDs().contains(mciResponse.getId()));
         assertNull(mciResponse.getMessage());
+
+        verify(1, postRequestedFor(urlMatching("/signin")));
+        verify(1, getRequestedFor(urlMatching("/healthIds/nextBlock")));
+        verify(1, putRequestedFor(urlMatching("/healthIds/markUsed/" + mciResponse.getId())));
     }
 
     @Test
@@ -239,4 +251,60 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         expectedPatient.setAddressLine(addressLine);
         return expectedPatient;
     }
+
+    private void setupStub() {
+        MCIProperties mciProperties = MCIProperties.getInstance();
+        UUID token = UUID.randomUUID();
+        String idpResponse = "{\"access_token\" : \"" + token.toString() + "\"}";
+        String hidResponse = getHidResponse();
+
+        stubFor(post(urlMatching("/signin"))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withRequestBody(containing("password=password&email=shrSysAdmin%40gmail.com"))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody(idpResponse)
+                ));
+
+        stubFor(get(urlPathEqualTo("/healthIds/nextBlock"))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody(hidResponse)
+                ));
+
+        stubFor(put(urlPathEqualTo("/healthIds/markUsed"))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody("Accepted")
+                ));
+    }
+
+    private String getHidResponse() {
+        HashMap<String, Object> hidResponse = new HashMap<>();
+
+        hidResponse.put("total", "10");
+        hidResponse.put("hids", getHIDs());
+        return new Gson().toJson(hidResponse);
+    }
+
+    private List<String> getHIDs() {
+        return Lists.newArrayList("98000430630",
+                "98000429756",
+                "98000430531",
+                "98000430507",
+                "98000430341",
+                "98000430564",
+                "98000429145",
+                "98000430911",
+                "98000429061",
+                "98000430333");
+    }
+
 }

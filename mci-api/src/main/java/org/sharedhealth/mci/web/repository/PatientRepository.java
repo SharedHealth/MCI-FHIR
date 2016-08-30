@@ -6,13 +6,12 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
-import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 
 public class PatientRepository {
     private final Mapper<Patient> patientMapper;
-    private static final Logger logger = LogManager.getLogger(Application.class);
+    private static final Logger logger = LogManager.getLogger(PatientRepository.class);
 
     public PatientRepository(MappingManager mappingManager) {
         patientMapper = mappingManager.mapper(Patient.class);

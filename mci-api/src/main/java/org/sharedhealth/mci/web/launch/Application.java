@@ -54,7 +54,7 @@ public class Application {
 
         IdentityProviderService identityProviderService = new IdentityProviderService(identityStore);
         MciHealthIdStore mciHealthIdStore = new MciHealthIdStore();
-        HealthIdService healthIdService = new HealthIdService(mappingManager, identityProviderService, mciHealthIdStore);
+        HealthIdService healthIdService = new HealthIdService(identityProviderService, mciHealthIdStore, mciProperties);
         PatientService patientService = new PatientService(patientMapper, healthIdService, patientRepository, fhirPatientValidator);
         //instantiate all services/mappers/ here
 

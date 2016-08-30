@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web;
 
+import com.google.gson.Gson;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -8,7 +9,10 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
@@ -33,6 +37,7 @@ public class WebClient {
         return execute(request);
     }
 
+
     public String post(String url, Map<String, String> headers, Map<String, String> formEntities) throws IOException {
         logger.debug("HTTP POST request for {}", url);
         HttpPost request = new HttpPost(url);
@@ -43,6 +48,15 @@ public class WebClient {
         }
         UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(valuePairs);
         request.setEntity(formEntity);
+        return execute(request);
+    }
+
+    public String put(String url, Map<String, String> headers, Map<String, String> data) throws IOException {
+        logger.debug("HTTP put request for {}", url);
+        HttpPut request = new HttpPut(url);
+        addHeaders(headers, request);
+        StringEntity stringEntity = new StringEntity(new Gson().toJson(data), ContentType.APPLICATION_JSON);
+        request.setEntity(stringEntity);
         return execute(request);
     }
 
