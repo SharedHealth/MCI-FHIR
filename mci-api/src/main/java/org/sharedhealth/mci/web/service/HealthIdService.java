@@ -6,6 +6,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
+import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,16 +73,23 @@ public class HealthIdService {
     public void replenishIfNeeded() throws IOException {
         //todo: should inject mciProperties dependency in constructor
         MCIProperties mciProperties = MCIProperties.getInstance();
-        List<String> existingHIDs = getExistingHIDs(mciProperties);
-        if (existingHIDs.size() > mciHealthIdStore.noOfHIDsLeft()) {
-            mciHealthIdStore.clear();
-            mciHealthIdStore.addMciHealthIds(existingHIDs);
-        }
         if (mciHealthIdStore.noOfHIDsLeft() > mciProperties.getHealthIdReplenishThreshold()) return;
+        List<String> existingHIDs = getExistingHIDs(mciProperties);
+         /*
+            * this is a case when in some situation it was not able to delete a HID from file after patient create
+            * ideally we can overwrite the file with memory contents
+            if (mciHealthIdStore.noOfHIDsLeft() > 0 && existingHIDs.size() > mciHealthIdStore.noOfHIDsLeft()) {
+           }
+           * */
+        mciHealthIdStore.clear();
+        mciHealthIdStore.addMciHealthIds(existingHIDs);
+        if (mciHealthIdStore.noOfHIDsLeft() > mciProperties.getHealthIdReplenishThreshold()) return;
+
         List nextBlock = getNextBlockFromHidService(mciProperties);
         if (nextBlock != null) {
             mciHealthIdStore.addMciHealthIds(nextBlock);
-            IOUtils.write(mciHealthIdStore.getAll().toString(), new FileOutputStream(mciProperties.getHidLocalStoragePath()));
+            String hidsContent = new Gson().toJson(mciHealthIdStore.getAll());
+            IOUtils.write(hidsContent, new FileOutputStream(mciProperties.getHidLocalStoragePath()));
         }
     }
 

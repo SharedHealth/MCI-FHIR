@@ -3,6 +3,7 @@ package org.sharedhealth.mci.web.service;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
@@ -22,10 +23,10 @@ import org.sharedhealth.mci.web.util.TestUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.*;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.HttpUtil.*;
@@ -83,33 +84,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void shouldNotReplenishIfTheThresholdIsNotReached() throws Exception {
-        MCIProperties mciProperties = MCIProperties.getInstance();
-
-        List<String> healthIdBlock = new ArrayList<>();
-        healthIdBlock.add("healthId1");
-        healthIdBlock.add("healthId2");
-        healthIdBlock.add("healthId3");
-        healthIdBlock.add("healthId4");
-        mciHealthIdStore.addMciHealthIds(healthIdBlock);
-
-        healthIdService.replenishIfNeeded();
-
-        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(4));
-
-        verify(0, postRequestedFor(urlMatching("/signin"))
-                        .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
-                        .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
-                        .withRequestBody(containing("password=password&email=shrSysAdmin%40gmail.com"))
-        );
-
-        verify(0, getRequestedFor(urlPathMatching("/healthIds"))
-                        .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
-                        .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
-        );
-    }
-
-    @Test
     public void shouldAskHIDServiceForTheFirstEverStartup() throws Exception {
         MCIProperties mciProperties = MCIProperties.getInstance();
         assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
@@ -135,10 +109,13 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     @Test
     public void shouldReplenishFromHIDServiceHIDCountReachesToThreshold() throws Exception {
         MCIProperties mciProperties = MCIProperties.getInstance();
+
         List<String> healthIdBlock = new ArrayList<>();
         healthIdBlock.add("healthId1");
         healthIdBlock.add("healthId2");
         mciHealthIdStore.addMciHealthIds(healthIdBlock);
+        File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
+        IOUtils.write(new Gson().toJson(healthIdBlock), new FileOutputStream(hidLocalStorageFile));
 
         setupStub(mciProperties);
 
@@ -147,6 +124,89 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
 
         verify(1, postRequestedFor(urlMatching("/signin")));
         verify(1, getRequestedFor(urlPathMatching("/healthIds")));
+
+        assertTrue(hidLocalStorageFile.exists());
+        String content = IOUtils.toString(new FileInputStream(hidLocalStorageFile), "UTF-8");
+        List<String> hids = Arrays.asList(new ObjectMapper().readValue(content, String[].class));
+
+        List<String> expectedHIDs = getHIDs();
+        expectedHIDs.addAll(healthIdBlock);
+        assertEquals(hids.size(), expectedHIDs.size());
+        assertTrue(hids.containsAll(expectedHIDs));
+    }
+
+    @Test
+    public void shouldNotReplenishIfTheThresholdIsNotReached() throws Exception {
+        List<String> healthIdBlock = new ArrayList<>();
+        healthIdBlock.add("healthId1");
+        healthIdBlock.add("healthId2");
+        healthIdBlock.add("healthId3");
+        healthIdBlock.add("healthId4");
+        mciHealthIdStore.addMciHealthIds(healthIdBlock);
+
+        healthIdService.replenishIfNeeded();
+
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(4));
+
+        verify(0, postRequestedFor(urlMatching("/signin")));
+        verify(0, getRequestedFor(urlPathMatching("/healthIds")));
+    }
+
+
+    @Test
+    public void shouldNotRequestHIDServiceWhenFileHasSufficientHIDsWhileInitialization() throws Exception {
+        MCIProperties mciProperties = MCIProperties.getInstance();
+
+        List<String> healthIdBlock = new ArrayList<>();
+        healthIdBlock.add("healthId1");
+        healthIdBlock.add("healthId2");
+        healthIdBlock.add("healthId3");
+        healthIdBlock.add("healthId4");
+
+        File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
+        IOUtils.write(new Gson().toJson(healthIdBlock), new FileOutputStream(hidLocalStorageFile));
+
+        assertTrue(hidLocalStorageFile.exists());
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
+
+        healthIdService.replenishIfNeeded();
+
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(4));
+
+        verify(0, postRequestedFor(urlMatching("/signin")));
+        verify(0, getRequestedFor(urlPathMatching("/healthIds")));
+    }
+
+    @Test
+    public void shouldRequestHIDServiceWhenFileDoesNotHaveSufficientHIDsWhileInitialization() throws Exception {
+        MCIProperties mciProperties = MCIProperties.getInstance();
+
+        List<String> healthIdBlock = new ArrayList<>();
+        healthIdBlock.add("healthId1");
+        healthIdBlock.add("healthId2");
+
+        File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
+        IOUtils.write(new Gson().toJson(healthIdBlock), new FileOutputStream(hidLocalStorageFile));
+
+        assertTrue(hidLocalStorageFile.exists());
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
+
+        setupStub(mciProperties);
+        healthIdService.replenishIfNeeded();
+
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(2 + mciProperties.getHealthIdReplenishBlockSize()));
+
+        verify(1, postRequestedFor(urlMatching("/signin")));
+        verify(1, getRequestedFor(urlPathMatching("/healthIds")));
+
+        assertTrue(hidLocalStorageFile.exists());
+        String content = IOUtils.toString(new FileInputStream(hidLocalStorageFile), "UTF-8");
+        List<String> hids = Arrays.asList(new ObjectMapper().readValue(content, String[].class));
+
+        List<String> expectedHIDs = getHIDs();
+        expectedHIDs.addAll(healthIdBlock);
+        assertEquals(hids.size(), expectedHIDs.size());
+        assertTrue(hids.containsAll(expectedHIDs));
     }
 
     private void setupStub(MCIProperties mciProperties) {
@@ -185,7 +245,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     }
 
     private List<String> getHIDs() {
-        return asList("98000430630",
+        return Lists.newArrayList("98000430630",
                 "98000429756",
                 "98000430531",
                 "98000430507",
