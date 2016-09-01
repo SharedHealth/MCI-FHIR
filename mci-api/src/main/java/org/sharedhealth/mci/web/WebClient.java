@@ -88,7 +88,7 @@ public class WebClient {
                     getIdentityStore().clearIdentityToken();
                     throw new IdentityUnauthorizedException("Identity not authorized.");
                 } else {
-                    throw new ClientProtocolException(String.format("Unexpected Response status %s", statusCode));
+                    throw new ClientProtocolException("Unexpected Response status.");
                 }
             };
             return client.execute(request, responseHandler);

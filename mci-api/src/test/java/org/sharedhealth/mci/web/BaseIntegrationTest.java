@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.sharedhealth.mci.web.config.MCIProperties;
+import org.sharedhealth.mci.web.model.MciHealthIdStore;
 
 import java.io.File;
 import java.io.InputStream;
@@ -36,6 +37,7 @@ public class BaseIntegrationTest {
         if (file.exists()) {
             file.delete();
         }
+        MciHealthIdStore.getInstance().clear();
     }
 
     private static Map<String, String> mockPropertySources() {
