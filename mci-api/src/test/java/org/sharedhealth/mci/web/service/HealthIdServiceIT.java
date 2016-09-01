@@ -96,7 +96,8 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
 
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
                 mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
-        String hidResponse = getHidResponse();
+        List<String> expectedHIDs = getHIDs("9800043063", 10);
+        String hidResponse = getHidResponse(expectedHIDs);
         UUID uuid = UUID.randomUUID();
         setUpIdentityStub(uuid);
         setupNextHidStub(nextHIDBlockUrl, hidResponse, uuid);
@@ -108,36 +109,41 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         verify(1, getRequestedFor(urlPathMatching("/healthIds")));
 
         List<String> hids = readHIDsFromFile();
-        List<String> expectedHIDs = getHIDs();
         assertEquals(hids.size(), expectedHIDs.size());
         assertTrue(hids.containsAll(expectedHIDs));
     }
 
-
     @Test
     public void shouldReplenishFromHIDServiceHIDCountReachesToThreshold() throws Exception {
-        List<String> healthIdBlock = Lists.newArrayList("healthId1", "healthId2");
+        List<String> initialHealthIdBlock = getHIDs("9800043044", 10);
+        IOUtils.write(new Gson().toJson(initialHealthIdBlock), new FileOutputStream(new File(mciProperties.getHidLocalStoragePath())));
+
+        List<String> healthIdBlock = initialHealthIdBlock.subList(0, 1);
+
         mciHealthIdStore.addMciHealthIds(healthIdBlock);
-        IOUtils.write(new Gson().toJson(healthIdBlock), new FileOutputStream(new File(mciProperties.getHidLocalStoragePath())));
+
 
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
                 mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
-        String hidResponse = getHidResponse();
+        List<String> newHealthIds = getHIDs("9800043063", 10);
+        String hidResponse = getHidResponse(newHealthIds);
         UUID uuid = UUID.randomUUID();
         setUpIdentityStub(uuid);
         setupNextHidStub(nextHIDBlockUrl, hidResponse, uuid);
 
         healthIdService.replenishIfNeeded();
 
-        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(2 + mciProperties.getHealthIdReplenishBlockSize()));
         verify(1, postRequestedFor(urlMatching("/signin")));
         verify(1, getRequestedFor(urlPathMatching("/healthIds")));
 
-        List<String> hids = readHIDsFromFile();
-        List<String> expectedHIDs = getHIDs();
-        expectedHIDs.addAll(healthIdBlock);
-        assertEquals(hids.size(), expectedHIDs.size());
-        assertTrue(hids.containsAll(expectedHIDs));
+        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(healthIdBlock.size() + mciProperties.getHealthIdReplenishBlockSize()));
+
+        List<String> hidsInFile = readHIDsFromFile();
+        List<String> expectedHIDs = ListUtils.union(newHealthIds, healthIdBlock);
+        assertEquals(hidsInFile.size(), expectedHIDs.size());
+        assertTrue(hidsInFile.containsAll(expectedHIDs));
+
+        assertEquals(mciHealthIdStore.noOfHIDsLeft(), hidsInFile.size());
     }
 
     @Test
@@ -150,46 +156,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         assertThat(mciHealthIdStore.noOfHIDsLeft(), is(4));
         verify(0, postRequestedFor(urlMatching("/signin")));
         verify(0, getRequestedFor(urlPathMatching("/healthIds")));
-    }
-
-    @Test
-    public void shouldNotRequestHIDServiceWhenFileHasSufficientHIDsWhileInitialization() throws Exception {
-        List<String> healthIdBlock = Lists.newArrayList("healthId1", "healthId2", "healthId3", "healthId4");
-        IOUtils.write(new Gson().toJson(healthIdBlock), new FileOutputStream(new File(mciProperties.getHidLocalStoragePath())));
-
-        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
-        healthIdService.replenishIfNeeded();
-
-        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(4));
-        verify(0, postRequestedFor(urlMatching("/signin")));
-        verify(0, getRequestedFor(urlPathMatching("/healthIds")));
-    }
-
-
-    @Test
-    public void shouldRequestHIDServiceWhenFileDoesNotHaveSufficientHIDsWhileInitialization() throws Exception {
-        List<String> healthIdBlock = Lists.newArrayList("healthId1", "healthId2");
-        IOUtils.write(new Gson().toJson(healthIdBlock), new FileOutputStream(new File(mciProperties.getHidLocalStoragePath())));
-        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
-
-        String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
-                mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
-        String hidResponse = getHidResponse();
-        UUID uuid = UUID.randomUUID();
-        setUpIdentityStub(uuid);
-        setupNextHidStub(nextHIDBlockUrl, hidResponse, uuid);
-
-        healthIdService.replenishIfNeeded();
-
-        assertThat(mciHealthIdStore.noOfHIDsLeft(), is(2 + mciProperties.getHealthIdReplenishBlockSize()));
-        verify(1, postRequestedFor(urlMatching("/signin")));
-        verify(1, getRequestedFor(urlPathMatching("/healthIds")));
-
-        List<String> hids = readHIDsFromFile();
-        List<String> expectedHIDs = getHIDs();
-        expectedHIDs.addAll(healthIdBlock);
-        assertEquals(hids.size(), expectedHIDs.size());
-        assertTrue(hids.containsAll(expectedHIDs));
     }
 
     private List<String> readHIDsFromFile() throws IOException {
@@ -235,24 +201,19 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
                 ));
     }
 
-    private String getHidResponse() {
+    private String getHidResponse(List<String> hids) {
         HashMap<String, Object> hidResponse = new HashMap<>();
 
         hidResponse.put("total", "10");
-        hidResponse.put("hids", getHIDs());
+        hidResponse.put("hids", hids);
         return new Gson().toJson(hidResponse);
     }
 
-    private List<String> getHIDs() {
-        return Lists.newArrayList("98000430630",
-                "98000429756",
-                "98000430531",
-                "98000430507",
-                "98000430341",
-                "98000430564",
-                "98000429145",
-                "98000430911",
-                "98000429061",
-                "98000430333");
+    private List<String> getHIDs(String prefix, int noOfHealthIds) {
+        ArrayList<String> hids = new ArrayList<>();
+        for (int i = 0; i < noOfHealthIds; i++) {
+            hids.add(prefix + i);
+        }
+        return hids;
     }
 }

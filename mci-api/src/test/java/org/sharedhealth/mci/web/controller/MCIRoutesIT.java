@@ -34,7 +34,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.apache.http.HttpStatus.*;
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.launch.Application.getIdentityStore;
-import static org.sharedhealth.mci.web.launch.Application.getMciHealthIdStore;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 import static org.sharedhealth.mci.web.util.HttpUtil.*;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
@@ -45,13 +44,10 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     private static final String HOST_NAME = "http://localhost:9990";
     private static final String POST = "post";
     private static CloseableHttpClient httpClient;
-    private Mapper<MciHealthId> mciHealthIdMapper;
-    private Mapper<OrgHealthId> orgHealthIdMapper;
     private Mapper<Patient> patientMapper;
 
     @Rule
     public WireMockRule idpService = new WireMockRule(9997);
-
 
     private final String healthId = "HID";
     private final String givenName = "Bob the";
@@ -82,14 +78,12 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     public void setUp() throws Exception {
         MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
         patientMapper = mappingManager.mapper(Patient.class);
-        mciHealthIdMapper = mappingManager.mapper(MciHealthId.class);
-        orgHealthIdMapper = mappingManager.mapper(OrgHealthId.class);
         httpClient = HttpClientBuilder.create().build();
     }
 
     @After
     public void tearDown() throws Exception {
-        getMciHealthIdStore().clear();
+        MciHealthIdStore.getInstance().clear();
         getIdentityStore().clearIdentityToken();
         TestUtil.truncateAllColumnFamilies();
     }
