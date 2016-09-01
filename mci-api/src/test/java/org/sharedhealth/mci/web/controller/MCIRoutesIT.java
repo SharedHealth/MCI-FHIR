@@ -183,7 +183,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     }
 
     private void addHidsToMciHealthIdStore() {
-        MciHealthIdStore mciHealthIdStore = getMciHealthIdStore();
+        MciHealthIdStore mciHealthIdStore = MciHealthIdStore.getInstance();
         mciHealthIdStore.addMciHealthIds(getHIDs());
     }
 

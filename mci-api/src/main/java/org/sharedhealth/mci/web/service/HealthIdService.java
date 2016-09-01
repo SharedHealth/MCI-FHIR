@@ -1,8 +1,11 @@
 package org.sharedhealth.mci.web.service;
 
 import com.google.gson.Gson;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.sharedhealth.mci.web.WebClient;
 import org.sharedhealth.mci.web.config.MCIProperties;
@@ -22,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.sharedhealth.mci.web.util.HttpUtil.*;
 
 public class HealthIdService {
+    private static final Logger logger = LogManager.getLogger(HealthIdService.class);
 
     private final String USED_AT_KEY = "used_at";
     private static final String HEALTH_ID_LIST_KEY = "hids";
@@ -49,7 +53,7 @@ public class HealthIdService {
         Map<String, String> hidServiceHeaders = getHIDServiceHeaders();
         Map<String, String> data = new HashMap<>();
         data.put(USED_AT_KEY, usedAt.toString());
-        new WebClient().put(mciProperties.getIdpBaseUrl(), getMarkUsedUrlPath(healthId), hidServiceHeaders, data);
+        new WebClient().put(mciProperties.getHidServiceBaseUrl(), getMarkUsedUrlPath(healthId), hidServiceHeaders, data);
     }
 
     public void putBack(MciHealthId healthId) {
@@ -57,6 +61,7 @@ public class HealthIdService {
     }
 
     public void loadFromFile() throws IOException {
+        logger.info("Loading HealthIds from file.");
         List<String> existingHIDs = getExistingHIDs();
         ConcurrentLinkedQueue<String> hidBlock = new ConcurrentLinkedQueue<>();
         for (String existingHID : existingHIDs) {
@@ -64,30 +69,29 @@ public class HealthIdService {
                 hidBlock.add(existingHID);
             }
         }
-        writeHIDsToFile();
-        mciHealthIdStore.addMciHealthIds(hidBlock);
+        addMciHealthIds(hidBlock);
     }
 
     public void replenishIfNeeded() throws IOException {
-        //todo: should inject mciProperties dependency in constructor
-        if (mciHealthIdStore.noOfHIDsLeft() > mciProperties.getHealthIdReplenishThreshold()) return;
-        List<String> existingHIDs = getExistingHIDs();
-        mciHealthIdStore.clear();
-        mciHealthIdStore.addMciHealthIds(existingHIDs);
         if (mciHealthIdStore.noOfHIDsLeft() > mciProperties.getHealthIdReplenishThreshold()) return;
         List nextBlock = getNextBlockFromHidService();
         if (nextBlock != null) {
-            mciHealthIdStore.addMciHealthIds(nextBlock);
-            writeHIDsToFile();
+            addMciHealthIds(nextBlock);
         }
+    }
+
+    private void addMciHealthIds(Collection nextBlock) throws IOException {
+        Collection hids = CollectionUtils.union(mciHealthIdStore.getAll(), nextBlock);
+        writeHIDsToFile(hids);
+        mciHealthIdStore.addMciHealthIds(nextBlock);
     }
 
     private String getMarkUsedUrlPath(MciHealthId healthId) {
         return String.format(mciProperties.getHidServiceMarkUsedUrlPattern(), healthId.getHid());
     }
 
-    private void writeHIDsToFile() throws IOException {
-        String hidsContent = new Gson().toJson(mciHealthIdStore.getAll());
+    private void writeHIDsToFile(Collection hids) throws IOException {
+        String hidsContent = new Gson().toJson(hids);
         IOUtils.write(hidsContent, new FileOutputStream(mciProperties.getHidLocalStoragePath()));
     }
 

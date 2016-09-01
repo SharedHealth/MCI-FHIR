@@ -61,7 +61,7 @@ public class Application {
         fhirPatientValidator = new FhirPatientValidator(mciProperties);
 
         identityStore = new IdentityStore();
-        mciHealthIdStore = new MciHealthIdStore();
+        mciHealthIdStore = MciHealthIdStore.getInstance();
 
         identityProviderService = new IdentityProviderService(identityStore);
 

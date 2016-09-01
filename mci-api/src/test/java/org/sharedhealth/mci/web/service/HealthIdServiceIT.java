@@ -3,10 +3,14 @@ package org.sharedhealth.mci.web.service;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.IdentityStore;
@@ -18,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +45,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     @Before
     public void setUp() throws Exception {
         identityProviderService = new IdentityProviderService(new IdentityStore());
-        mciHealthIdStore = new MciHealthIdStore();
+        mciHealthIdStore = MciHealthIdStore.getInstance();
         mciProperties = MCIProperties.getInstance();
         healthIdService = new HealthIdService(identityProviderService, mciHealthIdStore, mciProperties);
     }
@@ -81,8 +86,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     public void shouldPutBackTheHIDToStore() throws Exception {
         List<String> hidBlock = Lists.newArrayList("healthId1");
         mciHealthIdStore.addMciHealthIds(hidBlock);
-        File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
-        IOUtils.write(new Gson().toJson(hidBlock), new FileOutputStream(hidLocalStorageFile));
 
         healthIdService.putBack(new MciHealthId("healthId2"));
 
