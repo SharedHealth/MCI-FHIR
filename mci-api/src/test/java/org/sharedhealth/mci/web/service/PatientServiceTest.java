@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -128,22 +127,6 @@ public class PatientServiceTest {
         inOrder.verify(healthIdService).getNextHealthId();
         inOrder.verify(patientRepository).createPatient(mciPatient);
         inOrder.verify(healthIdService).markUsed(mciHealthId);
-    }
-
-    @Test
-    public void shouldThrowAnErrorWhenNoHIDAvailable() throws Exception {
-        String message = "No HIDs available to assign";
-        when(healthIdService.getNextHealthId()).thenThrow(new RuntimeException(message));
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = new ca.uhn.fhir.model.dstu2.resource.Patient();
-
-        MCIValidationResult mockValidationResult = mock(MCIValidationResult.class);
-        when(fhirPatientValidator.validate(fhirPatient)).thenReturn(mockValidationResult);
-        when(mockValidationResult.isSuccessful()).thenReturn(true);
-
-        MCIResponse mciResponse = patientService.createPatient(fhirPatient);
-
-        assertEquals(message, mciResponse.getMessage());
-        assertEquals(SC_BAD_REQUEST, mciResponse.getHttpStatus());
     }
 
     @Test

@@ -4,6 +4,7 @@ import ca.uhn.fhir.model.dstu2.resource.Patient;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
@@ -11,6 +12,8 @@ import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
+
+import java.io.IOException;
 
 public class PatientService {
     private PatientMapper patientMapper;
@@ -29,37 +32,39 @@ public class PatientService {
 
     public Patient findPatientByHealthId(String healthId) {
         org.sharedhealth.mci.web.model.Patient mciPatient = patientRepository.findByHealthId(healthId);
+        if (null == mciPatient) {
+            throw new PatientNotFoundException("No patient found with health id: " + healthId);
+        }
         return patientMapper.mapToFHIRPatient(mciPatient);
     }
 
-    public MCIResponse createPatient(Patient fhirPatient) {
+    public MCIResponse createPatient(Patient fhirPatient) throws IOException {
         MCIValidationResult validate = fhirPatientValidator.validate(fhirPatient);
         if (!validate.isSuccessful()) {
             return createMCIResponseForValidationFailure(validate);
         }
         org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(fhirPatient);
         MciHealthId healthId;
-        try {
-            healthId = healthIdService.getNextHealthId();
-            mciPatient.setHealthId(healthId.getHid());
-        } catch (Exception e) {
-            MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_BAD_REQUEST);
-            mciResponse.setMessage(e.getMessage());
-            return mciResponse;
-        }
+        healthId = healthIdService.getNextHealthId();
+        mciPatient.setHealthId(healthId.getHid());
+
         MCIResponse mciResponse = null;
         try {
             mciResponse = patientRepository.createPatient(mciPatient);
         } catch (Exception e) {
-            String message = "Error while creating patient: ";
-            logger.error(message, e);
+            logger.error("Error while creating patient: " + e.getMessage(), e);
             healthIdService.putBack(healthId);
-            MCIResponse response = new MCIResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            response.setMessage(message + e.getMessage());
-            return response;
+            return getMciResponse("Error while creating patient: " + e.getMessage(),
+                    HttpStatus.SC_INTERNAL_SERVER_ERROR);
         }
         healthIdService.markUsed(healthId);
         return mciResponse;
+    }
+
+    private MCIResponse getMciResponse(String message, int status) {
+        MCIResponse response = new MCIResponse(status);
+        response.setMessage(message);
+        return response;
     }
 
     private MCIResponse createMCIResponseForValidationFailure(MCIValidationResult validationResult) {

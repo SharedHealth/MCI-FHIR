@@ -61,15 +61,14 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
 
         assertNotNull(nextHealthId);
         assertEquals(1, mciHealthIdStore.noOfHIDsLeft());
-        List<String> hids = readHIDsFromFile();
-        assertEquals(1, hids.size());
-        assertFalse(hids.contains(nextHealthId.getHid()));
     }
 
     @Test
     public void shouldAskHIDServiceToMarkAsUsedHID() throws Exception {
         MciHealthId hid = new MciHealthId("hid");
-        setupStub("/healthIds/markUsed/hid", "Accepted");
+        UUID token = UUID.randomUUID();
+        setUpIdentityStub(token);
+        setupMarkUsedStub("/healthIds/markUsed/hid", "Accepted", token);
 
         healthIdService.markUsed(hid);
 
@@ -79,7 +78,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void shouldPutBackTheHIDToStoreAndFile() throws Exception {
+    public void shouldPutBackTheHIDToStore() throws Exception {
         List<String> hidBlock = Lists.newArrayList("healthId1");
         mciHealthIdStore.addMciHealthIds(hidBlock);
         File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
@@ -88,20 +87,19 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         healthIdService.putBack(new MciHealthId("healthId2"));
 
         assertEquals(2, mciHealthIdStore.noOfHIDsLeft());
-        List<String> hids = readHIDsFromFile();
-        assertEquals(2, hids.size());
-        assertTrue(hids.containsAll(asList("healthId1", "healthId2")));
     }
 
     @Test
-    public void shouldAskHIDServiceForTheFirstEverStartup() throws Exception {
+    public void shouldAsHIDServiceForTheFirstEverStartup() throws Exception {
         assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
         assertFalse(new File(mciProperties.getHidLocalStoragePath()).exists());
 
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
                 mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
         String hidResponse = getHidResponse();
-        setupStub(nextHIDBlockUrl, hidResponse);
+        UUID uuid = UUID.randomUUID();
+        setUpIdentityStub(uuid);
+        setupNextHidStub(nextHIDBlockUrl, hidResponse, uuid);
 
         healthIdService.replenishIfNeeded();
 
@@ -115,6 +113,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         assertTrue(hids.containsAll(expectedHIDs));
     }
 
+
     @Test
     public void shouldReplenishFromHIDServiceHIDCountReachesToThreshold() throws Exception {
         List<String> healthIdBlock = Lists.newArrayList("healthId1", "healthId2");
@@ -124,7 +123,9 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
                 mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
         String hidResponse = getHidResponse();
-        setupStub(nextHIDBlockUrl, hidResponse);
+        UUID uuid = UUID.randomUUID();
+        setUpIdentityStub(uuid);
+        setupNextHidStub(nextHIDBlockUrl, hidResponse, uuid);
 
         healthIdService.replenishIfNeeded();
 
@@ -151,7 +152,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         verify(0, getRequestedFor(urlPathMatching("/healthIds")));
     }
 
-
     @Test
     public void shouldNotRequestHIDServiceWhenFileHasSufficientHIDsWhileInitialization() throws Exception {
         List<String> healthIdBlock = Lists.newArrayList("healthId1", "healthId2", "healthId3", "healthId4");
@@ -165,6 +165,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         verify(0, getRequestedFor(urlPathMatching("/healthIds")));
     }
 
+
     @Test
     public void shouldRequestHIDServiceWhenFileDoesNotHaveSufficientHIDsWhileInitialization() throws Exception {
         List<String> healthIdBlock = Lists.newArrayList("healthId1", "healthId2");
@@ -174,7 +175,9 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
                 mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
         String hidResponse = getHidResponse();
-        setupStub(nextHIDBlockUrl, hidResponse);
+        UUID uuid = UUID.randomUUID();
+        setUpIdentityStub(uuid);
+        setupNextHidStub(nextHIDBlockUrl, hidResponse, uuid);
 
         healthIdService.replenishIfNeeded();
 
@@ -196,8 +199,30 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         return asList(new ObjectMapper().readValue(content, String[].class));
     }
 
-    private void setupStub(String hidServiceUrl, String hidServiceResponse) {
-        UUID token = UUID.randomUUID();
+    private void setupMarkUsedStub(String hidServiceUrl, String hidServiceResponse, UUID token) {
+        stubFor(put(urlPathEqualTo(hidServiceUrl))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody(hidServiceResponse)
+                ));
+    }
+
+    private void setupNextHidStub(String hidServiceUrl, String hidServiceResponse, UUID token) {
+        stubFor(get(urlPathEqualTo(hidServiceUrl))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
+                .willReturn(aResponse()
+                                .withStatus(HttpStatus.SC_OK)
+                                .withBody(hidServiceResponse)
+                ));
+    }
+
+    private void setUpIdentityStub(UUID uuid) {
+        UUID token = uuid;
         String idpResponse = "{\"access_token\" : \"" + token.toString() + "\"}";
 
         stubFor(post(urlMatching("/signin"))
@@ -207,15 +232,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
                 .willReturn(aResponse()
                                 .withStatus(HttpStatus.SC_OK)
                                 .withBody(idpResponse)
-                ));
-
-        stubFor(get(urlPathEqualTo(hidServiceUrl))
-                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
-                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
-                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
-                .willReturn(aResponse()
-                                .withStatus(HttpStatus.SC_OK)
-                                .withBody(hidServiceResponse)
                 ));
     }
 

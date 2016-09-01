@@ -33,6 +33,8 @@ import java.util.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.apache.http.HttpStatus.*;
 import static org.junit.Assert.*;
+import static org.sharedhealth.mci.web.launch.Application.getIdentityStore;
+import static org.sharedhealth.mci.web.launch.Application.getMciHealthIdStore;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 import static org.sharedhealth.mci.web.util.HttpUtil.*;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
@@ -87,6 +89,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
 
     @After
     public void tearDown() throws Exception {
+        getMciHealthIdStore().clear();
+        getIdentityStore().clearIdentityToken();
         TestUtil.truncateAllColumnFamilies();
     }
 
@@ -121,6 +125,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         setupStub();
         String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
 
+        addHidsToMciHealthIdStore();
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
 
         assertNotNull(urlResponse);
@@ -133,25 +138,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         assertTrue(getHIDs().contains(mciResponse.getId()));
         assertNull(mciResponse.getMessage());
 
-        verify(1, postRequestedFor(urlMatching("/signin")));
-        verify(1, getRequestedFor(urlMatching("/healthIds/nextBlock")));
         verify(1, putRequestedFor(urlMatching("/healthIds/markUsed/" + mciResponse.getId())));
-    }
-
-    @Test
-    public void shouldDeleteTheHealthIdAssignedToCreatedPatient() throws Exception {
-        mciHealthIdMapper.save(new MciHealthId(healthId));
-        assertNotNull(mciHealthIdMapper.get(healthId));
-        assertNull(orgHealthIdMapper.get(healthId));
-
-        String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
-        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
-
-        assertNotNull(urlResponse);
-        assertEquals(SC_CREATED, urlResponse.status);
-
-        assertNull(mciHealthIdMapper.get(healthId));
-        assertNotNull(orgHealthIdMapper.get(healthId));
     }
 
     @Test
@@ -160,12 +147,12 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content);
 
         assertNotNull(urlResponse);
-        assertEquals(SC_BAD_REQUEST, urlResponse.status);
+        assertEquals(SC_INTERNAL_SERVER_ERROR, urlResponse.status);
         String body = urlResponse.body;
         assertNotNull(body);
 
         MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
-        assertEquals("No HIDs available to assign", mciResponse.getMessage());
+        assertEquals("HealthIds are exhausted.", mciResponse.getMessage());
         assertNull(mciResponse.getId());
     }
 
@@ -199,6 +186,11 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         List<Error> errors = mciResponse.getErrors();
         assertEquals(1, errors.size());
         assertTrue(errors.contains(new Error("/f:Patient/f:gender", "error", message)));
+    }
+
+    private void addHidsToMciHealthIdStore() {
+        MciHealthIdStore mciHealthIdStore = getMciHealthIdStore();
+        mciHealthIdStore.addMciHealthIds(getHIDs());
     }
 
     private static UrlResponse doMethod(String requestMethod, String path, String body) throws Exception {

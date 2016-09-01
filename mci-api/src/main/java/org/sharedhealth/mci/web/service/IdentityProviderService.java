@@ -39,14 +39,13 @@ public class IdentityProviderService {
     }
 
     private String getIdentityTokenFromIdp(MCIProperties mciProperties) throws IOException {
-        String idpUrl = mciProperties.getIdpUrl();
         Map<String, String> headers = new HashMap<>();
         headers.put(X_AUTH_TOKEN_KEY, mciProperties.getIdpXAuthToken());
         headers.put(CLIENT_KEY, mciProperties.getIdpClientId());
         Map<String, String> formEntities = new HashMap<>();
         formEntities.put(EMAIL_KEY, mciProperties.getIdpEmail());
         formEntities.put(PASSWORD_KEY, mciProperties.getIdpPassword());
-        String response = new WebClient().post(idpUrl, headers, formEntities);
+        String response = new WebClient().post(mciProperties.getIdpBaseUrl(), mciProperties.getIdpSignInUrl(), headers, formEntities);
         if (response != null) {
             Map map = new ObjectMapper().readValue(response, Map.class);
             return (String) map.get(ACCESS_TOKEN_KEY);

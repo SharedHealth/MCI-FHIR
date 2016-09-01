@@ -12,6 +12,8 @@ import org.sharedhealth.mci.web.util.FhirContextHelper;
 import spark.Request;
 import spark.Response;
 
+import java.io.IOException;
+
 public class PatientController {
     private final static Logger logger = LogManager.getLogger(PatientController.class);
     private final PatientService patientService;
@@ -20,7 +22,7 @@ public class PatientController {
         this.patientService = patientService;
     }
 
-    public String createPatient(Request request, Response response) {
+    public String createPatient(Request request, Response response) throws IOException {
         logger.debug("Create patient request");
 
         Patient patient;

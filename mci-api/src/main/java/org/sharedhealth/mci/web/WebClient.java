@@ -27,18 +27,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.sharedhealth.mci.web.launch.Application.getIdentityStore;
+import static org.sharedhealth.mci.web.util.MCIConstants.URL_SEPARATOR;
+import static org.sharedhealth.mci.web.util.StringUtils.*;
+
 public class WebClient {
     private final static Logger logger = LogManager.getLogger(WebClient.class);
 
-    public String get(String url, Map<String, String> headers) throws IOException {
+    public String get(String baseUrl, String path, Map<String, String> headers) throws IOException {
+        String url = getUrl(baseUrl, path);
         logger.debug("HTTP GET request for {}", url);
         HttpGet request = new HttpGet(url);
         addHeaders(headers, request);
         return execute(request);
     }
 
-
-    public String post(String url, Map<String, String> headers, Map<String, String> formEntities) throws IOException {
+    public String post(String baseUrl, String path, Map<String, String> headers, Map<String, String> formEntities) throws IOException {
+        String url = getUrl(baseUrl, path);
         logger.debug("HTTP POST request for {}", url);
         HttpPost request = new HttpPost(url);
         addHeaders(headers, request);
@@ -51,7 +56,9 @@ public class WebClient {
         return execute(request);
     }
 
-    public String put(String url, Map<String, String> headers, Map<String, String> data) throws IOException {
+
+    public String put(String baseUrl, String path, Map<String, String> headers, Map<String, String> data) throws IOException {
+        String url = getUrl(baseUrl, path);
         logger.debug("HTTP put request for {}", url);
         HttpPut request = new HttpPut(url);
         addHeaders(headers, request);
@@ -66,6 +73,10 @@ public class WebClient {
         }
     }
 
+    private String getUrl(String baseUrl, String path) {
+        return removeSuffix(ensureSuffix(baseUrl, URL_SEPARATOR) + removePrefix(path, URL_SEPARATOR), URL_SEPARATOR);
+    }
+
     private String execute(HttpRequestBase request) throws IOException {
         try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
             ResponseHandler<String> responseHandler = response -> {
@@ -74,6 +85,7 @@ public class WebClient {
                     HttpEntity entity = response.getEntity();
                     return entity != null ? parseContentInputString(entity) : null;
                 } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                    getIdentityStore().clearIdentityToken();
                     throw new IdentityUnauthorizedException("Identity not authorized.");
                 } else {
                     throw new ClientProtocolException(String.format("Unexpected Response status %s", statusCode));

@@ -1,5 +1,7 @@
 package org.sharedhealth.mci.web.model;
 
+import org.sharedhealth.mci.web.exception.HealthIdExhaustedException;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
@@ -25,7 +27,11 @@ public class MciHealthIdStore {
     }
 
     public String getNextHealthId() {
-        return this.mciHealthIds.remove();
+        try {
+            return this.mciHealthIds.remove();
+        } catch (Exception e) {
+            throw new HealthIdExhaustedException();
+        }
     }
 
     public int noOfHIDsLeft() {

@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
-import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.util.DateUtil;
@@ -70,11 +69,6 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(patient, byHealthId);
         assertEquals(patient.getHealthId(),mciResponse.getId());
         assertEquals(HttpStatus.SC_CREATED,mciResponse.getHttpStatus());
-    }
-
-    @Test(expected = PatientNotFoundException.class)
-    public void shouldThrowErrorWhenPatientNotFound() throws Exception {
-        patientRepository.findByHealthId("HID1");
     }
 
     private Patient preparePatientData() {

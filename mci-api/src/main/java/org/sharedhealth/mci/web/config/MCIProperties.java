@@ -7,8 +7,8 @@ import java.util.Map;
 public class MCIProperties {
     private static MCIProperties mciProperties;
     private String cassandraKeySpace;
-
     private String cassandraHost;
+
     private String cassandraPort;
     private String cassandraUser;
     private String cassandraPassword;
@@ -17,7 +17,8 @@ public class MCIProperties {
     private String mciBaseUrl;
     private String patientLinkUri;
     private String profilesFolderPath;
-    private String idpUrl;
+    private String idpBaseUrl;
+    private String idpSignInUrl;
     private String idpClientId;
     private String idpXAuthToken;
     private String idpEmail;
@@ -43,7 +44,8 @@ public class MCIProperties {
         this.mciBaseUrl = env.get("MCI_BASE_URL");
         this.patientLinkUri = env.get("PATIENT_LINK_URI");
         this.profilesFolderPath = env.get("PROFILES_FOLDER_PATH");
-        this.idpUrl = env.get("IDP_URL");
+        this.idpBaseUrl = env.get("IDP_BASE_URL");
+        this.idpSignInUrl = env.get("IDP_URL");
         this.idpClientId = env.get("IDP_CLIENT_ID");
         this.idpXAuthToken = env.get("IDP_X_AUTH_TOKEN");
         this.idpEmail = env.get("IDP_EMAIL");
@@ -148,8 +150,12 @@ public class MCIProperties {
         return idpPassword;
     }
 
-    public String getIdpUrl() {
-        return idpUrl;
+    public String getIdpBaseUrl() {
+        return idpBaseUrl;
+    }
+
+    public String getIdpSignInUrl() {
+        return idpSignInUrl;
     }
 
     public String getHidLocalStoragePath() {
