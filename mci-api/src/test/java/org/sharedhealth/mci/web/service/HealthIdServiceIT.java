@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.HttpUtil.*;
@@ -93,7 +91,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void shouldAsHIDServiceForTheFirstEverStartup() throws Exception {
+    public void shouldAskHIDServiceForTheFirstEverStartup() throws Exception {
         assertThat(mciHealthIdStore.noOfHIDsLeft(), is(0));
         assertFalse(new File(mciProperties.getHidLocalStoragePath()).exists());
 
@@ -124,7 +122,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         List<String> healthIdBlock = initialHealthIdBlock.subList(0, 1);
 
         mciHealthIdStore.addMciHealthIds(healthIdBlock);
-
 
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
                 mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
@@ -164,8 +161,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     private List<String> readHIDsFromFile() throws IOException {
         File hidLocalStorageFile = new File(mciProperties.getHidLocalStoragePath());
         assertTrue(hidLocalStorageFile.exists());
-        String content = IOUtils.toString(new FileInputStream(hidLocalStorageFile), "UTF-8");
-        return asList(new ObjectMapper().readValue(content, String[].class));
+        return IOUtils.readLines(new FileInputStream(hidLocalStorageFile), "UTF-8");
     }
 
     private void setupMarkUsedStub(String hidServiceUrl, String hidServiceResponse, UUID token) {

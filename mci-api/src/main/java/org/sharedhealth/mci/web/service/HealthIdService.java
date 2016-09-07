@@ -1,9 +1,8 @@
 package org.sharedhealth.mci.web.service;
 
-import com.google.gson.Gson;
+import com.google.common.base.Charsets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -91,8 +90,8 @@ public class HealthIdService {
     }
 
     private void writeHIDsToFile(Collection hids) throws IOException {
-        String hidsContent = new Gson().toJson(hids);
-        IOUtils.write(hidsContent, new FileOutputStream(mciProperties.getHidLocalStoragePath()));
+        IOUtils.writeLines(hids, IOUtils.LINE_SEPARATOR_UNIX,
+                new FileOutputStream(mciProperties.getHidLocalStoragePath()), Charsets.UTF_8);
     }
 
     private List getNextBlockFromHidService() throws IOException {
@@ -116,12 +115,7 @@ public class HealthIdService {
 
     private List<String> getExistingHIDs() throws IOException {
         File file = getHidFile();
-        String content = IOUtils.toString(new FileInputStream(file), "UTF-8");
-        if (StringUtils.isNotEmpty(content)) {
-            String[] hids = new ObjectMapper().readValue(content, String[].class);
-            return Arrays.asList(hids);
-        }
-        return new ArrayList<>();
+        return IOUtils.readLines(new FileInputStream(file), Charsets.UTF_8);
     }
 
     private File getHidFile() throws IOException {

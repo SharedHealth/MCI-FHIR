@@ -38,7 +38,7 @@ public class PatientService {
         return patientMapper.mapToFHIRPatient(mciPatient);
     }
 
-    public MCIResponse createPatient(Patient fhirPatient) throws IOException {
+    public MCIResponse createPatient(Patient fhirPatient) {
         MCIValidationResult validate = fhirPatientValidator.validate(fhirPatient);
         if (!validate.isSuccessful()) {
             return createMCIResponseForValidationFailure(validate);
@@ -57,7 +57,11 @@ public class PatientService {
             return getMciResponse("Error while creating patient: " + e.getMessage(),
                     HttpStatus.SC_INTERNAL_SERVER_ERROR);
         }
-        healthIdService.markUsed(healthId);
+        try {
+            healthIdService.markUsed(healthId);
+        } catch (IOException e) {
+            // Add to failed events
+        }
         return mciResponse;
     }
 
