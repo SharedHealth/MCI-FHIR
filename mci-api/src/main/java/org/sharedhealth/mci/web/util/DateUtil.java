@@ -3,11 +3,14 @@ package org.sharedhealth.mci.web.util;
 import org.apache.commons.lang3.time.DateUtils;
 
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
+import static java.util.Calendar.YEAR;
 import static org.apache.commons.lang3.time.DateUtils.addSeconds;
 
 public class DateUtil {
@@ -25,6 +28,7 @@ public class DateUtil {
     public static final String ISO_8601_DATE_IN_HOUR_MIN_FORMAT2 = "yyyy-MM-dd'T'HH:mmXXX"; //2015-02-17T11:37+05:30
     public static final String ISO_8601_DATE_IN_SECS_FORMAT2 = "yyyy-MM-dd'T'HH:mm:ssXXX"; //2015-02-17T11:37:16+05:30
     public static final String ISO_8601_DATE_IN_MILLIS_FORMAT2 = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"; //2015-02-17T11:36:11.587+05:30
+    public static final String ISO_DATE_TIME_TILL_MILLIS_FORMAT3 = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
     public static final String UTC_DATE_MILLIS_TZD_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSX"; //2011-04-15T20:08:18.032Z
     public static final String UTC_DATE_IN_SECS_TZD_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX"; //2011-04-15T20:08:18Z;
@@ -58,6 +62,12 @@ public class DateUtil {
         Calendar instance = Calendar.getInstance();
         instance.setTime(date);
         return instance.get(Calendar.YEAR);
+    }
+
+    public static int getYearOf(UUID uuid) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(TimeUuidUtil.getTimeFromUUID(uuid));
+        return cal.get(YEAR);
     }
 
     public static Date parseDate(String date, String... formats) throws ParseException {
@@ -129,5 +139,28 @@ public class DateUtil {
 
     public static Date addMinutes(Date date, int minutes) {
         return org.apache.commons.lang3.time.DateUtils.addMinutes(date, minutes);
+    }
+
+
+    public static String toIsoMillisFormat(UUID uuid) {
+        return toIsoMillisFormat(TimeUuidUtil.getTimeFromUUID(uuid));
+    }
+
+    public static String toIsoMillisFormat(long date) {
+        return toIsoMillisFormat(new Date(date));
+    }
+
+    public static String toIsoMillisFormat(String dateString) {
+        if (dateString == null) {
+            return null;
+        }
+        Date date = null;
+        date = parseDate(dateString);
+        return date == null ? null : toIsoMillisFormat(date);
+    }
+
+    public static String toIsoMillisFormat(Date date) {
+        DateFormat dateFormat = new SimpleDateFormat(ISO_DATE_TIME_TILL_MILLIS_FORMAT3);
+        return dateFormat.format(date);
     }
 }

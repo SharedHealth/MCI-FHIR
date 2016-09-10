@@ -10,10 +10,12 @@ import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.repository.PatientRepository;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
 
 import java.io.IOException;
+import java.util.Date;
 
 public class PatientService {
     private PatientMapper patientMapper;
@@ -47,6 +49,7 @@ public class PatientService {
         MciHealthId healthId;
         healthId = healthIdService.getNextHealthId();
         mciPatient.setHealthId(healthId.getHid());
+        mciPatient.setCreatedAt(TimeUuidUtil.uuidForDate(new Date()));
 
         MCIResponse mciResponse = null;
         try {

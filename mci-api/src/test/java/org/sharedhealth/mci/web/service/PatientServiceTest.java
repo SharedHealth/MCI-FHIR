@@ -120,12 +120,13 @@ public class PatientServiceTest {
         Patient patientToBeCreated = argumentCaptor.getValue();
 
         assertSame(mciPatient, patientToBeCreated);
+        assertNotNull(patientToBeCreated.getCreatedAt());
         assertEquals(healthId, patientToBeCreated.getHealthId());
 
         InOrder inOrder = inOrder(patientMapper, healthIdService, patientRepository);
         inOrder.verify(patientMapper).mapToMCIPatient(fhirPatient);
         inOrder.verify(healthIdService).getNextHealthId();
-        inOrder.verify(patientRepository).createPatient(mciPatient);
+        inOrder.verify(patientRepository).createPatient(patientToBeCreated);
         inOrder.verify(healthIdService).markUsed(mciHealthId);
     }
 

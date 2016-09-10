@@ -6,9 +6,7 @@ import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_MCI_HEALTH_ID;
-import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_ORG_HEALTH_ID;
-import static org.sharedhealth.mci.web.util.RepositoryConstants.CF_PATIENT;
+import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
 public class TestUtil {
 
@@ -24,7 +22,9 @@ public class TestUtil {
         return asList(
                 CF_PATIENT,
                 CF_MCI_HEALTH_ID,
-                CF_ORG_HEALTH_ID
+                CF_ORG_HEALTH_ID,
+                CF_PATIENT_UPDATE_LOG,
+                CF_PATIENT_AUDIT_LOG
         );
     }
 

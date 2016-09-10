@@ -10,17 +10,22 @@ import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.Patient;
+import org.sharedhealth.mci.web.model.PatientAuditLog;
+import org.sharedhealth.mci.web.model.PatientUpdateLog;
 import org.sharedhealth.mci.web.util.DateUtil;
+import org.sharedhealth.mci.web.util.RepositoryConstants;
 import org.sharedhealth.mci.web.util.TestUtil;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
 import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class PatientRepositoryIT extends BaseIntegrationTest {
     private PatientRepository patientRepository;
     private Mapper<Patient> patientMapper;
+    private Mapper<PatientUpdateLog> patientUpdateLogMapper;
+    private Mapper<PatientAuditLog> patientAuditLogMapper;
 
     private final String healthId = "HID";
     private final String givenName = "Bob the";
@@ -41,6 +46,8 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
         patientRepository = new PatientRepository(mappingManager);
         patientMapper = mappingManager.mapper(Patient.class);
+        patientUpdateLogMapper = mappingManager.mapper(PatientUpdateLog.class);
+        patientAuditLogMapper = mappingManager.mapper(PatientAuditLog.class);
     }
 
     @After
@@ -67,8 +74,23 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
         Patient byHealthId = patientMapper.get(patient.getHealthId());
         assertEquals(patient, byHealthId);
-        assertEquals(patient.getHealthId(),mciResponse.getId());
-        assertEquals(HttpStatus.SC_CREATED,mciResponse.getHttpStatus());
+        assertEquals(patient.getHealthId(), mciResponse.getId());
+        assertEquals(HttpStatus.SC_CREATED, mciResponse.getHttpStatus());
+
+        PatientAuditLog patientAuditLog = patientAuditLogMapper.get(patient.getHealthId());
+        assertNotNull(patientAuditLog);
+        assertEquals(patient.getCreatedAt(), patientAuditLog.getEventId());
+        assertNull(patientAuditLog.getApprovedBy());
+        assertNull(patientAuditLog.getRequestedBy());
+
+        PatientUpdateLog patientUpdateLog = patientUpdateLogMapper.get(DateUtil.getYearOf(patient.getCreatedAt()));
+        assertNotNull(patientUpdateLog);
+        assertEquals(patient.getCreatedAt(), patientUpdateLog.getEventId());
+        assertEquals(patient.getHealthId(), patientUpdateLog.getHealthId());
+        assertEquals(RepositoryConstants.EVENT_TYPE_CREATED, patientUpdateLog.getEventType());
+        assertNull(patientUpdateLog.getApprovedBy());
+
+
     }
 
     private Patient preparePatientData() {
@@ -86,6 +108,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         expectedPatient.setUnionOrUrbanWardId(urbanWardId);
         expectedPatient.setRuralWardId(ruralWardId);
         expectedPatient.setAddressLine(addressLine);
+        expectedPatient.setCreatedAt(TimeUuidUtil.uuidForDate(new Date()));
         return expectedPatient;
     }
 }

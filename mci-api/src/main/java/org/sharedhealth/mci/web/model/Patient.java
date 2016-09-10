@@ -5,6 +5,7 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 
 import java.util.Date;
+import java.util.UUID;
 
 import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
@@ -50,6 +51,8 @@ public class Patient {
     @Column(name = COUNTRY_CODE)
     private String countryCode;
 
+    @Column(name = CREATED_AT)
+    private UUID createdAt;
 
     public String getHealthId() {
         return healthId;
@@ -153,6 +156,14 @@ public class Patient {
 
     public void setCountryCode(String countryCode) {
         this.countryCode = countryCode;
+    }
+
+    public UUID getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(UUID createdAt) {
+        this.createdAt = createdAt;
     }
 
     @Override
