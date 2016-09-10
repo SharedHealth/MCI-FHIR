@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <StructureDefinition xmlns="http://hl7.org/fhir">
-  <id value="PatientName" />
+  <id value="mciName" />
   <meta>
-    <lastUpdated value="2016-08-23T18:21:44.477+05:30" />
+    <lastUpdated value="2016-09-09T12:44:49.869+05:30" />
   </meta>
-  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#PatientName" />
+  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profiles#mciName" />
   <version value="1.0" />
-  <name value="PatinetName" />
+  <name value="MCIName" />
   <status value="draft" />
   <fhirVersion value="1.0.2" />
   <kind value="datatype" />

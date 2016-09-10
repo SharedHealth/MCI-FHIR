@@ -1,21 +1,18 @@
 <Patient xmlns="http://hl7.org/fhir">
-    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup">
-        <valueString value="201918991101"/>
-    </extension>
-    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#MCIName">
-        <valueHumanName>
-            <family value="Chalmers"/>
-            <given value="Peter"/>
-        </valueHumanName>
-    </extension>
+    <name>
+        <family value="Jon"/>
+        <given value="Peter"/>
+    </name>
     <gender value="male"/>
-
     <birthDate value="1976-01-12">
         <extension url="http://hl7.org/fhir/StructureDefinition/patient-birthTime">
             <valueDateTime value="1976-01-12T16:50:00+05:30"/>
         </extension>
     </birthDate>
     <address>
+        <extension url="﻿https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
+            <valueString value="1976-01-12T16:50:00+05:30"/>
+        </extension>
         <line value="3rd lane"/>
         <country value="050"/>
     </address>

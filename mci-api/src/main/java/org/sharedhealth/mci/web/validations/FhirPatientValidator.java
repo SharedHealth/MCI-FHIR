@@ -5,6 +5,8 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hl7.fhir.instance.hapi.validation.DefaultProfileValidationSupport;
 import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
 import org.hl7.fhir.instance.hapi.validation.ValidationSupportChain;
@@ -21,6 +23,7 @@ import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirContext;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirHL7Context;
 
 public class FhirPatientValidator {
+    private static final Logger logger = LogManager.getLogger(FhirPatientValidator.class);
     public static final String PATH_TO_PROFILES_FOLDER = "/Users/mritunjd/Documents/projects/bdshr/MCI-Registry/profiles/";
 
     //should be removed once forge bug is fixed
@@ -39,7 +42,7 @@ public class FhirPatientValidator {
         ValidationResult validationResult = fhirValidator.validateWithResult(patient);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
-        ignoreErrors(mciValidationResult);
+//        ignoreErrors(mciValidationResult);
         return mciValidationResult;
     }
 
@@ -79,11 +82,11 @@ public class FhirPatientValidator {
                     FhirInstanceValidator validator = new FhirInstanceValidator();
 
                     // loadProfileOrReturnNull reads from file mypatient.profile.xml and give StructureDefinition for that
-                    StructureDefinition patient = loadProfileOrReturnNull("patient");
+                    StructureDefinition patient = loadProfileOrReturnNull("mcipatient");
                     validator.setStructureDefintion(patient);
 
                     //SharedHealthSupport is IValidationSupport which gives definition of custom extensions
-                    validator.setValidationSupport(new ValidationSupportChain(new DefaultProfileValidationSupport(), new SharedHealthSupport()));
+                    validator.setValidationSupport(new ValidationSupportChain(new SharedHealthSupport(), new DefaultProfileValidationSupport()));
                     fhirValidator.registerValidatorModule(validator);
                 }
             }
@@ -92,15 +95,15 @@ public class FhirPatientValidator {
     }
 
     public static StructureDefinition loadProfileOrReturnNull(String profileName) {
-        String profileText;
         try {
             String pathToProfile = PATH_TO_PROFILES_FOLDER + profileName.toLowerCase() + ".profile.xml";
-            profileText = IOUtils.toString(new FileInputStream(pathToProfile), "UTF-8");
+            String profileText = IOUtils.toString(new FileInputStream(pathToProfile), "UTF-8");
+            return fhirHL7Context.newXmlParser().parseResource(StructureDefinition.class,
+                    profileText);
         } catch (IOException e1) {
-            throw new RuntimeException("No profile found for patient");
+            logger.debug("No customised profile for {}", profileName);
         }
-        return fhirHL7Context.newXmlParser().parseResource(StructureDefinition.class,
-                profileText);
+        return null;
     }
 
 }
