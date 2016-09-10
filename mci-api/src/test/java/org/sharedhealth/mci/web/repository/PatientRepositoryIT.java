@@ -2,6 +2,7 @@ package org.sharedhealth.mci.web.repository;
 
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
@@ -13,13 +14,15 @@ import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.model.PatientAuditLog;
 import org.sharedhealth.mci.web.model.PatientUpdateLog;
 import org.sharedhealth.mci.web.util.DateUtil;
-import org.sharedhealth.mci.web.util.RepositoryConstants;
 import org.sharedhealth.mci.web.util.TestUtil;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
 import java.util.Date;
+import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.sharedhealth.mci.web.util.JsonMapper.readValue;
+import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
 public class PatientRepositoryIT extends BaseIntegrationTest {
     private PatientRepository patientRepository;
@@ -27,7 +30,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
     private Mapper<PatientUpdateLog> patientUpdateLogMapper;
     private Mapper<PatientAuditLog> patientAuditLogMapper;
 
-    private final String healthId = "HID";
+    private final String healthId = "HID123";
     private final String givenName = "Bob the";
     private final String surName = "Builder";
     private final String gender = "M";
@@ -77,20 +80,70 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(patient.getHealthId(), mciResponse.getId());
         assertEquals(HttpStatus.SC_CREATED, mciResponse.getHttpStatus());
 
+        assertPatientAuditLog(patient);
+
+        assertPatientUpdateLog(patient);
+
+    }
+
+    private void assertPatientAuditLog(Patient patient) {
         PatientAuditLog patientAuditLog = patientAuditLogMapper.get(patient.getHealthId());
         assertNotNull(patientAuditLog);
         assertEquals(patient.getCreatedAt(), patientAuditLog.getEventId());
         assertNull(patientAuditLog.getApprovedBy());
         assertNull(patientAuditLog.getRequestedBy());
+        String changeSet = patientAuditLog.getChangeSet();
+        assertNotNull(changeSet);
 
+        Map<String, Map<String, Object>> changeSetAsMap = readValue(changeSet, new TypeReference<Map<String, Map<String, Object>>>() {
+        });
+        assertHidChangeSet(changeSetAsMap);
+        assertDOBChangeset(changeSetAsMap);
+        assertGenderChangeSet(changeSetAsMap);
+        assertGivenNameChangeSet(changeSetAsMap);
+        assertSurNameChangeSet(changeSetAsMap);
+
+    }
+
+    private void assertPatientUpdateLog(Patient patient) {
         PatientUpdateLog patientUpdateLog = patientUpdateLogMapper.get(DateUtil.getYearOf(patient.getCreatedAt()));
         assertNotNull(patientUpdateLog);
         assertEquals(patient.getCreatedAt(), patientUpdateLog.getEventId());
         assertEquals(patient.getHealthId(), patientUpdateLog.getHealthId());
-        assertEquals(RepositoryConstants.EVENT_TYPE_CREATED, patientUpdateLog.getEventType());
+        assertEquals(EVENT_TYPE_CREATED, patientUpdateLog.getEventType());
         assertNull(patientUpdateLog.getApprovedBy());
+        String changeSet = patientUpdateLog.getChangeSet();
+        assertNotNull(changeSet);
 
+        Map<String, Map<String, Object>> changeSetAsMap = readValue(changeSet, new TypeReference<Map<String, Map<String, Object>>>() {
+        });
 
+        assertHidChangeSet(changeSetAsMap);
+    }
+
+    private void assertHidChangeSet(Map<String, Map<String, Object>> changeSetAsMap) {
+        Map<String, Object> hidChangeSetAsMap = changeSetAsMap.get(HID);
+        assertEquals(healthId, hidChangeSetAsMap.get(NEW_VALUE).toString());
+        assertEquals("", hidChangeSetAsMap.get(OLD_VALUE).toString());
+    }
+
+    private void assertDOBChangeset(Map<String, Map<String, Object>> changeSetAsMap) {
+        Map<String, Object> dateOfBirthChangeSet = changeSetAsMap.get(DATE_OF_BIRTH);
+        assertEquals(dateOfBirth.toString(), dateOfBirthChangeSet.get(NEW_VALUE));
+    }
+
+    private void assertGenderChangeSet(Map<String, Map<String, Object>> changeSetAsMap) {
+        Map<String, Object> genderChangeSet = changeSetAsMap.get(GENDER);
+        assertEquals(gender, genderChangeSet.get(NEW_VALUE));
+    }
+
+    private void assertGivenNameChangeSet(Map<String, Map<String, Object>> changeSetAsMap) {
+        Map<String, Object> givenNameChangeSet = changeSetAsMap.get(GIVEN_NAME);
+        assertEquals(givenName, givenNameChangeSet.get(NEW_VALUE));
+    }
+    private void assertSurNameChangeSet(Map<String, Map<String, Object>> changeSetAsMap) {
+        Map<String, Object> surNameChangeSet = changeSetAsMap.get(SUR_NAME);
+        assertEquals(surName, surNameChangeSet.get(NEW_VALUE));
     }
 
     private Patient preparePatientData() {
