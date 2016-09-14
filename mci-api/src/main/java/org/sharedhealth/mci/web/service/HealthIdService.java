@@ -83,6 +83,7 @@ public class HealthIdService {
         Collection hids = CollectionUtils.union(mciHealthIdStore.getAll(), nextBlock);
         writeHIDsToFile(hids);
         mciHealthIdStore.addMciHealthIds(nextBlock);
+        logger.info("Replenished {} healthIds from HID service", nextBlock.size());
     }
 
     private String getMarkUsedUrlPath(MciHealthId healthId) {
