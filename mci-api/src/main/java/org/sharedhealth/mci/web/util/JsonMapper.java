@@ -35,7 +35,4 @@ public class JsonMapper {
         }
     }
 
-    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
-        return objectMapper.convertValue(fromValue, toValueType);
-    }
 }
