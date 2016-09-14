@@ -16,7 +16,7 @@ public class RepositoryConstants {
     public static final String DATE_OF_BIRTH = "date_of_birth";
     public static final String CREATED_AT = "created_at";
 
-
+    public static final String PRESENT_ADDRESS = "present_address";
     public static final String COUNTRY_CODE = "country_code";
     public static final String DIVISION_ID = "division_id";
     public static final String DISTRICT_ID = "district_id";
@@ -39,6 +39,9 @@ public class RepositoryConstants {
     public static final String YEAR = "year";
     public static final String EVENT_TYPE = "event_type";
     public static final String EVENT_TYPE_CREATED = "created";
+
+    public static final String OLD_VALUE = "old_value";
+    public static final String NEW_VALUE = "new_value";
 
 
 
