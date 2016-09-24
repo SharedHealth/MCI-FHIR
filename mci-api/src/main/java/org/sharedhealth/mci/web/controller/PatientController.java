@@ -1,12 +1,12 @@
 package org.sharedhealth.mci.web.controller;
 
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.parser.DataFormatException;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.service.PatientService;
@@ -34,7 +34,7 @@ public class PatientController {
         Patient patient;
         try {
             patient = (Patient) FhirContextHelper.parseResource(request.body());
-        } catch (DataFormatException e) {
+        } catch (DataFormatException|IllegalArgumentException e) {
             logger.error("Can not parse", e);
             MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_UNPROCESSABLE_ENTITY);
             mciResponse.setMessage(e.getMessage());

@@ -115,7 +115,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         String body = urlResponse.body;
         assertNotNull(body);
         IBaseResource resource = parseResource(body);
-        assertTrue(resource instanceof ca.uhn.fhir.model.dstu2.resource.Patient);
+        assertTrue(resource instanceof org.hl7.fhir.dstu3.model.Patient);
     }
 
     @Test
@@ -212,11 +212,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         assertNotNull(body);
 
         MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
-
-        String message = "The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender (http://hl7.org/fhir/ValueSet/administrative-gender, and a code is required from this value set";
-        List<Error> errors = mciResponse.getErrors();
-        assertEquals(1, errors.size());
-        assertTrue(errors.contains(new Error("/f:Patient/f:gender", "error", message)));
+        assertEquals(SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
+        assertEquals("Unknown AdministrativeGender code 'myNewGender'", mciResponse.getMessage());
     }
 
     @Test

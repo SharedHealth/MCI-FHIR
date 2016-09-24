@@ -1,7 +1,7 @@
 package org.sharedhealth.mci.web.validations;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.validation.SingleValidationMessage;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

@@ -1,9 +1,9 @@
 package org.sharedhealth.mci.web.service;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.model.Error;

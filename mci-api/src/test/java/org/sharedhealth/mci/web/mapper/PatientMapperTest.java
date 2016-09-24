@@ -1,14 +1,6 @@
 package org.sharedhealth.mci.web.mapper;
 
-import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.dstu2.composite.*;
-import ca.uhn.fhir.model.dstu2.resource.Patient;
-import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
-import ca.uhn.fhir.model.dstu2.valueset.IdentifierTypeCodesEnum;
-import ca.uhn.fhir.model.dstu2.valueset.LinkTypeEnum;
-import ca.uhn.fhir.model.primitive.DateDt;
-import ca.uhn.fhir.model.primitive.DateTimeDt;
-import ca.uhn.fhir.model.primitive.StringDt;
+import org.hl7.fhir.dstu3.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -61,38 +53,38 @@ public class PatientMapperTest {
 
         org.sharedhealth.mci.web.model.Patient mciPatient = createMCIPatient();
         mciPatient.setHealthId(healthId);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
+        org.hl7.fhir.dstu3.model.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
         assertNotNull(fhirPatient);
 
-        List<IdentifierDt> identifiers = fhirPatient.getIdentifier();
+        List<Identifier> identifiers = fhirPatient.getIdentifier();
         assertEquals(1, identifiers.size());
-        IdentifierDt hidIdentifier = identifiers.get(0);
+        Identifier hidIdentifier = identifiers.get(0);
         assertEquals(healthId, hidIdentifier.getValue());
         assertEquals(getMCIPatientURI(mciBaseUrl) + healthId, hidIdentifier.getSystem());
 
-        BoundCodeableConceptDt<IdentifierTypeCodesEnum> type = hidIdentifier.getType();
-        CodingDt codingDt = type.getCodingFirstRep();
-        assertEquals(getMCIValuesetURI(mciBaseUrl), codingDt.getSystem());
-        assertEquals(MCI_IDENTIFIER_HID_CODE, codingDt.getCode());
+        CodeableConcept type = hidIdentifier.getType();
+        Coding coding = type.getCodingFirstRep();
+        assertEquals(getMCIValuesetURI(mciBaseUrl), coding.getSystem());
+        assertEquals(MCI_IDENTIFIER_HID_CODE, coding.getCode());
 
-        HumanNameDt name = fhirPatient.getNameFirstRep();
-        assertEquals(givenName, name.getGivenFirstRep().getValue());
-        assertEquals(surName, name.getFamilyFirstRep().getValue());
+        HumanName name = fhirPatient.getNameFirstRep();
+        assertEquals(givenName, name.getGiven().get(0).getValue());
+        assertEquals(surName, name.getFamily().get(0).getValue());
 
-        assertEquals(AdministrativeGenderEnum.MALE.getCode(), fhirPatient.getGender());
+        assertEquals(Enumerations.AdministrativeGender.MALE, fhirPatient.getGender());
         assertEquals(dateTimeOfBirth, fhirPatient.getBirthDate());
 
-        AddressDt address = fhirPatient.getAddressFirstRep();
-        List<ExtensionDt> extensions = address.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
-        assertEquals(addressLine, address.getLineFirstRep().getValue());
+        Address address = fhirPatient.getAddressFirstRep();
+        List<Extension> extensions = address.getExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
+        assertEquals(addressLine, address.getLine().get(0).getValue());
         assertEquals(1, extensions.size());
-        StringDt addressCode = (StringDt) extensions.get(0).getValue();
+        StringType addressCode = (StringType) extensions.get(0).getValue();
         assertEquals("302618020104", addressCode.getValue());
         assertEquals(countryCode, address.getCountry());
 
-        Patient.Link link = fhirPatient.getLinkFirstRep();
-        assertEquals(LinkTypeEnum.SEE_ALSO.getCode(), link.getType());
-        assertEquals(patientLinkUri + healthId, link.getOther().getReference().getValue());
+        Patient.PatientLinkComponent link = fhirPatient.getLinkFirstRep();
+        assertEquals(Patient.LinkType.SEEALSO, link.getType());
+        assertEquals(patientLinkUri + healthId, link.getOther().getReference());
     }
 
     @Test
@@ -110,27 +102,27 @@ public class PatientMapperTest {
         assertEquals(expectedMCIPatient, mciPatient);
     }
 
-    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient(boolean timeOfBirthIncluded) {
-        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+    private org.hl7.fhir.dstu3.model.Patient createFHIRPatient(boolean timeOfBirthIncluded) {
+        org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
         patient.addName().addGiven(givenName).addFamily(surName);
-        patient.setGender(AdministrativeGenderEnum.MALE);
+        patient.setGender(Enumerations.AdministrativeGender.MALE);
 
         if (timeOfBirthIncluded) {
-            DateDt date = new DateDt(dateTimeOfBirth);
-            ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateTimeOfBirth));
-            date.addUndeclaredExtension(extensionDt);
-            patient.setBirthDate(date);
+            DateType date = new DateType(dateTimeOfBirth);
+            Extension extension = new Extension().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeType(dateTimeOfBirth));
+            date.addExtension(extension);
+            patient.setBirthDate(date.getValue());
         } else {
-            patient.setBirthDate(new DateDt(dateOfBirth));
+            patient.setBirthDate(dateOfBirth);
         }
 
-        AddressDt addressDt = new AddressDt().addLine(addressLine);
-        addressDt.setCountry(countryCode);
+        Address address = new Address().addLine(addressLine);
+        address.setCountry(countryCode);
         String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
-        ExtensionDt addressCodeExtension = new ExtensionDt().
-                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
-        addressDt.addUndeclaredExtension(addressCodeExtension);
-        patient.addAddress(addressDt);
+        Extension addressCodeExtension = new Extension().
+                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringType(addressCode));
+        address.addExtension(addressCodeExtension);
+        patient.addAddress(address);
         return patient;
     }
 

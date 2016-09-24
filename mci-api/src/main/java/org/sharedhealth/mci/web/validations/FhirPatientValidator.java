@@ -1,12 +1,12 @@
 package org.sharedhealth.mci.web.validations;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
 import org.apache.commons.io.IOUtils;
-import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
-import org.hl7.fhir.instance.model.StructureDefinition;
+import org.hl7.fhir.dstu3.hapi.validation.FhirInstanceValidator;
+import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.StructureDefinition;
 import org.sharedhealth.mci.web.config.MCIProperties;
 
 import java.io.FileInputStream;
@@ -17,7 +17,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirContext;
-import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirHL7Context;
 
 public class FhirPatientValidator {
     private final String PATIENT_PROFILE_FILE_PREFIX = "mcipatient";
@@ -31,10 +30,10 @@ public class FhirPatientValidator {
     }
 
     public MCIValidationResult validate(Patient patient) {
-        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
-        MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
-        changeWarningToErrorIfNeeded(mciValidationResult);
-        return mciValidationResult;
+//        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
+//        MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
+//        changeWarningToErrorIfNeeded(mciValidationResult);
+        return null;
     }
 
     private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {
@@ -77,7 +76,7 @@ public class FhirPatientValidator {
         } catch (IOException e) {
             throw new RuntimeException("No profile found for patient");
         }
-        return fhirHL7Context.newXmlParser().parseResource(StructureDefinition.class,
+        return fhirContext.newXmlParser().parseResource(StructureDefinition.class,
                 profileText);
     }
 

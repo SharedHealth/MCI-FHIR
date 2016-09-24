@@ -1,8 +1,8 @@
 package org.sharedhealth.mci.web.controller;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

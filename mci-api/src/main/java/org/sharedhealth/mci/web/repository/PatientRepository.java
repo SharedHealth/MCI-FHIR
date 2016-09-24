@@ -35,8 +35,7 @@ public class PatientRepository {
 
     public Patient findByHealthId(String healthId) {
         logger.info(String.format("Find patient by healthId: %s", healthId));
-        Patient patient = patientDBMapper.get(healthId);
-        return patient;
+        return patientDBMapper.get(healthId);
     }
 
     public MCIResponse createPatient(Patient patient) {

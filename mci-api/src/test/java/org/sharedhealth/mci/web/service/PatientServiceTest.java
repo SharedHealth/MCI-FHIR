@@ -1,14 +1,15 @@
 package org.sharedhealth.mci.web.service;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.dstu2.composite.AddressDt;
-import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.StringDt;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import org.apache.http.HttpStatus;
+import org.hl7.fhir.dstu3.model.Address;
+import org.hl7.fhir.dstu3.model.Enumerations;
+import org.hl7.fhir.dstu3.model.Extension;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -79,11 +80,11 @@ public class PatientServiceTest {
     @Test
     public void shouldGiveFHIRPatientForGivenHID() throws Exception {
         Patient mciPatient = new Patient();
-        ca.uhn.fhir.model.dstu2.resource.Patient expectedFHIRPatient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+        org.hl7.fhir.dstu3.model.Patient expectedFHIRPatient = new org.hl7.fhir.dstu3.model.Patient();
         when(patientRepository.findByHealthId(healthId)).thenReturn(mciPatient);
         when(patientMapper.mapToFHIRPatient(mciPatient)).thenReturn(expectedFHIRPatient);
 
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientService.findPatientByHealthId(healthId);
+        org.hl7.fhir.dstu3.model.Patient fhirPatient = patientService.findPatientByHealthId(healthId);
 
         assertNotNull(fhirPatient);
         assertSame(expectedFHIRPatient, fhirPatient);
@@ -112,7 +113,7 @@ public class PatientServiceTest {
         response.setId(healthId);
 
         MciHealthId mciHealthId = new MciHealthId(healthId);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = createFHIRPatient();
+        org.hl7.fhir.dstu3.model.Patient fhirPatient = createFHIRPatient();
         Patient mciPatient = new Patient();
 
         MCIValidationResult mockValidationResult = mock(MCIValidationResult.class);
@@ -145,7 +146,7 @@ public class PatientServiceTest {
 
     @Test
     public void shouldThrowAnErrorIfPatientDataIsNotValid() throws Exception {
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+        org.hl7.fhir.dstu3.model.Patient fhirPatient = new org.hl7.fhir.dstu3.model.Patient();
         String invalidGender = "Invalid gender";
         String genderLocation = "/f:Patient/f:gender";
         String invalidDOB = "Invalid DOB";
@@ -175,22 +176,22 @@ public class PatientServiceTest {
         return singleValidationMessage;
     }
 
-    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient() {
-        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+    private org.hl7.fhir.dstu3.model.Patient createFHIRPatient() {
+        org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
         patient.addName().addGiven(givenName).addFamily(surName);
-        patient.setGender(AdministrativeGenderEnum.MALE);
+        patient.setGender(Enumerations.AdministrativeGender.MALE);
 
         DateDt date = new DateDt(dateOfBirth);
         ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
         date.addUndeclaredExtension(extensionDt);
-        patient.setBirthDate(date);
+        patient.setBirthDate(date.getValue());
 
-        AddressDt addressDt = new AddressDt().addLine(addressLine);
+        Address addressDt = new Address().addLine(addressLine);
         addressDt.setCountry(countryCode);
         String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
-        ExtensionDt addressCodeExtension = new ExtensionDt().
+        Extension addressCodeExtension = new Extension().
                 setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
-        addressDt.addUndeclaredExtension(addressCodeExtension);
+        addressDt.addExtension(addressCodeExtension);
         patient.addAddress(addressDt);
         return patient;
     }
