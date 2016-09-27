@@ -8,6 +8,7 @@ import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.controller.GlobalExceptionHandler;
 import org.sharedhealth.mci.web.controller.MCIRoutes;
 import org.sharedhealth.mci.web.controller.PatientController;
+import org.sharedhealth.mci.web.security.TokenAuthenticationFilter;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.model.IdentityStore;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
@@ -41,6 +42,7 @@ public class Application {
     private static HealthIdService healthIdService;
     private static PatientService patientService;
     private static PatientController patientController;
+    private static TokenAuthenticationFilter authenticationFilter;
 
     public static void main(String[] args) {
         logger.info("Starting MCI Registry");
@@ -74,7 +76,8 @@ public class Application {
         instantiateControllers();
 
         //instantiate MCIRoutes with all controllers here
-        new MCIRoutes(patientController);
+        authenticationFilter = new TokenAuthenticationFilter(identityProviderService);
+        new MCIRoutes(patientController, authenticationFilter);
         //instantiate MCIRoutes with all controllers here
 
 

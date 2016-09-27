@@ -8,8 +8,8 @@ public class MCIProperties {
     private static MCIProperties mciProperties;
     private String cassandraKeySpace;
     private String cassandraHost;
-
     private String cassandraPort;
+
     private String cassandraUser;
     private String cassandraPassword;
     private String cassandraTimeout;
@@ -19,6 +19,7 @@ public class MCIProperties {
     private String profilesFolderPath;
     private String idpBaseUrl;
     private String idpSignInUrl;
+    private String idpUserInfoUrl;
     private String idpClientId;
     private String idpXAuthToken;
     private String idpEmail;
@@ -45,7 +46,8 @@ public class MCIProperties {
         this.patientLinkUri = env.get("PATIENT_LINK_URI");
         this.profilesFolderPath = env.get("PROFILES_FOLDER_PATH");
         this.idpBaseUrl = env.get("IDP_BASE_URL");
-        this.idpSignInUrl = env.get("IDP_URL");
+        this.idpSignInUrl = env.get("IDP_SIGNIN_URL");
+        this.idpUserInfoUrl = env.get("IDP_USERINFO_URL");
         this.idpClientId = env.get("IDP_CLIENT_ID");
         this.idpXAuthToken = env.get("IDP_X_AUTH_TOKEN");
         this.idpEmail = env.get("IDP_EMAIL");
@@ -160,5 +162,13 @@ public class MCIProperties {
 
     public String getHidLocalStoragePath() {
         return hidLocalStoragePath;
+    }
+
+    public String getIdpUserInfoUrl() {
+        return idpUserInfoUrl;
+    }
+
+    public void setIdpUserInfoUrl(String idpUserInfoUrl) {
+        this.idpUserInfoUrl = idpUserInfoUrl;
     }
 }

@@ -1,12 +1,13 @@
 package org.sharedhealth.mci.web.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.sharedhealth.mci.web.WebClient;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.exception.IdentityUnauthorizedException;
 import org.sharedhealth.mci.web.model.IdentityStore;
+import org.sharedhealth.mci.web.security.UserInfo;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -51,5 +52,15 @@ public class IdentityProviderService {
             return (String) map.get(ACCESS_TOKEN_KEY);
         }
         return null;
+    }
+
+    public UserInfo getUserInfo(MCIProperties mciProperties, String clientAuthToken) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(X_AUTH_TOKEN_KEY, mciProperties.getIdpXAuthToken());
+        headers.put(CLIENT_KEY, mciProperties.getIdpClientId());
+        String userInfoUrl = String.format(mciProperties.getIdpUserInfoUrl(), clientAuthToken);
+        String response = new WebClient().get(mciProperties.getIdpBaseUrl(), userInfoUrl, headers);
+        UserInfo userInfo = new ObjectMapper().readValue(response, UserInfo.class);
+        return userInfo;
     }
 }
