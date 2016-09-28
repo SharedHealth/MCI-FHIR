@@ -1,0 +1,24 @@
+{
+  "id": "18548",
+  "name": "Facility 1",
+  "email": "facility@gmail.com",
+  "is_active": 1,
+  "activated": true,
+  "activated_at": "2016-09-27 03:40:01",
+  "last_login": "2016-09-27 03:40:01",
+  "access_token": "d324fe7a-156b-449c-93b2-1c9871ee306c",
+  "created_at": "2016-09-27 03:40:01",
+  "updated_at": "2016-09-27 03:40:01",
+  "deleted_at": "2016-09-27 03:40:01",
+  "groups": [
+    "Facility Admin",
+    "MCI User"
+  ],
+  "profiles": [
+    {
+      "name": "facility",
+      "id": "10019842",
+      "catchment": ["3026"]
+    }
+  ]
+}

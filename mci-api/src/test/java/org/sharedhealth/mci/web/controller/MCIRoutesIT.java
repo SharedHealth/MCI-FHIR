@@ -92,34 +92,12 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void shouldNotAllowGetRequestIfNotAuthenticated() throws Exception {
-        MCIProperties mciProperties = MCIProperties.getInstance();
-        String authToken = UUID.randomUUID().toString();
-
-        patientMapper.save(createMCIPatient());
-        stubFor(get(urlMatching("/token/" + authToken))
-                .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
-                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
-                .willReturn(aResponse()
-                        .withStatus(HttpStatus.SC_UNAUTHORIZED)));
-        Map<String, String> headers = new HashMap<>();
-        headers.put("X-Auth-Token", authToken);
-        headers.put("client_id", mciProperties.getIdpClientId());
-        headers.put("From", mciProperties.getIdpEmail());
-
-        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null, headers);
-
-        assertNotNull(urlResponse);
-        assertEquals(SC_UNAUTHORIZED, urlResponse.status);
-    }
-
-    @Test
     public void shouldGetThePatient() throws Exception {
         patientMapper.save(createMCIPatient());
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
-        setUpValidClient(authToken);
-        Map<String, String> headers = getHeader(authToken);
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
         UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null, headers);
 
@@ -136,8 +114,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         MCIResponse mciResponse = new MCIResponse(404);
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
-        setUpValidClient(authToken);
-        Map<String, String> headers = getHeader(authToken);
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
         mciResponse.setMessage("No patient found with health id: HID");
 
@@ -152,10 +130,9 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     public void shouldCreateAPatientForGivenData() throws Exception {
         setupStubForHealthIdService();
         String content = asString("patients/valid_patient_with_mandatory_fields.xml");
-
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
-        setUpValidClient(authToken);
-        Map<String, String> headers = getHeader(authToken);
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
         addHidsToMciHealthIdStore();
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content, headers);
@@ -178,8 +155,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         String content = asString("patients/valid_patient_with_mandatory_fields.xml");
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
-        setUpValidClient(authToken);
-        Map<String, String> headers = getHeader(authToken);
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content, headers);
 
@@ -198,8 +175,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         String content = asString("patients/patient_with_unknown_elements.xml");
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
-        setUpValidClient(authToken);
-        Map<String, String> headers = getHeader(authToken);
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content, headers);
 
@@ -217,8 +194,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         String content = asString("patients/patient_with_invalid_gender.xml");
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
-        setUpValidClient(authToken);
-        Map<String, String> headers = getHeader(authToken);
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
         UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content, headers);
 
@@ -235,10 +212,57 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         assertTrue(errors.contains(new Error("/f:Patient/f:gender", "error", message)));
     }
 
-    private Map<String, String> getHeader(String authToken) {
-        String clientId = "18548";
-        String email = "facility@gmail.com";
+    @Test
+    public void shouldNotAllowGetRequestIfNotAuthenticated() throws Exception {
+        MCIProperties mciProperties = MCIProperties.getInstance();
+        String authToken = UUID.randomUUID().toString();
 
+        patientMapper.save(createMCIPatient());
+        stubFor(get(urlMatching("/token/" + authToken))
+                .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
+                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
+                .willReturn(aResponse()
+                        .withStatus(HttpStatus.SC_UNAUTHORIZED)));
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("X-Auth-Token", authToken);
+        headers.put("client_id", mciProperties.getIdpClientId());
+        headers.put("From", mciProperties.getIdpEmail());
+
+        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null, headers);
+
+        assertNotNull(urlResponse);
+        assertEquals(SC_UNAUTHORIZED, urlResponse.status);
+    }
+
+    @Test
+    public void shouldNotGetThePatientIfNotAuthorised() throws Exception {
+        String authToken = "e20e9984-a9b9-40b2-adfc-a9e65dad4c4d";
+        setUpValidClient(authToken, asString("idpClients/userWithoutMciUserGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility1309@gmail.com", "18553");
+
+        UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null, headers);
+
+        assertNotNull(urlResponse);
+        assertEquals(SC_FORBIDDEN, urlResponse.status);
+    }
+
+    @Test
+    public void shouldNotCreateAPatientIfNotAuthorised() throws Exception {
+        String content = asString("patients/valid_patient_with_mandatory_fields.xml");
+
+        String authToken = "e20e9984-a9b9-40b2-adfc-a9e65dad4c4d";
+        setUpValidClient(authToken, asString("idpClients/userWithoutMciUserGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility1309@gmail.com", "18553");
+
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content, headers);
+
+        assertNotNull(urlResponse);
+        assertEquals(SC_FORBIDDEN, urlResponse.status);
+
+    }
+
+    private Map<String, String> getHeader(String authToken, String email, String clientId) {
         Map<String, String> headers = new HashMap<>();
         headers.put("X-Auth-Token", authToken);
         headers.put("client_id", clientId);
@@ -310,8 +334,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         return expectedPatient;
     }
 
-    private void setUpValidClient(String authToken) {
-        String idpResponse = asString("idpClients/facilityClient.json");
+    private void setUpValidClient(String authToken, String idpResponse) {
         MCIProperties mciProperties = MCIProperties.getInstance();
 
         stubFor(get(urlMatching("/token/" + authToken))
@@ -322,7 +345,6 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                                 .withBody(idpResponse)
                 ));
     }
-
 
     private void setupStubForHealthIdService() {
         MCIProperties mciProperties = MCIProperties.getInstance();

@@ -5,9 +5,9 @@ import org.sharedhealth.mci.web.exception.IdentityUnauthorizedException;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
 import org.sharedhealth.mci.web.model.MCIResponse;
 
-import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import java.nio.file.AccessDeniedException;
+
+import static org.apache.http.HttpStatus.*;
 import static spark.Spark.exception;
 
 public class GlobalExceptionHandler {
@@ -15,6 +15,7 @@ public class GlobalExceptionHandler {
         handlePatientNotFoundException();
         handleHealthIdExhaustedException();
         handleIdentityUnauthorizedException();
+        handleIdentityAccessDeniedException();
         handleGenericException();
     }
 
@@ -40,6 +41,15 @@ public class GlobalExceptionHandler {
         exception(IdentityUnauthorizedException.class, (exception, request, response) -> {
             response.status(SC_UNAUTHORIZED);
             MCIResponse mciResponse = new MCIResponse(SC_UNAUTHORIZED);
+            mciResponse.setMessage(exception.getMessage());
+            response.body(mciResponse.toString());
+        });
+    }
+
+    private void handleIdentityAccessDeniedException() {
+        exception(AccessDeniedException.class, (exception, request, response) -> {
+            response.status(SC_FORBIDDEN);
+            MCIResponse mciResponse = new MCIResponse(SC_FORBIDDEN);
             mciResponse.setMessage(exception.getMessage());
             response.body(mciResponse.toString());
         });

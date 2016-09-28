@@ -33,5 +33,6 @@ public class TokenAuthenticationFilter implements Filter {
             logger.error("Unable to authenticate user");
             throw new IdentityUnauthorizedException("Unable to authenticate user");
         }
+        request.attribute("userDetails", userInfo);
     }
 }
