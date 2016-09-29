@@ -26,7 +26,7 @@ dependencies {
             libraries.cassandra_driver_mapping, libraries.cassandra_all,libraries.hapi_fhir_base,
             libraries.hapi_fhir_structures,libraries.hapi_fhir_structures_hl7,libraries.hapi_fhir_validation,
             libraries.apache_collections, libraries.jackson_core,libraries.jackson_annotations,libraries.jackson_databind,
-            libraries.hector_core
+            libraries.hector_core,libraries.ehcache_core
 
     testCompile testLibraries.junit,testLibraries.mockito,testLibraries.cassandra_unit,testLibraries.system_rules,
             testLibraries.mutagen, testLibraries.mutagen_cassandra, testLibraries.wiremock
