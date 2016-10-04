@@ -34,7 +34,7 @@ public class FhirPatientValidatorTest {
         assertFalse(validationResult.isSuccessful());
         SingleValidationMessage message = validationResult.getMessages().get(0);
         assertEquals("/f:Patient/f:gender", message.getLocationString());
-        assertEquals("The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender (http://hl7.org/fhir/ValueSet/administrative-gender, and a code is required from this value set", message.getMessage());
+        assertEquals("Coded value myNewGender is not in value set http://hl7.org/fhir/ValueSet/administrative-gender (http://hl7.org/fhir/ValueSet/administrative-gender)", message.getMessage());
     }
 
     private Patient createPatientFromFile(String filePath) throws DataFormatException {

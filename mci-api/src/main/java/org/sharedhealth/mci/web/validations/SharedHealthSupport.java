@@ -2,7 +2,6 @@ package org.sharedhealth.mci.web.validations;
 
 import ca.uhn.fhir.context.FhirContext;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
 import org.hl7.fhir.instance.hapi.validation.IValidationSupport;
 import org.hl7.fhir.instance.model.ValueSet;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -21,13 +20,14 @@ public class SharedHealthSupport implements IValidationSupport {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends IBaseResource> T fetchResource(FhirContext theContext, Class<T> theClass, String theUri) {
+        theUri = theUri.replace("\uFEFF", "");
         String fhirURIPrefix = "http://hl7.org/fhir/StructureDefinition/";
         String sharedHealthPrefix = "https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#";
         if (theUri.startsWith(fhirURIPrefix)) {
             String profileName = theUri.substring(fhirURIPrefix.length());
             return (T) FhirPatientValidator.loadProfileOrReturnNull(profileName);
         }
-        if(theUri.startsWith(sharedHealthPrefix)){
+        if (theUri.startsWith(sharedHealthPrefix)) {
             String profileName = theUri.substring(sharedHealthPrefix.length());
             return (T) FhirPatientValidator.loadProfileOrReturnNull(profileName);
         }

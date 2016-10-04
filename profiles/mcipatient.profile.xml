@@ -2,7 +2,7 @@
 <StructureDefinition xmlns="http://hl7.org/fhir">
   <id value="mciPatient" />
   <meta>
-    <lastUpdated value="2016-09-09T12:45:50.875+05:30" />
+    <lastUpdated value="2016-09-27T17:57:16.887+05:30" />
   </meta>
   <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profiles#MCIPatient" />
   <version value="1.0" />
@@ -43,6 +43,73 @@
         <map value="administrative.individual" />
       </mapping>
     </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="bloodGroup" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup" />
+      </type>
+    </element>
+    <element>
+      <path value="Patient.extension.url" />
+      <representation value="xmlAttr" />
+      <short value="identifies the meaning of the extension" />
+      <definition value="Source of the definition for the extension code - a logical name or a URL." />
+      <comments value="The definition may point directly to a computable or human-readable definition of the extensibility codes, or it may be a logical URI as declared in some other specification. The definition should be version specific.  This will ideally be the URI for the Resource Profile defining the extension, with the code for the extension after a #." />
+      <min value="1" />
+      <max value="1" />
+      <base>
+        <path value="Extension.url" />
+        <min value="1" />
+        <max value="1" />
+      </base>
+      <type>
+        <code value="uri" />
+      </type>
+      <fixedUri value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup" />
+      <mapping>
+        <identity value="rim" />
+        <map value="N/A" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="confidential" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#Confidential" />
+      </type>
+    </element>
+    <element>
+      <path value="Patient.extension.url" />
+      <representation value="xmlAttr" />
+      <short value="identifies the meaning of the extension" />
+      <definition value="Source of the definition for the extension code - a logical name or a URL." />
+      <comments value="The definition may point directly to a computable or human-readable definition of the extensibility codes, or it may be a logical URI as declared in some other specification. The definition should be version specific.  This will ideally be the URI for the Resource Profile defining the extension, with the code for the extension after a #." />
+      <min value="1" />
+      <max value="1" />
+      <base>
+        <path value="Extension.url" />
+        <min value="1" />
+        <max value="1" />
+      </base>
+      <type>
+        <code value="uri" />
+      </type>
+      <fixedUri value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#Confidential" />
+      <mapping>
+        <identity value="rim" />
+        <map value="N/A" />
+      </mapping>
+    </element>
+
     <element>
       <path value="Patient.id" />
       <short value="Logical id of this artifact" />
@@ -1375,6 +1442,11 @@
     </element>
     <element>
       <path value="Patient.extension" />
+      <slicing>
+        <discriminator value="url" />
+        <ordered value="false"/>
+        <rules value="open" />
+      </slicing>
       <short value="Additional Content defined by implementations" />
       <definition value="May be used to represent additional information that is not part of the basic definition of the resource. In order to make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension." />
       <comments value="There can be no stigma associated with the use of extensions by any application, project, or standard - regardless of the institution or jurisdiction that uses or defines the extensions.  The use of extensions is what allows the FHIR specification to retain a core level of simplicity for everyone." />
@@ -7934,6 +8006,28 @@
         <identity value="w5" />
         <map value="administrative.individual" />
       </mapping>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="bloodGroup" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#BloodGroup" />
+      </type>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="confidential" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#Confidential" />
+      </type>
     </element>
     <element>
       <path value="Patient.name" />

@@ -25,10 +25,11 @@ import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirHL7Context;
 public class FhirPatientValidator {
     private static final Logger logger = LogManager.getLogger(FhirPatientValidator.class);
     public static final String PATH_TO_PROFILES_FOLDER = "/Users/mritunjd/Documents/projects/bdshr/MCI-Registry/profiles/";
-
     //should be removed once forge bug is fixed
     private static final Pattern IGNORE_EXTENSION_SLICE_ERROR_LOCATION = Pattern.compile("/f:Patient/f:extension(\\[\\d+\\])*");
+
     private static final String IGNORE_EXTENSION_SLICE_ERROR_MESSAGE = "Element matches more than one slice";
+    private static final String SLICE_VALIDATION_NOT_DONE_ERROR = "validation of slices not done yet";
 
     private List<Pattern> patientFieldErrors = new ArrayList<>();
     private volatile FhirValidator fhirValidator;
@@ -39,7 +40,8 @@ public class FhirPatientValidator {
 
     public MCIValidationResult validate(Patient patient) {
         FhirValidator fhirValidator = validatorInstance();
-        ValidationResult validationResult = fhirValidator.validateWithResult(patient);
+        ValidationResult validationResult = null;
+        validationResult = fhirValidator.validateWithResult(patient);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
 //        ignoreErrors(mciValidationResult);
@@ -81,8 +83,9 @@ public class FhirPatientValidator {
                     fhirValidator = fhirContext.newValidator();
                     FhirInstanceValidator validator = new FhirInstanceValidator();
 
+
                     // loadProfileOrReturnNull reads from file mypatient.profile.xml and give StructureDefinition for that
-                    StructureDefinition patient = loadProfileOrReturnNull("mcipatient");
+                    StructureDefinition patient = loadProfileOrReturnNull("patient-us-lab");
                     validator.setStructureDefintion(patient);
 
                     //SharedHealthSupport is IValidationSupport which gives definition of custom extensions
