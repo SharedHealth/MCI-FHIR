@@ -1,15 +1,9 @@
 package org.sharedhealth.mci.web.service;
 
-import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.primitive.DateDt;
-import ca.uhn.fhir.model.primitive.DateTimeDt;
-import ca.uhn.fhir.model.primitive.StringDt;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import org.apache.http.HttpStatus;
-import org.hl7.fhir.dstu3.model.Address;
-import org.hl7.fhir.dstu3.model.Enumerations;
-import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -181,18 +175,18 @@ public class PatientServiceTest {
         patient.addName().addGiven(givenName).addFamily(surName);
         patient.setGender(Enumerations.AdministrativeGender.MALE);
 
-        DateDt date = new DateDt(dateOfBirth);
-        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
-        date.addUndeclaredExtension(extensionDt);
+        DateType date = new DateType(dateOfBirth);
+        Extension extension = new Extension().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeType(dateOfBirth));
+        date.addExtension(extension);
         patient.setBirthDate(date.getValue());
 
-        Address addressDt = new Address().addLine(addressLine);
-        addressDt.setCountry(countryCode);
+        Address address = new Address().addLine(addressLine);
+        address.setCountry(countryCode);
         String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
         Extension addressCodeExtension = new Extension().
-                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
-        addressDt.addExtension(addressCodeExtension);
-        patient.addAddress(addressDt);
+                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringType(addressCode));
+        address.addExtension(addressCodeExtension);
+        patient.addAddress(address);
         return patient;
     }
 

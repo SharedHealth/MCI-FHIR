@@ -30,10 +30,10 @@ public class FhirPatientValidator {
     }
 
     public MCIValidationResult validate(Patient patient) {
-//        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
-//        MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
-//        changeWarningToErrorIfNeeded(mciValidationResult);
-        return null;
+        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
+        MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
+        changeWarningToErrorIfNeeded(mciValidationResult);
+        return mciValidationResult;
     }
 
     private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {

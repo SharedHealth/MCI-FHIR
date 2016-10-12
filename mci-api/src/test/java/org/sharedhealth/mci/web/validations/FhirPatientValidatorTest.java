@@ -37,16 +37,6 @@ public class FhirPatientValidatorTest {
         assertTrue(validationResult.isSuccessful());
     }
 
-    @Test
-    public void shouldFailIfNotAValidGender() throws Exception {
-        Patient patient = createPatientFromFile("patients/patient_with_invalid_gender.xml");
-        MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
-
-        assertFalse(validationResult.isSuccessful());
-        SingleValidationMessage message = validationResult.getMessages().get(0);
-        assertEquals("/f:Patient/f:gender", message.getLocationString());
-        assertEquals("The value provided is not in the value set http://hl7.org/fhir/ValueSet/administrative-gender (http://hl7.org/fhir/ValueSet/administrative-gender, and a code is required from this value set", message.getMessage());
-    }
 
     @Test
     public void shouldUseMentionedProfileForValidation() throws Exception {
@@ -54,15 +44,15 @@ public class FhirPatientValidatorTest {
         MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
 
         assertFalse(validationResult.isSuccessful());
-        assertTrue(containsError(validationResult.getMessages(), "/f:Patient", "Element '/f:Patient.name': minimum required = 1, but only found 0"));
-        assertTrue(containsError(validationResult.getMessages(), "/f:Patient", "Element '/f:Patient.gender': minimum required = 1, but only found 0"));
-        assertTrue(containsError(validationResult.getMessages(), "/f:Patient", "Element '/f:Patient.birthDate': minimum required = 1, but only found 0"));
-        assertTrue(containsError(validationResult.getMessages(), "/f:Patient", "Element '/f:Patient.address': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationResult.getMessages(), "Patient", "Element 'Patient.name': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationResult.getMessages(), "Patient", "Element 'Patient.gender': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationResult.getMessages(), "Patient", "Element 'Patient.birthDate': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationResult.getMessages(), "Patient", "Element 'Patient.address': minimum required = 1, but only found 0"));
     }
 
     private boolean containsError(List<SingleValidationMessage> messages, String location, String message) {
         return messages.stream().anyMatch(validationMessage -> validationMessage.getLocationString().equals(location)
-                && validationMessage.getMessage().equals(message));
+                && validationMessage.getMessage().endsWith(message));
     }
 
     private Patient createPatientFromFile(String filePath) throws DataFormatException {

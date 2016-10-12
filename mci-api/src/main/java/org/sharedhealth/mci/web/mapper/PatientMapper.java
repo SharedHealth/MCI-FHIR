@@ -1,6 +1,5 @@
 package org.sharedhealth.mci.web.mapper;
 
-import ca.uhn.fhir.model.primitive.StringDt;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.BidiMap;
@@ -50,7 +49,7 @@ public class PatientMapper {
         HumanName name = fhirPatient.getNameFirstRep();
         mciPatient.setGivenName(name.getGiven().get(0).getValueNotNull());
         mciPatient.setSurName(name.getFamily().get(0).getValueNotNull());
-        mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValueAsString()));
+        mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValue()));
 
         List<Extension> birthExtensions = fhirPatient.getBirthDateElement().getExtensionsByUrl(BIRTH_TIME_EXTENSION_URL);
         Date birthTime;
@@ -166,7 +165,7 @@ public class PatientMapper {
         return address;
     }
 
-    private StringDt buildAddressCode(org.sharedhealth.mci.web.model.Patient mciPatient) {
+    private StringType buildAddressCode(org.sharedhealth.mci.web.model.Patient mciPatient) {
         StringBuilder addressCode = new StringBuilder();
         appendAddressPart(addressCode, mciPatient.getDivisionId());
         appendAddressPart(addressCode, mciPatient.getDistrictId());
@@ -174,7 +173,7 @@ public class PatientMapper {
         appendAddressPart(addressCode, mciPatient.getCityCorporationId());
         appendAddressPart(addressCode, mciPatient.getUnionOrUrbanWardId());
         appendAddressPart(addressCode, mciPatient.getRuralWardId());
-        return new StringDt(addressCode.toString());
+        return new StringType(addressCode.toString());
     }
 
     private void appendAddressPart(StringBuilder addressCode, String addressPart) {
