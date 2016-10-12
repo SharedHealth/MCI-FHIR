@@ -29,7 +29,9 @@ import java.util.Map;
 
 import static org.sharedhealth.mci.web.launch.Application.getIdentityStore;
 import static org.sharedhealth.mci.web.util.MCIConstants.URL_SEPARATOR;
-import static org.sharedhealth.mci.web.util.StringUtils.*;
+import static org.sharedhealth.mci.web.util.StringUtils.ensureSuffix;
+import static org.sharedhealth.mci.web.util.StringUtils.removePrefix;
+import static org.sharedhealth.mci.web.util.StringUtils.removeSuffix;
 
 public class WebClient {
     private final static Logger logger = LogManager.getLogger(WebClient.class);

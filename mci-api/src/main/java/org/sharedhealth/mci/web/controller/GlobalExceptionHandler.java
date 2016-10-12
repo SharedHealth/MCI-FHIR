@@ -1,5 +1,7 @@
 package org.sharedhealth.mci.web.controller;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.mci.web.exception.IdentityUnauthorizedException;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
@@ -7,59 +9,29 @@ import org.sharedhealth.mci.web.model.MCIResponse;
 
 import java.nio.file.AccessDeniedException;
 
-import static org.apache.http.HttpStatus.*;
+import static org.apache.http.HttpStatus.SC_FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static spark.Spark.exception;
 
 public class GlobalExceptionHandler {
+    private static final Logger logger = LogManager.getLogger(GlobalExceptionHandler.class);
+
     public GlobalExceptionHandler() {
-        handlePatientNotFoundException();
-        handleHealthIdExhaustedException();
-        handleIdentityUnauthorizedException();
-        handleIdentityAccessDeniedException();
-        handleGenericException();
+        handleException(PatientNotFoundException.class, SC_NOT_FOUND);
+        handleException(HealthIdExhaustedException.class, SC_INTERNAL_SERVER_ERROR);
+        handleException(IdentityUnauthorizedException.class, SC_UNAUTHORIZED);
+        handleException(AccessDeniedException.class, SC_FORBIDDEN);
+        handleException(Exception.class, SC_INTERNAL_SERVER_ERROR);
     }
 
-    private void handlePatientNotFoundException() {
-        exception(PatientNotFoundException.class, (exception, request, response) -> {
-            response.status(SC_NOT_FOUND);
-            MCIResponse mciResponse = new MCIResponse(SC_NOT_FOUND);
+    private <T extends Exception> void handleException(Class<T> exceptionClass, int status) {
+        exception(exceptionClass, (exception, request, response) -> {
+            response.status(status);
+            MCIResponse mciResponse = new MCIResponse(status);
             mciResponse.setMessage(exception.getMessage());
-            response.body(mciResponse.toString());
-        });
-    }
-
-    private void handleHealthIdExhaustedException() {
-        exception(HealthIdExhaustedException.class, (exception, request, response) -> {
-            response.status(SC_INTERNAL_SERVER_ERROR);
-            MCIResponse mciResponse = new MCIResponse(SC_INTERNAL_SERVER_ERROR);
-            mciResponse.setMessage(exception.getMessage());
-            response.body(mciResponse.toString());
-        });
-    }
-
-    private void handleIdentityUnauthorizedException() {
-        exception(IdentityUnauthorizedException.class, (exception, request, response) -> {
-            response.status(SC_UNAUTHORIZED);
-            MCIResponse mciResponse = new MCIResponse(SC_UNAUTHORIZED);
-            mciResponse.setMessage(exception.getMessage());
-            response.body(mciResponse.toString());
-        });
-    }
-
-    private void handleIdentityAccessDeniedException() {
-        exception(AccessDeniedException.class, (exception, request, response) -> {
-            response.status(SC_FORBIDDEN);
-            MCIResponse mciResponse = new MCIResponse(SC_FORBIDDEN);
-            mciResponse.setMessage(exception.getMessage());
-            response.body(mciResponse.toString());
-        });
-    }
-
-    private void handleGenericException() {
-        exception(Exception.class, (exception, request, response) -> {
-            response.status(SC_INTERNAL_SERVER_ERROR);
-            MCIResponse mciResponse = new MCIResponse(SC_INTERNAL_SERVER_ERROR);
-            mciResponse.setMessage(exception.getMessage());
+            logger.error(exception.getMessage(), exception);
             response.body(mciResponse.toString());
         });
     }

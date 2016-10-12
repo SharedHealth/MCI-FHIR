@@ -21,6 +21,8 @@ import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.repository.PatientRepository;
+import org.sharedhealth.mci.web.security.UserInfo;
+import org.sharedhealth.mci.web.security.UserProfile;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
@@ -29,10 +31,19 @@ import java.util.Date;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.security.UserInfo.HRM_MCI_USER_GROUP;
+import static org.sharedhealth.mci.web.util.FHIRConstants.ADDRESS_CODE_EXTENSION_NAME;
+import static org.sharedhealth.mci.web.util.FHIRConstants.BIRTH_TIME_EXTENSION_URL;
+import static org.sharedhealth.mci.web.util.FHIRConstants.getFhirExtensionUrl;
 
 public class PatientServiceTest {
     private PatientService patientService;
@@ -111,8 +122,8 @@ public class PatientServiceTest {
         when(healthIdService.getNextHealthId()).thenReturn(mciHealthId);
         when(patientMapper.mapToMCIPatient(fhirPatient)).thenReturn(mciPatient);
         when(patientRepository.createPatient(mciPatient)).thenReturn(response);
-
-        MCIResponse mciResponse = patientService.createPatient(fhirPatient);
+        UserInfo userInfo = getUserInfo();
+        MCIResponse mciResponse = patientService.createPatient(fhirPatient, userInfo);
         assertEquals(response, mciResponse);
 
         ArgumentCaptor<Patient> argumentCaptor = ArgumentCaptor.forClass(Patient.class);
@@ -121,6 +132,9 @@ public class PatientServiceTest {
 
         assertSame(mciPatient, patientToBeCreated);
         assertNotNull(patientToBeCreated.getCreatedAt());
+
+        String expectedCreatedBy = "{\"facility\":{\"id\":\"100067\",\"name\":null},\"provider\":null,\"admin\":null}";
+        assertEquals(expectedCreatedBy, patientToBeCreated.getCreatedBy());
         assertEquals(healthId, patientToBeCreated.getHealthId());
 
         InOrder inOrder = inOrder(patientMapper, healthIdService, patientRepository);
@@ -144,7 +158,7 @@ public class PatientServiceTest {
         when(mockValidationResult.isSuccessful()).thenReturn(false);
         when(mockValidationResult.getMessages()).thenReturn(validationMessages);
 
-        MCIResponse mciResponse = patientService.createPatient(fhirPatient);
+        MCIResponse mciResponse = patientService.createPatient(fhirPatient, getUserInfo());
 
         assertNotNull(mciResponse);
         assertEquals(HttpStatus.SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
@@ -152,7 +166,6 @@ public class PatientServiceTest {
         Error dobError = new Error(dobLocation, "error", invalidDOB);
         assertTrue(mciResponse.getErrors().contains(genderError));
         assertTrue(mciResponse.getErrors().contains(dobError));
-
     }
 
     private SingleValidationMessage createMessage(String theMessage, String locationString) {
@@ -181,5 +194,10 @@ public class PatientServiceTest {
         addressDt.addUndeclaredExtension(addressCodeExtension);
         patient.addAddress(addressDt);
         return patient;
+    }
+
+    private UserInfo getUserInfo() {
+        UserProfile userProfile = new UserProfile("facility", "100067", null);
+        return new UserInfo("102", "ABC", "abc@mail", 1, true, "111100", asList(HRM_MCI_USER_GROUP), asList(userProfile));
     }
 }

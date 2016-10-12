@@ -54,6 +54,9 @@ public class Patient {
     @Column(name = CREATED_AT)
     private UUID createdAt;
 
+    @Column(name = CREATED_BY)
+    private String createdBy;
+
     public String getHealthId() {
         return healthId;
     }
@@ -226,5 +229,13 @@ public class Patient {
                 ", cityCorporationId='" + cityCorporationId + '\'' +
                 ", countryCode='" + countryCode + '\'' +
                 '}';
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
     }
 }

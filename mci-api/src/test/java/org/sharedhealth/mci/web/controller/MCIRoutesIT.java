@@ -26,6 +26,7 @@ import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.model.Patient;
+import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.TestUtil;
 import spark.Spark;
@@ -34,11 +35,18 @@ import java.util.*;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.apache.http.HttpStatus.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.sharedhealth.mci.web.launch.Application.IDENTITY_PROVIDER_CACHE;
+import static org.sharedhealth.mci.web.launch.Application.getCacheManager;
 import static org.sharedhealth.mci.web.launch.Application.getIdentityStore;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 import static org.sharedhealth.mci.web.util.FileUtil.asString;
-import static org.sharedhealth.mci.web.util.HttpUtil.*;
+import static org.sharedhealth.mci.web.util.HttpUtil.CLIENT_ID_KEY;
+import static org.sharedhealth.mci.web.util.HttpUtil.FROM_KEY;
+import static org.sharedhealth.mci.web.util.HttpUtil.X_AUTH_TOKEN_KEY;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
 import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_URI_PATH;
 
@@ -89,6 +97,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         MciHealthIdStore.getInstance().clear();
         getIdentityStore().clearIdentityToken();
         TestUtil.truncateAllColumnFamilies();
+        getCacheManager().getCache(IDENTITY_PROVIDER_CACHE, String.class, UserInfo.class).clear();
     }
 
     @Test
@@ -341,8 +350,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
                 .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
                 .willReturn(aResponse()
-                                .withStatus(HttpStatus.SC_OK)
-                                .withBody(idpResponse)
+                        .withStatus(HttpStatus.SC_OK)
+                        .withBody(idpResponse)
                 ));
     }
 
@@ -357,8 +366,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
                 .withRequestBody(containing("password=password&email=shrSysAdmin%40gmail.com"))
                 .willReturn(aResponse()
-                                .withStatus(HttpStatus.SC_OK)
-                                .withBody(idpResponse)
+                        .withStatus(HttpStatus.SC_OK)
+                        .withBody(idpResponse)
                 ));
 
         stubFor(get(urlPathEqualTo("/healthIds/nextBlock"))
@@ -366,8 +375,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
                 .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
                 .willReturn(aResponse()
-                                .withStatus(HttpStatus.SC_OK)
-                                .withBody(hidResponse)
+                        .withStatus(HttpStatus.SC_OK)
+                        .withBody(hidResponse)
                 ));
 
         stubFor(put(urlPathEqualTo("/healthIds/markUsed"))
@@ -375,8 +384,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
                 .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
                 .willReturn(aResponse()
-                                .withStatus(HttpStatus.SC_OK)
-                                .withBody("Accepted")
+                        .withStatus(HttpStatus.SC_OK)
+                        .withBody("Accepted")
                 ));
     }
 

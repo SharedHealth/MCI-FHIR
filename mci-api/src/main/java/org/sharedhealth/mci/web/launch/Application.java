@@ -3,16 +3,24 @@ package org.sharedhealth.mci.web.launch;
 import com.datastax.driver.mapping.MappingManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ehcache.CacheManager;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.expiry.Duration;
+import org.ehcache.expiry.Expirations;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.controller.GlobalExceptionHandler;
 import org.sharedhealth.mci.web.controller.MCIRoutes;
 import org.sharedhealth.mci.web.controller.PatientController;
-import org.sharedhealth.mci.web.security.TokenAuthenticationFilter;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.model.IdentityStore;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.repository.PatientRepository;
+import org.sharedhealth.mci.web.security.TokenAuthenticationFilter;
+import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.service.HealthIdService;
 import org.sharedhealth.mci.web.service.IdentityProviderService;
 import org.sharedhealth.mci.web.service.PatientService;
@@ -31,6 +39,7 @@ import static spark.Spark.port;
 public class Application {
 
     private static final Logger logger = LogManager.getLogger(Application.class);
+    public static final String IDENTITY_PROVIDER_CACHE = "identityProviderUserCache";
 
     private static PatientRepository patientRepository;
     private static MCIProperties mciProperties;
@@ -43,6 +52,7 @@ public class Application {
     private static PatientService patientService;
     private static PatientController patientController;
     private static TokenAuthenticationFilter authenticationFilter;
+    private static CacheManager cacheManager;
 
     public static void main(String[] args) {
         logger.info("Starting MCI Registry");
@@ -76,10 +86,18 @@ public class Application {
         instantiateControllers();
 
         //instantiate MCIRoutes with all controllers here
-        authenticationFilter = new TokenAuthenticationFilter(identityProviderService);
+        CacheConfiguration<String, UserInfo> configuration = CacheConfigurationBuilder
+                .newCacheConfigurationBuilder(String.class, UserInfo.class, ResourcePoolsBuilder.heap(500))
+                .withExpiry(Expirations.timeToLiveExpiration(Duration.of(2 * 60, TimeUnit.SECONDS)))
+                .withExpiry(Expirations.timeToIdleExpiration(Duration.of(2 * 60, TimeUnit.SECONDS)))
+                .build();
+        cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+                .withCache(IDENTITY_PROVIDER_CACHE, configuration)
+                .build(true);
+
+        authenticationFilter = new TokenAuthenticationFilter(identityProviderService, cacheManager.getCache(IDENTITY_PROVIDER_CACHE, String.class, UserInfo.class));
         new MCIRoutes(patientController, authenticationFilter);
         //instantiate MCIRoutes with all controllers here
-
 
         try {
             healthIdService.loadFromFile();
@@ -149,5 +167,9 @@ public class Application {
 
     public static IdentityStore getIdentityStore() {
         return identityStore;
+    }
+
+    public static CacheManager getCacheManager() {
+        return cacheManager;
     }
 }

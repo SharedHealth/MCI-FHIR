@@ -10,13 +10,24 @@
                 <pattern>%d{dd-MM-yyyy HH:mm:ss} [%-5p] %c{1} - %m%n</pattern>
             </PatternLayout>
             <Policies>
-                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
+        <RollingFile name="ACCESS_LOG" fileName="/var/log/mci-registry/access.log"
+                     filePattern="/var/log/mci-registry/access.log.%d{dd-MM-yyyy}">
+            <RegexFilter regex="^ACCESS:.*" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <pattern>%d{dd-MM-yyyy HH:mm:ss} [%-5p] %c{1} - %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
             </Policies>
         </RollingFile>
     </Appenders>
     <Loggers>
         <Logger name="org.sharedhealth.mci" level="${env:MCI_LOG_LEVEL}" additivity="false">
-            <appender-ref ref="VAR_LOG"/>
+            <AppenderRef ref="VAR_LOG"/>
+            <AppenderRef ref="ACCESS_LOG"/>
         </Logger>
     </Loggers>
 </Configuration>

@@ -9,13 +9,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
-import org.sharedhealth.mci.web.model.MCIResponse;
-import org.sharedhealth.mci.web.model.Patient;
-import org.sharedhealth.mci.web.model.PatientAuditLog;
-import org.sharedhealth.mci.web.model.PatientUpdateLog;
+import org.sharedhealth.mci.web.model.*;
 import org.sharedhealth.mci.web.util.TestUtil;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +21,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.DateUtil.*;
 import static org.sharedhealth.mci.web.util.JsonMapper.readValue;
+import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
 public class PatientRepositoryIT extends BaseIntegrationTest {
@@ -78,6 +77,8 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
         Patient byHealthId = patientDBMapper.get(patient.getHealthId());
         assertEquals(patient, byHealthId);
+        assertEquals(patient.getCreatedAt(), byHealthId.getCreatedAt());
+        assertEquals(patient.getCreatedBy(), byHealthId.getCreatedBy());
         assertEquals(patient.getHealthId(), mciResponse.getId());
         assertEquals(HttpStatus.SC_CREATED, mciResponse.getHttpStatus());
 
@@ -140,8 +141,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         return presentAddress   ;
     }
 
-
-    private Patient preparePatientData() {
+    private Patient preparePatientData() throws AccessDeniedException {
         Patient expectedPatient = new Patient();
         expectedPatient.setHealthId(healthId);
         expectedPatient.setGivenName(givenName);
@@ -157,6 +157,11 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         expectedPatient.setRuralWardId(ruralWardId);
         expectedPatient.setAddressLine(addressLine);
         expectedPatient.setCreatedAt(TimeUuidUtil.uuidForDate(new Date()));
+        expectedPatient.setCreatedBy(writeValueAsString(getRequester()));
         return expectedPatient;
+    }
+
+    private Requester getRequester() throws AccessDeniedException {
+        return new Requester("100067", null, null, null);
     }
 }

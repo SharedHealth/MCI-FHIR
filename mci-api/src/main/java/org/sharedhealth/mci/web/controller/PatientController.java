@@ -16,6 +16,8 @@ import spark.Response;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
+import static org.sharedhealth.mci.web.security.AuthorizationFilter.USER_DETAILS_KEY;
+
 public class PatientController {
     private final static Logger logger = LogManager.getLogger(PatientController.class);
     private final PatientService patientService;
@@ -25,6 +27,7 @@ public class PatientController {
     }
 
     public String createPatient(Request request, Response response) throws IOException {
+        logAccessDetails("Creating a new patient", request.attribute(USER_DETAILS_KEY));
         logger.debug("Create patient request");
 
         Patient patient;
@@ -37,20 +40,24 @@ public class PatientController {
             response.status(mciResponse.getHttpStatus());
             return mciResponse.toString();
         }
-
-        MCIResponse mciResponse = patientService.createPatient(patient);
+        UserInfo userInfo = request.attribute(USER_DETAILS_KEY);
+        MCIResponse mciResponse = patientService.createPatient(patient, userInfo);
         response.status(mciResponse.getHttpStatus());
         return mciResponse.toString();
     }
 
+    private void logAccessDetails(String action, UserInfo userDetails) {
+        logger.info(String.format("ACCESS: EMAIL=%s ACTION=%s", userDetails.getProperties().getEmail(), action));
+    }
+
     public String getPatient(String hidParam, Request request, Response response) throws AccessDeniedException {
         String healthId = request.params(hidParam);
-        UserInfo userDetails = request.attribute("userDetails");
+        UserInfo userDetails = request.attribute(USER_DETAILS_KEY);
         if (userDetails.getProperties().isPatientUserOnly()
                 && !userDetails.getProperties().getPatientHid().equals(healthId)) {
             throw new AccessDeniedException(String.format("Access to user %s is denied", userDetails.getProperties().getEmail()));
         }
-
+        logAccessDetails(String.format("Find patient given (healthId) : %s", healthId), request.attribute(USER_DETAILS_KEY));
         logger.debug(String.format("find patient request by HID %s", healthId));
         Patient patient = patientService.findPatientByHealthId(healthId);
         response.status(200);

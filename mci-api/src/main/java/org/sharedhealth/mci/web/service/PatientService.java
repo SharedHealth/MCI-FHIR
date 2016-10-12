@@ -9,13 +9,18 @@ import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
+import org.sharedhealth.mci.web.model.Requester;
 import org.sharedhealth.mci.web.repository.PatientRepository;
+import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.Date;
+
+import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 
 public class PatientService {
     private PatientMapper patientMapper;
@@ -40,7 +45,7 @@ public class PatientService {
         return patientMapper.mapToFHIRPatient(mciPatient);
     }
 
-    public MCIResponse createPatient(Patient fhirPatient) {
+    public MCIResponse createPatient(Patient fhirPatient, UserInfo userInfo) throws AccessDeniedException {
         MCIValidationResult validate = fhirPatientValidator.validate(fhirPatient);
         if (!validate.isSuccessful()) {
             return createMCIResponseForValidationFailure(validate);
@@ -50,7 +55,8 @@ public class PatientService {
         healthId = healthIdService.getNextHealthId();
         mciPatient.setHealthId(healthId.getHid());
         mciPatient.setCreatedAt(TimeUuidUtil.uuidForDate(new Date()));
-
+        UserInfo.UserInfoProperties userInfoProperties = userInfo.getProperties();
+        mciPatient.setCreatedBy(writeValueAsString(new Requester(userInfoProperties.getFacilityId(), userInfoProperties.getProviderId(), userInfoProperties.getAdminId(), userInfoProperties.getName())));
         MCIResponse mciResponse = null;
         try {
             mciResponse = patientRepository.createPatient(mciPatient);
@@ -78,7 +84,7 @@ public class PatientService {
         MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         mciResponse.setMessage("Validation Failed");
         validationResult.getMessages().stream().forEach(message ->
-                        mciResponse.addError(new Error(message.getLocationString(), message.getSeverity().getCode(), message.getMessage()))
+                mciResponse.addError(new Error(message.getLocationString(), message.getSeverity().getCode(), message.getMessage()))
         );
         return mciResponse;
     }

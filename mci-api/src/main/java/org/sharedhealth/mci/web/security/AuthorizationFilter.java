@@ -9,6 +9,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 public class AuthorizationFilter implements Filter {
+    public final static String USER_DETAILS_KEY = "userDetails";
     private List<String> allowedUserList;
 
     public AuthorizationFilter(List<String> allowedUserList) {
@@ -17,7 +18,7 @@ public class AuthorizationFilter implements Filter {
 
     @Override
     public void handle(Request request, Response response) throws Exception {
-        authorizeRequests(request.attribute("userDetails"));
+        authorizeRequests(request.attribute(USER_DETAILS_KEY));
     }
 
     private void authorizeRequests(UserInfo userDetails) throws AccessDeniedException {

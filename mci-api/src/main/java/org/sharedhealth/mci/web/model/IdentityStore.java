@@ -1,6 +1,11 @@
 package org.sharedhealth.mci.web.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IdentityStore {
+    private final static Logger logger = LogManager.getLogger(IdentityStore.class);
+
     private String identityToken;
 
     public void setIdentityToken(String identityToken) {
@@ -12,6 +17,7 @@ public class IdentityStore {
     }
 
     public String clearIdentityToken() {
+        logger.debug("Clearing Identity Token");
         return identityToken = null;
     }
 

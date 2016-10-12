@@ -7,17 +7,28 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.sharedhealth.mci.web.model.MCIResponse;
+import org.sharedhealth.mci.web.security.UserInfo;
+import org.sharedhealth.mci.web.security.UserProfile;
 import org.sharedhealth.mci.web.service.PatientService;
 import org.sharedhealth.mci.web.util.FileUtil;
 import spark.Request;
 import spark.Response;
 
+import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.sharedhealth.mci.web.security.AuthorizationFilter.USER_DETAILS_KEY;
+import static org.sharedhealth.mci.web.security.UserInfo.HRM_MCI_USER_GROUP;
 
 public class PatientControllerTest {
     private PatientController patientController;
@@ -41,21 +52,25 @@ public class PatientControllerTest {
         String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
 
         when(request.body()).thenReturn(content);
-        when(patientService.createPatient(any(Patient.class))).thenReturn(mciResponse);
+        UserInfo userInfo = getUserInfo();
+        when(patientService.createPatient(any(Patient.class), eq(userInfo))).thenReturn(mciResponse);
+        when(request.attribute(USER_DETAILS_KEY)).thenReturn(userInfo);
 
         String result = patientController.createPatient(request, response);
 
         assertNotNull(result);
         assertEquals(result, mciResponse.toString());
 
-        verify(patientService).createPatient(any(Patient.class));
+        verify(patientService).createPatient(any(Patient.class), eq(userInfo));
         verify(response).status(HttpStatus.SC_CREATED);
     }
 
     @Test
     public void shouldFailToCreateWhenPatientDataContainsUnknownElement() throws Exception {
         String content = FileUtil.asString("patients/patient_with_unknown_elements.xml");
+        UserInfo userInfo = getUserInfo();
         when(request.body()).thenReturn(content);
+        when(request.attribute(USER_DETAILS_KEY)).thenReturn(userInfo);
 
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
@@ -65,14 +80,16 @@ public class PatientControllerTest {
         assertTrue(mciResponse.getMessage().contains("Unknown element 'newElement' found during parse"));
 
         verify(response).status(SC_UNPROCESSABLE_ENTITY);
-        verify(patientService, never()).createPatient(any(Patient.class));
+        verify(patientService, never()).createPatient(any(Patient.class), eq(userInfo));
     }
 
     @Test
     public void shouldFailToCreateWhenPatientDataContainsUnknownAttribute() throws Exception {
         String content = FileUtil.asString("patients/patient_with_unknown_attributes.xml");
+        UserInfo userInfo = getUserInfo();
         when(request.body()).thenReturn(content);
-
+        when(request.attribute(USER_DETAILS_KEY)).thenReturn(userInfo);
+        
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
 
@@ -82,13 +99,15 @@ public class PatientControllerTest {
         assertTrue(mciResponse.getMessage().contains("Unknown attribute 'newAttribute' found during parse"));
 
         verify(response).status(SC_UNPROCESSABLE_ENTITY);
-        verify(patientService, never()).createPatient(any(Patient.class));
+        verify(patientService, never()).createPatient(any(Patient.class), eq(userInfo));
     }
 
     @Test
     public void shouldFailToCreateWhenPatientDataContainsUnexpectedRepeatingElement() throws Exception {
         String content = FileUtil.asString("patients/patient_with_multiple_dobs.xml");
+        UserInfo userInfo = getUserInfo();
         when(request.body()).thenReturn(content);
+        when(request.attribute(USER_DETAILS_KEY)).thenReturn(userInfo);
 
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
@@ -99,6 +118,11 @@ public class PatientControllerTest {
         assertTrue(mciResponse.getMessage().contains("Multiple repetitions of non-repeatable element 'birthDate' found during parse"));
 
         verify(response).status(SC_UNPROCESSABLE_ENTITY);
-        verify(patientService, never()).createPatient(any(Patient.class));
+        verify(patientService, never()).createPatient(any(Patient.class), eq(userInfo));
+    }
+
+    private UserInfo getUserInfo() {
+        UserProfile userProfile = new UserProfile("facility", "100067", null);
+        return new UserInfo("102", "ABC", "abc@mail", 1, true, "111100", asList(HRM_MCI_USER_GROUP), asList(userProfile));
     }
 }
