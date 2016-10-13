@@ -4,6 +4,7 @@ package org.sharedhealth.mci.web.controller;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.parser.DataFormatException;
 import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.model.MCIResponse;
@@ -43,6 +44,7 @@ public class PatientController {
         UserInfo userInfo = request.attribute(USER_DETAILS_KEY);
         MCIResponse mciResponse = patientService.createPatient(patient, userInfo);
         response.status(mciResponse.getHttpStatus());
+        response.type(ContentType.APPLICATION_JSON.getMimeType());
         return mciResponse.toString();
     }
 
@@ -61,6 +63,7 @@ public class PatientController {
         logger.debug(String.format("find patient request by HID %s", healthId));
         Patient patient = patientService.findPatientByHealthId(healthId);
         response.status(200);
+        response.type(ContentType.APPLICATION_XML.getMimeType());
         return formatPatient(patient);
     }
 

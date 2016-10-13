@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web.controller;
 
+import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.exception.HealthIdExhaustedException;
@@ -32,6 +33,7 @@ public class GlobalExceptionHandler {
             MCIResponse mciResponse = new MCIResponse(status);
             mciResponse.setMessage(exception.getMessage());
             logger.error(exception.getMessage(), exception);
+            response.type(ContentType.APPLICATION_JSON.getMimeType());
             response.body(mciResponse.toString());
         });
     }
