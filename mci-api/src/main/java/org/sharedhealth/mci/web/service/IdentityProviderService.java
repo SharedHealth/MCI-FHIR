@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.WebClient;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.exception.IdentityUnauthorizedException;
+import org.sharedhealth.mci.web.exception.NotFoundException;
 import org.sharedhealth.mci.web.model.IdentityStore;
 import org.sharedhealth.mci.web.security.UserInfo;
 
@@ -59,7 +60,12 @@ public class IdentityProviderService {
         headers.put(X_AUTH_TOKEN_KEY, mciProperties.getIdpXAuthToken());
         headers.put(CLIENT_KEY, mciProperties.getIdpClientId());
         String userInfoUrl = String.format(mciProperties.getIdpUserInfoUrl(), clientAuthToken);
-        String response = new WebClient().get(mciProperties.getIdpBaseUrl(), userInfoUrl, headers);
+        String response;
+        try {
+            response = new WebClient().get(mciProperties.getIdpBaseUrl(), userInfoUrl, headers);
+        } catch (NotFoundException e) {
+            throw new IdentityUnauthorizedException("Identity not authorized.");
+        }
         UserInfo userInfo = new ObjectMapper().readValue(response, UserInfo.class);
         return userInfo;
     }

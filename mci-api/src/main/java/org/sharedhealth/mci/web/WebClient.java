@@ -19,6 +19,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.exception.IdentityUnauthorizedException;
+import org.sharedhealth.mci.web.exception.NotFoundException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -89,6 +90,8 @@ public class WebClient {
                 } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
                     getIdentityStore().clearIdentityToken();
                     throw new IdentityUnauthorizedException("Identity not authorized.");
+                } else if (statusCode == HttpStatus.SC_NOT_FOUND) {
+                    throw new NotFoundException("Invalid Url.");
                 } else {
                     throw new ClientProtocolException("Unexpected Response status.");
                 }

@@ -231,7 +231,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 .withHeader(X_AUTH_TOKEN_KEY, equalTo(mciProperties.getIdpXAuthToken()))
                 .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
                 .willReturn(aResponse()
-                        .withStatus(HttpStatus.SC_UNAUTHORIZED)));
+                        .withStatus(HttpStatus.SC_NOT_FOUND)));
 
         Map<String, String> headers = new HashMap<>();
         headers.put("X-Auth-Token", authToken);
