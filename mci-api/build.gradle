@@ -8,6 +8,9 @@ mainClassName = "org.sharedhealth.mci.web.launch.Application"
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
     flatDir {
         dirs "${rootDir}/lib"
     }
@@ -151,6 +154,9 @@ task debugMCI(type: JavaExec) {
 buildscript {
     repositories {
         mavenCentral()
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots"
+        }
     }
     dependencies {
         classpath(

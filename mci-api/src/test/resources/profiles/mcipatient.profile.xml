@@ -2,17 +2,15 @@
 <StructureDefinition xmlns="http://hl7.org/fhir">
   <id value="mciPatient" />
   <meta>
-    <lastUpdated value="2016-08-25T11:35:14.049+05:30" />
+    <lastUpdated value="2016-10-07T13:37:21.583+05:30" />
   </meta>
-  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profiles#MCIPatient" />
-  <version value="1.0" />
+  <url value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profiles/MCIPatient" />
   <name value="MCIPatient" />
   <status value="draft" />
-  <description value="Definition for patient resource for MCI" />
   <fhirVersion value="1.0.2" />
   <kind value="resource" />
-  <type value="Patient" />
   <abstract value="false" />
+  <type value="Patient" />
   <baseDefinition value="http://hl7.org/fhir/StructureDefinition/Patient" />
   <snapshot>
     <element>
@@ -42,6 +40,55 @@
         <identity value="w5" />
         <map value="administrative.individual" />
       </mapping>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <slicing>
+        <discriminator value="url" />
+        <ordered value="false"/>
+        <rules value="open"/>
+      </slicing>
+      <short value="Additional Content defined by implementations" />
+      <definition value="May be used to represent additional information that is not part of the basic definition of the resource. In order to make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension." />
+      <comments value="There can be no stigma associated with the use of extensions by any application, project, or standard - regardless of the institution or jurisdiction that uses or defines the extensions.  The use of extensions is what allows the FHIR specification to retain a core level of simplicity for everyone." />
+      <alias value="extensions" />
+      <alias value="user content" />
+      <min value="0" />
+      <max value="*" />
+      <base>
+        <path value="Patient.extension" />
+        <min value="0" />
+        <max value="*" />
+      </base>
+      <type>
+        <code value="Extension" />
+      </type>
+      <mapping>
+        <identity value="rim" />
+        <map value="N/A" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="bloodGroup" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/BloodGroup" />
+      </type>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="confidentiality" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/confidentiality" />
+      </type>
     </element>
     <element>
       <path value="Patient.id" />
@@ -1374,28 +1421,6 @@
       </binding>
     </element>
     <element>
-      <path value="Patient.extension" />
-      <short value="Additional Content defined by implementations" />
-      <definition value="May be used to represent additional information that is not part of the basic definition of the resource. In order to make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension." />
-      <comments value="There can be no stigma associated with the use of extensions by any application, project, or standard - regardless of the institution or jurisdiction that uses or defines the extensions.  The use of extensions is what allows the FHIR specification to retain a core level of simplicity for everyone." />
-      <alias value="extensions" />
-      <alias value="user content" />
-      <min value="0" />
-      <max value="*" />
-      <base>
-        <path value="Patient.extension" />
-        <min value="0" />
-        <max value="*" />
-      </base>
-      <type>
-        <code value="Extension" />
-      </type>
-      <mapping>
-        <identity value="rim" />
-        <map value="N/A" />
-      </mapping>
-    </element>
-    <element>
       <path value="Patient.modifierExtension" />
       <short value="Extensions that cannot be ignored" />
       <definition value="May be used to represent additional information that is not part of the basic definition of the resource, and that modifies the understanding of the element that contains it. Usually modifier elements provide negation or qualification. In order to make the use of extensions safe and manageable, there is a strict set of governance applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension. Applications processing a resource are required to check for modifier extensions." />
@@ -2196,6 +2221,7 @@
       </base>
       <type>
         <code value="HumanName" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profile/mciName" />
       </type>
       <isSummary value="true" />
       <mapping>
@@ -2323,8 +2349,8 @@
       <definition value="The part of a name that links to the genealogy. In some cultures (e.g. Eritrea) the family name of a son is the first name of his father." />
       <comments value="For family name, hyphenated names such as &quot;Smith-Jones&quot; are a single name, but names with spaces such as &quot;Smith Jones&quot; are broken into multiple parts." />
       <alias value="surname" />
-      <min value="0" />
-      <max value="*" />
+      <min value="1" />
+      <max value="1" />
       <base>
         <path value="Patient.name.family" />
         <min value="0" />
@@ -2354,8 +2380,8 @@
       <comments value="If only initials are recorded, they may be used in place of the full name.  Not called &quot;first name&quot; since given names do not always come first." />
       <alias value="first name" />
       <alias value="middle name" />
-      <min value="0" />
-      <max value="*" />
+      <min value="1" />
+      <max value="1" />
       <base>
         <path value="Patient.name.given" />
         <min value="0" />
@@ -2990,7 +3016,7 @@
       <comments value="Patient may have multiple addresses with different uses or applicable periods." />
       <requirements value="May need to keep track of patient addresses for contacting, billing or reporting requirements and also to help with identification." />
       <min value="1" />
-      <max value="*" />
+      <max value="1" />
       <base>
         <path value="Patient.address" />
         <min value="0" />
@@ -3014,27 +3040,12 @@
       </mapping>
     </element>
     <element>
-      <path value="Patient.address.id" />
-      <representation value="xmlAttr" />
-      <short value="xml:id (or equivalent in JSON)" />
-      <definition value="unique id for the element within a resource (for internal references)." />
-      <min value="0" />
-      <max value="1" />
-      <base>
-        <path value="Patient.address.id" />
-        <min value="0" />
-        <max value="1" />
-      </base>
-      <type>
-        <code value="id" />
-      </type>
-      <mapping>
-        <identity value="rim" />
-        <map value="n/a" />
-      </mapping>
-    </element>
-    <element>
       <path value="Patient.address.extension" />
+      <slicing>
+        <discriminator value="url" />
+        <ordered value="false"/>
+        <rules value="open"/>
+      </slicing>
       <short value="Additional Content defined by implementations" />
       <definition value="May be used to represent additional information that is not part of the basic definition of the element. In order to make the use of extensions safe and manageable, there is a strict set of governance  applied to the definition and use of extensions. Though any implementer is allowed to define an extension, there is a set of requirements that SHALL be met as part of the definition of the extension." />
       <comments value="There can be no stigma associated with the use of extensions by any application, project, or standard - regardless of the institution or jurisdiction that uses or defines the extensions.  The use of extensions is what allows the FHIR specification to retain a core level of simplicity for everyone." />
@@ -3049,6 +3060,37 @@
       </base>
       <type>
         <code value="Extension" />
+      </type>
+      <mapping>
+        <identity value="rim" />
+        <map value="n/a" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.address.extension" />
+      <name value="addressCode" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode" />
+      </type>
+    </element>
+    <element>
+      <path value="Patient.address.id" />
+      <representation value="xmlAttr" />
+      <short value="xml:id (or equivalent in JSON)" />
+      <definition value="unique id for the element within a resource (for internal references)." />
+      <min value="0" />
+      <max value="1" />
+      <base>
+        <path value="Patient.address.id" />
+        <min value="0" />
+        <max value="1" />
+      </base>
+      <type>
+        <code value="id" />
       </type>
       <mapping>
         <identity value="rim" />
@@ -7934,6 +7976,28 @@
       </mapping>
     </element>
     <element>
+      <path value="Patient.extension" />
+      <name value="bloodGroup" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/BloodGroup" />
+      </type>
+    </element>
+    <element>
+      <path value="Patient.extension" />
+      <name value="confidentiality" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/confidentiality" />
+      </type>
+    </element>
+    <element>
       <path value="Patient.name" />
       <short value="A name associated with the patient" />
       <definition value="A name associated with the individual." />
@@ -7948,6 +8012,7 @@
       </base>
       <type>
         <code value="HumanName" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profile/mciName" />
       </type>
       <isSummary value="true" />
       <mapping>
@@ -7961,6 +8026,67 @@
       <mapping>
         <identity value="cda" />
         <map value=".patient.name" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.name.family" />
+      <short value="Family name (often called 'Surname')" />
+      <definition value="The part of a name that links to the genealogy. In some cultures (e.g. Eritrea) the family name of a son is the first name of his father." />
+      <comments value="For family name, hyphenated names such as &quot;Smith-Jones&quot; are a single name, but names with spaces such as &quot;Smith Jones&quot; are broken into multiple parts." />
+      <alias value="surname" />
+      <min value="1" />
+      <max value="1" />
+      <base>
+        <path value="Patient.name.family" />
+        <min value="0" />
+        <max value="*" />
+      </base>
+      <type>
+        <code value="string" />
+      </type>
+      <isSummary value="true" />
+      <mapping>
+        <identity value="v2" />
+        <map value="XPN.1" />
+      </mapping>
+      <mapping>
+        <identity value="rim" />
+        <map value="./part[partType = FAM]" />
+      </mapping>
+      <mapping>
+        <identity value="servd" />
+        <map value="./FamilyName" />
+      </mapping>
+    </element>
+    <element>
+      <path value="Patient.name.given" />
+      <short value="Given names (not always 'first'). Includes middle names" />
+      <definition value="Given name." />
+      <comments value="If only initials are recorded, they may be used in place of the full name.  Not called &quot;first name&quot; since given names do not always come first." />
+      <alias value="first name" />
+      <alias value="middle name" />
+      <min value="1" />
+      <max value="1" />
+      <base>
+        <path value="Patient.name.given" />
+        <min value="0" />
+        <max value="*" />
+      </base>
+      <type>
+        <code value="string" />
+      </type>
+      <isSummary value="true" />
+      <mapping>
+        <identity value="v2" />
+        <map value="XPN.2 + XPN.3" />
+      </mapping>
+      <mapping>
+        <identity value="rim" />
+        <map value="./part[partType = GIV]" />
+      </mapping>
+      <mapping>
+        <identity value="servd" />
+        <map value="./GivenNames" />
       </mapping>
     </element>
     <element>
@@ -8041,7 +8167,7 @@
       <comments value="Patient may have multiple addresses with different uses or applicable periods." />
       <requirements value="May need to keep track of patient addresses for contacting, billing or reporting requirements and also to help with identification." />
       <min value="1" />
-      <max value="*" />
+      <max value="1" />
       <base>
         <path value="Patient.address" />
         <min value="0" />
@@ -8063,6 +8189,17 @@
         <identity value="cda" />
         <map value=".addr" />
       </mapping>
+    </element>
+    <element>
+      <path value="Patient.address.extension" />
+      <name value="addressCode" />
+      <definition value="Optional Extensions Element - found in all resources." />
+      <min value="1" />
+      <max value="1" />
+      <type>
+        <code value="Extension" />
+        <profile value="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode" />
+      </type>
     </element>
   </differential>
 </StructureDefinition>

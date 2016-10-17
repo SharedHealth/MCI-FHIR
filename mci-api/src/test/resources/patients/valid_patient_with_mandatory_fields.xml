@@ -1,7 +1,13 @@
 <Patient xmlns="http://hl7.org/fhir">
+    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/BloodGroup">
+        <valueString value="A"/>
+    </extension>
+    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/confidentiality">
+        <valueBoolean value="true"/>
+    </extension>
     <name>
-        <family value="Raichand"/>
-        <given value="Yashvardhan"/>
+        <family value="Dev"/>
+        <given value="Ram"/>
     </name>
     <gender value="male"/>
 
@@ -11,8 +17,8 @@
         </extension>
     </birthDate>
     <address>
-        <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
-            <valueString value="201918991101"/>
+        <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode">
+            <valueString value="100456"/>
         </extension>
         <line value="3rd lane"/>
         <country value="050"/>

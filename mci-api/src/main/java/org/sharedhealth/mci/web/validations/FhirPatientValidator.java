@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web.validations;
 
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
@@ -19,7 +20,7 @@ import java.util.regex.Pattern;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirContext;
 
 public class FhirPatientValidator {
-    private final String PATIENT_PROFILE_FILE_PREFIX = "mcipatient";
+    private final String PATIENT_PROFILE_FILE_PREFIX = "mcipatient.profile.xml";
     private List<Pattern> patientFieldErrors = new ArrayList<>();
     private volatile FhirValidator fhirValidator;
     private MCIProperties mciProperties;
@@ -30,7 +31,8 @@ public class FhirPatientValidator {
     }
 
     public MCIValidationResult validate(Patient patient) {
-        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
+        FhirValidator fhirValidator = validatorInstance();
+        ValidationResult validationResult = fhirValidator.validateWithResult(patient);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
         return mciValidationResult;
@@ -59,7 +61,7 @@ public class FhirPatientValidator {
             synchronized (FhirValidator.class) {
                 if (fhirValidator == null) {
                     fhirValidator = fhirContext.newValidator();
-                    FhirInstanceValidator validator = new FhirInstanceValidator();
+                    FhirInstanceValidator validator = new FhirInstanceValidator(new MCIValidationSupport(mciProperties));
                     validator.setStructureDefintion(loadProfileOrReturnNull(mciProperties, PATIENT_PROFILE_FILE_PREFIX));
                     fhirValidator.registerValidatorModule(validator);
                 }
@@ -68,16 +70,21 @@ public class FhirPatientValidator {
         return fhirValidator;
     }
 
-    private static StructureDefinition loadProfileOrReturnNull(MCIProperties mciProperties, String profileName) {
+    public static StructureDefinition loadProfileOrReturnNull(MCIProperties mciProperties, String profileName) {
         String profileText;
         try {
-            String pathToProfile = mciProperties.getProfilesFolderPath() + profileName.toLowerCase() + ".profile.xml";
+            String pathToProfile = mciProperties.getProfilesFolderPath() + profileName.toLowerCase();
             profileText = IOUtils.toString(new FileInputStream(pathToProfile), "UTF-8");
         } catch (IOException e) {
-            throw new RuntimeException("No profile found for patient");
+            throw new RuntimeException(String.format("No profile found for %s", profileName));
         }
-        return fhirContext.newXmlParser().parseResource(StructureDefinition.class,
+        IParser parser;
+        if (profileName.endsWith(".xml")) {
+            parser = fhirContext.newXmlParser();
+        } else {
+            parser = fhirContext.newJsonParser();
+        }
+        return parser.parseResource(StructureDefinition.class,
                 profileText);
     }
-
 }
