@@ -141,7 +141,6 @@ public class PatientServiceTest {
         inOrder.verify(patientMapper).mapToMCIPatient(fhirPatient);
         inOrder.verify(healthIdService).getNextHealthId();
         inOrder.verify(patientRepository).createPatient(patientToBeCreated);
-        inOrder.verify(healthIdService).markUsed(mciHealthId);
     }
 
     @Test

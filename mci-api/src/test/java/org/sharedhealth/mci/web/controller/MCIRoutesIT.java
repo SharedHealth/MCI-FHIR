@@ -155,8 +155,6 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         assertNotNull(mciResponse.getId());
         assertTrue(getHIDs().contains(mciResponse.getId()));
         assertNull(mciResponse.getMessage());
-
-        verify(1, putRequestedFor(urlMatching("/healthIds/markUsed/" + mciResponse.getId())));
     }
 
     @Test
@@ -377,15 +375,6 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.SC_OK)
                         .withBody(hidResponse)
-                ));
-
-        stubFor(put(urlPathEqualTo("/healthIds/markUsed"))
-                .withHeader(X_AUTH_TOKEN_KEY, equalTo(token.toString()))
-                .withHeader(CLIENT_ID_KEY, equalTo(mciProperties.getIdpClientId()))
-                .withHeader(FROM_KEY, equalTo(mciProperties.getIdpEmail()))
-                .willReturn(aResponse()
-                        .withStatus(HttpStatus.SC_OK)
-                        .withBody("Accepted")
                 ));
     }
 

@@ -12,7 +12,6 @@ import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.MciHealthId;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.repository.PatientRepository;
-import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +25,6 @@ import static org.sharedhealth.mci.web.util.HttpUtil.*;
 public class HealthIdService {
     private static final Logger logger = LogManager.getLogger(HealthIdService.class);
 
-    private final String USED_AT_KEY = "used_at";
     private static final String HEALTH_ID_LIST_KEY = "hids";
 
     private IdentityProviderService identityProviderService;
@@ -47,13 +45,6 @@ public class HealthIdService {
         return new MciHealthId(nextHealthId);
     }
 
-    public void markUsed(MciHealthId healthId) throws IOException {
-        UUID usedAt = TimeUuidUtil.uuidForDate(new Date());
-        Map<String, String> hidServiceHeaders = getHIDServiceHeaders();
-        Map<String, String> data = new HashMap<>();
-        data.put(USED_AT_KEY, usedAt.toString());
-        new WebClient().put(mciProperties.getHidServiceBaseUrl(), getMarkUsedUrlPath(healthId), hidServiceHeaders, data);
-    }
 
     public void putBack(MciHealthId healthId) {
         mciHealthIdStore.addMciHealthIds(Arrays.asList(healthId.getHid()));
@@ -84,10 +75,6 @@ public class HealthIdService {
         writeHIDsToFile(hids);
         mciHealthIdStore.addMciHealthIds(nextBlock);
         logger.info("Replenished {} healthIds from HID service", nextBlock.size());
-    }
-
-    private String getMarkUsedUrlPath(MciHealthId healthId) {
-        return String.format(mciProperties.getHidServiceMarkUsedUrlPattern(), healthId.getHid());
     }
 
     private void writeHIDsToFile(Collection hids) throws IOException {

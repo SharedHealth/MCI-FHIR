@@ -16,7 +16,7 @@ import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
 
-import java.io.IOException;
+
 import java.nio.file.AccessDeniedException;
 import java.util.Date;
 
@@ -65,11 +65,6 @@ public class PatientService {
             healthIdService.putBack(healthId);
             return getMciResponse("Error while creating patient: " + e.getMessage(),
                     HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        }
-        try {
-            healthIdService.markUsed(healthId);
-        } catch (IOException e) {
-            // Add to failed events
         }
         return mciResponse;
     }

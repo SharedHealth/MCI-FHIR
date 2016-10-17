@@ -67,20 +67,6 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void shouldAskHIDServiceToMarkAsUsedHID() throws Exception {
-        MciHealthId hid = new MciHealthId("hid");
-        UUID token = UUID.randomUUID();
-        setUpIdentityStub(token);
-        setupMarkUsedStub("/healthIds/markUsed/hid", "Accepted", token);
-
-        healthIdService.markUsed(hid);
-
-        verify(1, putRequestedFor(urlMatching("/healthIds/markUsed/hid"))
-                        .withRequestBody(containing("\"used_at\":"))
-        );
-    }
-
-    @Test
     public void shouldPutBackTheHIDToStore() throws Exception {
         List<String> hidBlock = Lists.newArrayList("healthId1");
         mciHealthIdStore.addMciHealthIds(hidBlock);
