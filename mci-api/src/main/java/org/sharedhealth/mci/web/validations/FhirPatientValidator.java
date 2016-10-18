@@ -21,40 +21,18 @@ import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirContext;
 
 public class FhirPatientValidator {
     private final String PATIENT_PROFILE_FILE_PREFIX = "mcipatient.profile.xml";
-    private List<Pattern> patientFieldErrors = new ArrayList<>();
     private volatile FhirValidator fhirValidator;
     private MCIProperties mciProperties;
 
     public FhirPatientValidator(MCIProperties mciProperties) {
         this.mciProperties = mciProperties;
-        this.patientFieldErrors.add(Pattern.compile("/f:Patient/f:gender"));
     }
 
     public MCIValidationResult validate(Patient patient) {
         FhirValidator fhirValidator = validatorInstance();
         ValidationResult validationResult = fhirValidator.validateWithResult(patient);
-        MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
-        changeWarningToErrorIfNeeded(mciValidationResult);
-        return mciValidationResult;
+        return new MCIValidationResult(fhirContext, validationResult.getMessages());
     }
-
-    private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {
-        validationResult.getMessages().stream().forEach(validationMessage -> {
-            if (isPossiblePatientFieldError(validationMessage.getLocationString())) {
-                if (validationMessage.getSeverity().ordinal() <= ResultSeverityEnum.WARNING.ordinal()) {
-                    validationMessage.setSeverity(ResultSeverityEnum.ERROR);
-                }
-            }
-        });
-    }
-
-    private boolean isPossiblePatientFieldError(String locationString) {
-        return patientFieldErrors.stream().anyMatch(pattern -> {
-            Matcher matcher = pattern.matcher(locationString);
-            return matcher.matches();
-        });
-    }
-
 
     private FhirValidator validatorInstance() {
         if (fhirValidator == null) {

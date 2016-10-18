@@ -49,7 +49,7 @@ public class PatientControllerTest {
     public void shouldCreatePatientAndGiveCreatedPatientHID() throws Exception {
         MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_CREATED);
         mciResponse.setId("HID");
-        String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields.xml");
+        String content = FileUtil.asString("patients/valid_patient_with_mandatory_fields_for_profile.xml");
 
         when(request.body()).thenReturn(content);
         UserInfo userInfo = getUserInfo();

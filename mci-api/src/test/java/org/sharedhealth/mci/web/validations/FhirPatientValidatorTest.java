@@ -32,14 +32,8 @@ public class FhirPatientValidatorTest {
 
     @Test
     public void shouldValidateAPatientResource() throws Exception {
-        Patient patient = createPatientFromFile("patients/valid_patient_with_mandatory_fields.xml");
+        Patient patient = createPatientFromFile("patients/valid_patient_with_mandatory_fields_for_profile.xml");
         MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
-        System.out.println("***********");
-        for (SingleValidationMessage singleValidationMessage : validationResult.getMessages()) {
-            System.out.println(singleValidationMessage.getLocationString());
-            System.out.println(singleValidationMessage.getMessage());
-        }
-        System.out.println("***********");
         assertTrue(validationResult.isSuccessful());
     }
 
