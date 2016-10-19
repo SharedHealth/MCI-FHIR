@@ -71,13 +71,26 @@ public class FhirPatientValidatorMCIProfileTest {
         assertFalse(validationResult.isSuccessful());
         List<SingleValidationMessage> validationMessages = validationResult.getMessages();
         assertEquals(8, validationMessages.size());
-        for (SingleValidationMessage validationMessage : validationMessages) {
-            System.out.println(validationMessage.getLocationString());
-            System.out.println(validationMessage.getMessage());
-        }
+
         assertTrue(containsError(validationMessages, "Patient.extension[1].valueBoolean", "Could not verify slice for profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/BloodGroup"));
-        assertTrue(containsError(validationMessages, "Patient.name", "Element 'Patient.name.given': minimum required = 1, but only found 0"));
-        assertTrue(containsError(validationMessages, "Patient.address", "Element 'Patient.address.extension[addressCode]': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationMessages, "Patient.extension[1]", "Profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/BloodGroup, Element 'Patient.extension[1].valueString': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationMessages, "Patient.extension[2].valueString", "Could not verify slice for profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/confidentiality"));
+        assertTrue(containsError(validationMessages, "Patient.extension[2]", "Profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/confidentiality, Element 'Patient.extension[2].valueBoolean': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationMessages, "Patient.address.extension.valueBoolean", "Could not verify slice for profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode"));
+        assertTrue(containsError(validationMessages, "Patient.address.extension", "Profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode, Element 'Patient.address.extension.valueString': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationMessages, "Patient.address.extension.valueBoolean", "Could not verify slice for profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode"));
+        assertTrue(containsError(validationMessages, "Patient.address.extension", "Profile https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions/addressCode, Element 'Patient.address.extension.valueString': minimum required = 1, but only found 0"));
+    }
+
+    @Test
+    public void shouldFailWhenExtensionsAreMoreThanExpectedValue() throws Exception {
+        Patient patient = createPatientFromFile("patients/invalid_patient_extra_extenions.xml");
+        MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
+        assertFalse(validationResult.isSuccessful());
+        List<SingleValidationMessage> validationMessages = validationResult.getMessages();
+        assertEquals(2, validationMessages.size());
+        assertTrue(containsError(validationMessages, "Patient", "Element 'Patient.extension[bloodGroup]: max allowed = 1, but found 2"));
+        assertTrue(containsError(validationMessages, "Patient", "Element 'Patient.extension[confidentiality]: max allowed = 1, but found 2"));
     }
 
     private boolean containsError(List<SingleValidationMessage> messages, String location, String message) {
