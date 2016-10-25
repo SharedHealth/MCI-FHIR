@@ -57,7 +57,7 @@ configurations {
 
 jar {
     baseName = 'mci-registry'
-    version = '1.0-SNAPSHOT'
+    version = '2.5-SNAPSHOT'
 }
 
 private Properties loadConfig() {
@@ -81,7 +81,7 @@ task exportProperties(dependsOn: 'assembly') << {
 task dist(dependsOn: ['exportProperties'],
         type: Rpm) {
     packageName = 'mci-registry'
-    version = '1.0'
+    version = '2.5'
     release = project.hasProperty('release') ? project.release : '1'
     arch = NOARCH
     os = LINUX
