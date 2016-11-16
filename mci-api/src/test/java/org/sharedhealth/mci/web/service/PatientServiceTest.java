@@ -135,6 +135,7 @@ public class PatientServiceTest {
 
         String expectedCreatedBy = "{\"facility\":{\"id\":\"100067\",\"name\":null},\"provider\":null,\"admin\":null}";
         assertEquals(expectedCreatedBy, patientToBeCreated.getCreatedBy());
+        assertEquals(expectedCreatedBy, patientToBeCreated.getUpdatedBy());
         assertEquals(healthId, patientToBeCreated.getHealthId());
 
         InOrder inOrder = inOrder(patientMapper, healthIdService, patientRepository);

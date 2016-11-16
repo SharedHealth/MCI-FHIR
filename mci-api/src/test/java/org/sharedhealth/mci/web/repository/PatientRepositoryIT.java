@@ -79,6 +79,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(patient, byHealthId);
         assertEquals(patient.getCreatedAt(), byHealthId.getCreatedAt());
         assertEquals(patient.getCreatedBy(), byHealthId.getCreatedBy());
+        assertEquals(patient.getUpdatedBy(), byHealthId.getUpdatedBy());
         assertEquals(patient.getHealthId(), mciResponse.getId());
         assertEquals(HttpStatus.SC_CREATED, mciResponse.getHttpStatus());
 
@@ -158,6 +159,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         expectedPatient.setAddressLine(addressLine);
         expectedPatient.setCreatedAt(TimeUuidUtil.uuidForDate(new Date()));
         expectedPatient.setCreatedBy(writeValueAsString(getRequester()));
+        expectedPatient.setUpdatedBy(writeValueAsString(getRequester()));
         return expectedPatient;
     }
 

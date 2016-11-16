@@ -54,8 +54,14 @@ public class Patient {
     @Column(name = CREATED_AT)
     private UUID createdAt;
 
+    @Column(name = UPDATED_AT)
+    private UUID updatedAt;
+
     @Column(name = CREATED_BY)
     private String createdBy;
+
+    @Column(name = UPDATED_BY)
+    private String updatedBy;
 
     public String getHealthId() {
         return healthId;
@@ -237,5 +243,17 @@ public class Patient {
 
     public String getCreatedBy() {
         return createdBy;
+    }
+
+    public String getUpdatedBy() {return updatedBy;}
+
+    public void setUpdatedBy(String updatedBy) {this.updatedBy = updatedBy;}
+
+    public UUID getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(UUID updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

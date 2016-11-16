@@ -16,9 +16,9 @@ import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import org.sharedhealth.mci.web.validations.FhirPatientValidator;
 import org.sharedhealth.mci.web.validations.MCIValidationResult;
 
-
 import java.nio.file.AccessDeniedException;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 
@@ -54,9 +54,15 @@ public class PatientService {
         MciHealthId healthId;
         healthId = healthIdService.getNextHealthId();
         mciPatient.setHealthId(healthId.getHid());
-        mciPatient.setCreatedAt(TimeUuidUtil.uuidForDate(new Date()));
+        UUID createdAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setCreatedAt(createdAt);
+        mciPatient.setUpdatedAt(createdAt);
         UserInfo.UserInfoProperties userInfoProperties = userInfo.getProperties();
-        mciPatient.setCreatedBy(writeValueAsString(new Requester(userInfoProperties.getFacilityId(), userInfoProperties.getProviderId(), userInfoProperties.getAdminId(), userInfoProperties.getName())));
+        String createdBy = writeValueAsString(new Requester(userInfoProperties.getFacilityId(),
+                userInfoProperties.getProviderId(), userInfoProperties.getAdminId(),
+                userInfoProperties.getName()));
+        mciPatient.setCreatedBy(createdBy);
+        mciPatient.setUpdatedBy(createdBy);
         MCIResponse mciResponse = null;
         try {
             mciResponse = patientRepository.createPatient(mciPatient);

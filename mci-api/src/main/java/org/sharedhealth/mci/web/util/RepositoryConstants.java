@@ -15,7 +15,9 @@ public class RepositoryConstants {
     public static final String GENDER = "gender";
     public static final String DATE_OF_BIRTH = "date_of_birth";
     public static final String CREATED_AT = "created_at";
+    public static final String UPDATED_AT = "updated_at";
     public static final String CREATED_BY = "created_by";
+    public static final String UPDATED_BY = "updated_by";
 
     public static final String PRESENT_ADDRESS = "present_address";
     public static final String COUNTRY_CODE = "country_code";
