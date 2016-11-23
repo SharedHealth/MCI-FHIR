@@ -18,6 +18,7 @@ import org.sharedhealth.mci.web.controller.PatientController;
 import org.sharedhealth.mci.web.mapper.PatientMapper;
 import org.sharedhealth.mci.web.model.IdentityStore;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
+import org.sharedhealth.mci.web.repository.MasterDataRepository;
 import org.sharedhealth.mci.web.repository.PatientRepository;
 import org.sharedhealth.mci.web.security.TokenAuthenticationFilter;
 import org.sharedhealth.mci.web.security.UserInfo;
@@ -42,6 +43,7 @@ public class Application {
     public static final String IDENTITY_PROVIDER_CACHE = "identityProviderUserCache";
 
     private static PatientRepository patientRepository;
+    private static MasterDataRepository masterDataRepository;
     private static MCIProperties mciProperties;
     private static PatientMapper patientMapper;
     private static FhirPatientValidator fhirPatientValidator;
@@ -115,12 +117,13 @@ public class Application {
     }
 
     private static void instantiateMappers() {
-        patientMapper = new PatientMapper(mciProperties);
+        patientMapper = new PatientMapper(mciProperties, masterDataRepository);
     }
 
     private static void instantiateDao() {
         MappingManager mappingManager = MCICassandraConfig.getInstance().getMappingManager();
         patientRepository = new PatientRepository(mappingManager);
+        masterDataRepository = new MasterDataRepository(mappingManager);
     }
 
     private static void createHealthIdReplenishScheduler() {

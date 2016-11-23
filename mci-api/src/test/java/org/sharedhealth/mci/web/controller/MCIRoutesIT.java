@@ -28,6 +28,7 @@ import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.util.DateUtil;
+import org.sharedhealth.mci.web.util.PatientFactory;
 import org.sharedhealth.mci.web.util.TestUtil;
 import spark.Spark;
 
@@ -35,18 +36,11 @@ import java.util.*;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.apache.http.HttpStatus.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.sharedhealth.mci.web.launch.Application.IDENTITY_PROVIDER_CACHE;
-import static org.sharedhealth.mci.web.launch.Application.getCacheManager;
-import static org.sharedhealth.mci.web.launch.Application.getIdentityStore;
+import static org.junit.Assert.*;
+import static org.sharedhealth.mci.web.launch.Application.*;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 import static org.sharedhealth.mci.web.util.FileUtil.asString;
-import static org.sharedhealth.mci.web.util.HttpUtil.CLIENT_ID_KEY;
-import static org.sharedhealth.mci.web.util.HttpUtil.FROM_KEY;
-import static org.sharedhealth.mci.web.util.HttpUtil.X_AUTH_TOKEN_KEY;
+import static org.sharedhealth.mci.web.util.HttpUtil.*;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
 import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_URI_PATH;
 
@@ -60,7 +54,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     @Rule
     public WireMockRule idpService = new WireMockRule(9997);
 
-    private final String healthId = "HID";
+    private final String healthId = "HID123";
     private final String givenName = "Bob the";
     private final String surName = "Builder";
     private final String gender = "M";
@@ -102,7 +96,8 @@ public class MCIRoutesIT extends BaseIntegrationTest {
 
     @Test
     public void shouldGetThePatient() throws Exception {
-        patientMapper.save(createMCIPatient());
+        Patient mciPatient = PatientFactory.createMCIPatient();
+        patientMapper.save(mciPatient);
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
         setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
@@ -126,7 +121,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
         Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
 
-        mciResponse.setMessage("No patient found with health id: HID");
+        mciResponse.setMessage("No patient found with health id: HID123");
 
         UrlResponse urlResponse = doMethod(GET, PATIENT_URI_PATH + "/" + healthId, null, headers);
 

@@ -14,6 +14,7 @@ INSERT INTO master_data ("type", "key", "value") VALUES ('country_code', '050', 
 INSERT INTO master_data ("type", "key", "value") VALUES ('country_code', '051', 'Armenia');
 
 INSERT INTO master_data ("type", "key", "value") VALUES ('relations', 'FTH', 'father');
+INSERT INTO master_data ("type", "key", "value") VALUES ('relations', 'MTH', 'mother');
 INSERT INTO master_data ("type", "key", "value") VALUES ('relations', 'SPS', 'spouse');
 
 INSERT INTO master_data ("type", "key", "value") VALUES ('religion', '1', 'islam');
