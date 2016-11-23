@@ -109,7 +109,7 @@ public class PatientMapper {
     }
 
     private void mapRelationsToContacts(Patient fhirPatient, String relationsString) {
-        if (relationsString == null) return;
+        if (StringUtils.isBlank(relationsString)) return;
         ObjectMapper objectMapper = new ObjectMapper();
         List<Map> relations;
         try {
@@ -133,7 +133,9 @@ public class PatientMapper {
         HumanNameDt humanName = new HumanNameDt();
         humanName.addGiven(givenName);
         if (surName == null) return humanName;
-        return humanName.addFamily((String) surName);
+        String familyName = (String) surName;
+        if (StringUtils.isBlank(familyName)) return humanName;
+        return humanName.addFamily(familyName);
     }
 
     public org.sharedhealth.mci.web.model.Patient mapToMCIPatient(Patient fhirPatient) {
@@ -224,7 +226,7 @@ public class PatientMapper {
     }
 
     private void mapAsIdIdentifier(Patient fhirPatient, String value, String identifierTypeCode, String healthId) {
-        if (value == null) return;
+        if (StringUtils.isBlank(value)) return;
         String mciPatientURI = getMCIPatientURI(mciProperties.getMciBaseUrl());
         String system = String.format("%s%s", mciPatientURI, healthId);
         IdentifierDt identifierDt = fhirPatient.addIdentifier().setValue(value).setSystem(system);
