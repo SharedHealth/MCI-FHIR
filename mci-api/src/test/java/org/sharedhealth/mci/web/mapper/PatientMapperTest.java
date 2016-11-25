@@ -28,6 +28,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_STATUS_DEAD;
 import static org.sharedhealth.mci.web.util.MCIConstants.getMCIPatientURI;
 import static org.sharedhealth.mci.web.util.PatientFactory.*;
 
@@ -196,6 +197,7 @@ public class PatientMapperTest {
         mciPatient.setActive(true);
         mciPatient.setConfidential(false);
         mciPatient.setHealthId(healthId);
+        mciPatient.setStatus(PATIENT_STATUS_DEAD);
         Date date = new Date();
         mciPatient.setDateOfDeath(date);
         ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
@@ -203,6 +205,26 @@ public class PatientMapperTest {
         IDatatype deceased = fhirPatient.getDeceased();
         assertTrue(deceased instanceof DateTimeDt);
         assertEquals(date, ((DateTimeDt) deceased).getValue());
+    }
+
+    @Test
+    public void shouldMapADeadPatientWhenDateOfDeathIsUnknown() throws Exception {
+        String mciBaseUrl = "https://mci-registry.com/";
+        String patientLinkUri = "https://mci.com/api/v1/patients/";
+
+        when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
+        when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
+
+        org.sharedhealth.mci.web.model.Patient mciPatient = createMCIPatientWithMandatoryFields();
+        mciPatient.setActive(true);
+        mciPatient.setConfidential(false);
+        mciPatient.setHealthId(healthId);
+        mciPatient.setStatus(PATIENT_STATUS_DEAD);
+        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
+        assertNotNull(fhirPatient);
+        IDatatype deceased = fhirPatient.getDeceased();
+        assertTrue(deceased instanceof BooleanDt);
+        assertTrue(((BooleanDt) deceased).getValue());
     }
 
     @Test

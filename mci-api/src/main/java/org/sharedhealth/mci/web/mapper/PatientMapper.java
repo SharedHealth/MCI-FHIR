@@ -1,7 +1,6 @@
 package org.sharedhealth.mci.web.mapper;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.api.IDatatype;
 import ca.uhn.fhir.model.dstu2.composite.*;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
@@ -31,8 +30,7 @@ import java.util.Map;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
-import static org.sharedhealth.mci.web.util.MCIConstants.URL_SEPARATOR;
-import static org.sharedhealth.mci.web.util.MCIConstants.getMCIPatientURI;
+import static org.sharedhealth.mci.web.util.MCIConstants.*;
 import static org.sharedhealth.mci.web.util.StringUtils.ensureSuffix;
 
 public class PatientMapper {
@@ -81,8 +79,7 @@ public class PatientMapper {
             fhirPatient.addTelecom().setSystem(ContactPointSystemEnum.PHONE).setValue(mciPatient.getPhoneNo());
         }
 
-        IDatatype deceased = (null == mciPatient.getDateOfDeath()) ? new BooleanDt(false) : new DateTimeDt(mciPatient.getDateOfDeath());
-        fhirPatient.setDeceased(deceased);
+        mapDeceased(fhirPatient, mciPatient);
         fhirPatient.setActive(mciPatient.getActive());
 
         ExtensionDt confidentiality = new ExtensionDt().setUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME))
@@ -97,6 +94,20 @@ public class PatientMapper {
         ExtensionDt dobTypeExtension = new ExtensionDt().setUrl(getFhirExtensionUrl(DOB_TYPE_EXTENSION_NAME)).setValue(dobTypeCoding);
         fhirPatient.addUndeclaredExtension(dobTypeExtension);
         return fhirPatient;
+    }
+
+    private void mapDeceased(Patient fhirPatient, org.sharedhealth.mci.web.model.Patient mciPatient) {
+        if (PATIENT_STATUS_ALIVE.equals(mciPatient.getStatus())) {
+            fhirPatient.setDeceased(new BooleanDt(false));
+            return;
+        }
+        if (PATIENT_STATUS_DEAD.equals(mciPatient.getStatus())) {
+            if (mciPatient.getDateOfDeath() != null) {
+                fhirPatient.setDeceased(new DateTimeDt(mciPatient.getDateOfDeath()));
+                return;
+            }
+            fhirPatient.setDeceased(new BooleanDt(true));
+        }
     }
 
     private void mapCodingExtensionFor(String masterDataType, String masterDataKey, String valuesetName, String extensionName, Patient fhirPatient) {

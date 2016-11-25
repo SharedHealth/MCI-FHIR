@@ -8,12 +8,12 @@ import java.util.Date;
 
 import static org.sharedhealth.mci.web.util.DateUtil.parseDate;
 import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
+import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_STATUS_ALIVE;
 
 public class PatientFactory {
     public static final String educationLevel = "01";
     public static final String occupation = "02";
     public static final String phoneNo = "12345678";
-    public static final String status = "1";
     public static final Date dateOfDeath = null;
     public static final String dobType = "1";
     public static final String healthId = "HID123";
@@ -68,7 +68,7 @@ public class PatientFactory {
         expectedPatient.setEducationLevel(educationLevel);
         expectedPatient.setOccupation(occupation);
         expectedPatient.setPhoneNo(phoneNo);
-        expectedPatient.setStatus(status);
+        expectedPatient.setStatus(PATIENT_STATUS_ALIVE);
         expectedPatient.setDateOfDeath(dateOfDeath);
         expectedPatient.setDobType(dobType);
         expectedPatient.setHouseholdCode(householdCode);
