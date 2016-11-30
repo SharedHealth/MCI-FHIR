@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web.controller;
 
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -30,6 +31,7 @@ import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.util.DateUtil;
 import org.sharedhealth.mci.web.util.PatientFactory;
 import org.sharedhealth.mci.web.util.TestUtil;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import spark.Spark;
 
 import java.util.*;
@@ -97,6 +99,9 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     @Test
     public void shouldGetThePatient() throws Exception {
         Patient mciPatient = PatientFactory.createMCIPatient();
+        UUID createdAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setCreatedAt(createdAt);
+        mciPatient.setUpdatedAt(createdAt);
         patientMapper.save(mciPatient);
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
@@ -110,7 +115,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         String body = urlResponse.body;
         assertNotNull(body);
         IBaseResource resource = parseResource(body);
-        assertTrue(resource instanceof ca.uhn.fhir.model.dstu2.resource.Patient);
+        assertTrue(resource instanceof Bundle);
     }
 
     @Test

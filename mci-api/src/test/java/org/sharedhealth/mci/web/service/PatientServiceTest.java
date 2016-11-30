@@ -2,6 +2,7 @@ package org.sharedhealth.mci.web.service;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
 import ca.uhn.fhir.model.dstu2.composite.AddressDt;
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
@@ -31,19 +32,11 @@ import java.util.Date;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.security.UserInfo.HRM_MCI_USER_GROUP;
-import static org.sharedhealth.mci.web.util.FHIRConstants.ADDRESS_CODE_EXTENSION_NAME;
-import static org.sharedhealth.mci.web.util.FHIRConstants.BIRTH_TIME_EXTENSION_URL;
-import static org.sharedhealth.mci.web.util.FHIRConstants.getFhirExtensionUrl;
+import static org.sharedhealth.mci.web.util.FHIRConstants.*;
 
 public class PatientServiceTest {
     private PatientService patientService;
@@ -79,17 +72,17 @@ public class PatientServiceTest {
     @Test
     public void shouldGiveFHIRPatientForGivenHID() throws Exception {
         Patient mciPatient = new Patient();
-        ca.uhn.fhir.model.dstu2.resource.Patient expectedFHIRPatient = new ca.uhn.fhir.model.dstu2.resource.Patient();
+        Bundle expectedFHIRBundle = new Bundle();
         when(patientRepository.findByHealthId(healthId)).thenReturn(mciPatient);
-        when(patientMapper.mapToFHIRPatient(mciPatient)).thenReturn(expectedFHIRPatient);
+        when(patientMapper.mapPatientToBundle(mciPatient)).thenReturn(expectedFHIRBundle);
 
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientService.findPatientByHealthId(healthId);
+        Bundle bundle = patientService.findPatientByHealthId(healthId);
 
-        assertNotNull(fhirPatient);
-        assertSame(expectedFHIRPatient, fhirPatient);
+        assertNotNull(bundle);
+        assertSame(expectedFHIRBundle, bundle);
         InOrder inOrder = inOrder(patientRepository, patientMapper);
         inOrder.verify(patientRepository).findByHealthId(healthId);
-        inOrder.verify(patientMapper).mapToFHIRPatient(mciPatient);
+        inOrder.verify(patientMapper).mapPatientToBundle(mciPatient);
     }
 
     @Test(expected = PatientNotFoundException.class)

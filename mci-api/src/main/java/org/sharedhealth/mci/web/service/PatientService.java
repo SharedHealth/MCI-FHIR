@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web.service;
 
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -37,12 +38,12 @@ public class PatientService {
         this.fhirPatientValidator = fhirPatientValidator;
     }
 
-    public Patient findPatientByHealthId(String healthId) {
+    public Bundle findPatientByHealthId(String healthId) {
         org.sharedhealth.mci.web.model.Patient mciPatient = patientRepository.findByHealthId(healthId);
         if (null == mciPatient) {
             throw new PatientNotFoundException("No patient found with health id: " + healthId);
         }
-        return patientMapper.mapToFHIRPatient(mciPatient);
+        return patientMapper.mapPatientToBundle(mciPatient);
     }
 
     public MCIResponse createPatient(Patient fhirPatient, UserInfo userInfo) throws AccessDeniedException {

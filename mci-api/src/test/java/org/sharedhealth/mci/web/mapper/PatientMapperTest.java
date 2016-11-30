@@ -2,8 +2,11 @@ package org.sharedhealth.mci.web.mapper;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
 import ca.uhn.fhir.model.api.IDatatype;
+import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.model.dstu2.composite.*;
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.dstu2.resource.RelatedPerson;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
 import ca.uhn.fhir.model.dstu2.valueset.ContactPointSystemEnum;
 import ca.uhn.fhir.model.dstu2.valueset.IdentifierTypeCodesEnum;
@@ -20,16 +23,19 @@ import org.sharedhealth.mci.web.model.MasterData;
 import org.sharedhealth.mci.web.repository.MasterDataRepository;
 import org.sharedhealth.mci.web.util.FHIRConstants;
 import org.sharedhealth.mci.web.util.PatientFactory;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
-import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_STATUS_DEAD;
-import static org.sharedhealth.mci.web.util.MCIConstants.getMCIPatientURI;
+import static org.sharedhealth.mci.web.util.MCIConstants.*;
 import static org.sharedhealth.mci.web.util.PatientFactory.*;
 
 public class PatientMapperTest {
@@ -48,7 +54,7 @@ public class PatientMapperTest {
     }
 
     @Test
-    public void shouldMapMCIPatientToFHIRPatientWithJustMandatoryFields() throws Exception {
+    public void shouldMapMCIPatientWithJustMandatoryFieldsToFHIRBundleWithPatient() throws Exception {
         String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
@@ -59,10 +65,14 @@ public class PatientMapperTest {
         mciPatient.setActive(true);
         mciPatient.setConfidential(false);
         mciPatient.setHealthId(healthId);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
-        assertNotNull(fhirPatient);
+        UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setUpdatedAt(updatedAt);
+        mciPatient.setCreatedAt(updatedAt);
+        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        assertNotNull(patientBundle);
+        Patient patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 
-        List<IdentifierDt> identifiers = fhirPatient.getIdentifier();
+        List<IdentifierDt> identifiers = patient.getIdentifier();
         assertEquals(1, identifiers.size());
         IdentifierDt hidIdentifier = identifiers.get(0);
         assertEquals(healthId, hidIdentifier.getValue());
@@ -73,14 +83,14 @@ public class PatientMapperTest {
         assertEquals(getMCIValuesetURI(mciBaseUrl, MCI_PATIENT_IDENTIFIERS_VALUESET), codingDt.getSystem());
         assertEquals(MCI_IDENTIFIER_HID_CODE, codingDt.getCode());
 
-        HumanNameDt name = fhirPatient.getNameFirstRep();
+        HumanNameDt name = patient.getNameFirstRep();
         assertEquals(givenName, name.getGivenFirstRep().getValue());
         assertEquals(surName, name.getFamilyFirstRep().getValue());
 
-        assertEquals(AdministrativeGenderEnum.MALE.getCode(), fhirPatient.getGender());
-        assertEquals(dateOfBirth, fhirPatient.getBirthDate());
+        assertEquals(AdministrativeGenderEnum.MALE.getCode(), patient.getGender());
+        assertEquals(dateOfBirth, patient.getBirthDate());
 
-        AddressDt address = fhirPatient.getAddressFirstRep();
+        AddressDt address = patient.getAddressFirstRep();
         List<ExtensionDt> extensions = address.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME));
         assertEquals(addressLine, address.getLineFirstRep().getValue());
         assertEquals(1, extensions.size());
@@ -88,7 +98,7 @@ public class PatientMapperTest {
         assertEquals("302618020104", addressCode.getValue());
         assertEquals(countryCode, address.getCountry());
 
-        Patient.Link link = fhirPatient.getLinkFirstRep();
+        Patient.Link link = patient.getLinkFirstRep();
         assertEquals(LinkTypeEnum.SEE_ALSO.getCode(), link.getType());
         assertEquals(patientLinkUri + healthId, link.getOther().getReference().getValue());
     }
@@ -120,8 +130,12 @@ public class PatientMapperTest {
 
         org.sharedhealth.mci.web.model.Patient mciPatient = PatientFactory.createMCIPatient();
         mciPatient.setHealthId(healthId);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
-        assertNotNull(fhirPatient);
+        UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setUpdatedAt(updatedAt);
+        mciPatient.setCreatedAt(updatedAt);
+        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        assertNotNull(patientBundle);
+        Patient fhirPatient = (Patient) getResourceByType(new Patient().getResourceName(), patientBundle).get(0);
 
         List<IdentifierDt> identifiers = fhirPatient.getIdentifier();
         assertEquals(4, identifiers.size());
@@ -158,12 +172,6 @@ public class PatientMapperTest {
         assertEquals(LinkTypeEnum.SEE_ALSO.getCode(), link.getType());
         assertEquals(patientLinkUri + healthId, link.getOther().getReference().getValue());
 
-        List<Patient.Contact> contactPeople = fhirPatient.getContact();
-        assertEquals(3, contactPeople.size());
-        assertTrue(containsContact(contactPeople, "FTH", fatherDisplay, fatherName, surName));
-        assertTrue(containsContact(contactPeople, "MTH", motherDisplay, motherName, surName));
-        assertTrue(containsContact(contactPeople, "SPS", spouseDisplay, spouseName, surName));
-
         ContactPointDt telecom = fhirPatient.getTelecomFirstRep();
         assertEquals(ContactPointSystemEnum.PHONE.getCode(), telecom.getSystem());
         assertEquals(phoneNo, telecom.getValue());
@@ -175,14 +183,22 @@ public class PatientMapperTest {
         BooleanDt confidentiality = (BooleanDt) fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME)).get(0).getValue();
         assertFalse(confidentiality.getValue());
 
-        CodingDt educationCoding = (CodingDt) fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(EDUCATION_DETAILS_EXTENSION_NAME)).get(0).getValue();
+        CodingDt educationCoding = ((CodeableConceptDt) fhirPatient.getUndeclaredExtensionsByUrl(
+                getFhirExtensionUrl(EDUCATION_DETAILS_EXTENSION_NAME)).get(0).getValue()).getCodingFirstRep();
         assertCoding(educationCoding, getMCIValuesetURI(mciBaseUrl, MCI_PATIENT_EDUCATION_DETAILS_VALUESET), educationLevel, educationDisplay);
 
-        CodingDt occupationCoding = (CodingDt) fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(OCCUPATION_EXTENSION_NAME)).get(0).getValue();
+        CodingDt occupationCoding = ((CodeableConceptDt) fhirPatient.getUndeclaredExtensionsByUrl(
+                getFhirExtensionUrl(OCCUPATION_EXTENSION_NAME)).get(0).getValue()).getCodingFirstRep();
         assertCoding(occupationCoding, getMCIValuesetURI(mciBaseUrl, MCI_PATIENT_OCCUPATION_VALUESET), occupation, occupationDisplay);
 
-        CodingDt dobTypeCoding = (CodingDt) fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(DOB_TYPE_EXTENSION_NAME)).get(0).getValue();
+        CodingDt dobTypeCoding = ((CodeableConceptDt) fhirPatient.getUndeclaredExtensionsByUrl(
+                getFhirExtensionUrl(DOB_TYPE_EXTENSION_NAME)).get(0).getValue()).getCodingFirstRep();
         assertCoding(dobTypeCoding, getMCIValuesetURI(mciBaseUrl, MCI_PATIENT_DOB_TYPE_VALUESET), dobType, "Declared");
+
+        ArrayList<IResource> relations = getResourceByType(new RelatedPerson().getResourceName(), patientBundle);
+        containsRelation(relations, "FTH", fatherDisplay, fatherName, surName);
+        containsRelation(relations, "MTH", motherDisplay, motherName, surName);
+        containsRelation(relations, "SPS", spouseDisplay, spouseName, surName);
     }
 
     @Test
@@ -198,9 +214,14 @@ public class PatientMapperTest {
         mciPatient.setConfidential(false);
         mciPatient.setHealthId(healthId);
         mciPatient.setStatus(PATIENT_STATUS_DEAD);
+        UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setUpdatedAt(updatedAt);
+        mciPatient.setCreatedAt(updatedAt);
         Date date = new Date();
         mciPatient.setDateOfDeath(date);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
+        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        assertNotNull(patientBundle);
+        Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
         assertNotNull(fhirPatient);
         IDatatype deceased = fhirPatient.getDeceased();
         assertTrue(deceased instanceof DateTimeDt);
@@ -220,11 +241,39 @@ public class PatientMapperTest {
         mciPatient.setConfidential(false);
         mciPatient.setHealthId(healthId);
         mciPatient.setStatus(PATIENT_STATUS_DEAD);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = patientMapper.mapToFHIRPatient(mciPatient);
-        assertNotNull(fhirPatient);
+        UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setUpdatedAt(updatedAt);
+        mciPatient.setCreatedAt(updatedAt);
+        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        assertNotNull(patientBundle);
+        Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
         IDatatype deceased = fhirPatient.getDeceased();
         assertTrue(deceased instanceof BooleanDt);
         assertTrue(((BooleanDt) deceased).getValue());
+    }
+
+    @Test
+    public void shouldMapAPatientWithUnknownStatus() throws Exception {
+        String mciBaseUrl = "https://mci-registry.com/";
+        String patientLinkUri = "https://mci.com/api/v1/patients/";
+
+        when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
+        when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
+
+        org.sharedhealth.mci.web.model.Patient mciPatient = createMCIPatientWithMandatoryFields();
+        mciPatient.setActive(true);
+        mciPatient.setConfidential(false);
+        mciPatient.setHealthId(healthId);
+        mciPatient.setStatus(PATIENT_STATUS_UNKNOWN);
+        UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setUpdatedAt(updatedAt);
+        mciPatient.setCreatedAt(updatedAt);
+        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        assertNotNull(patientBundle);
+        Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
+        assertNotNull(fhirPatient);
+        IDatatype deceased = fhirPatient.getDeceased();
+        assertNull(deceased);
     }
 
     @Test
@@ -284,10 +333,11 @@ public class PatientMapperTest {
         });
     }
 
-    private boolean containsContact(List<Patient.Contact> contactPeople, String code, String display, String givenName, String surName) {
-        return contactPeople.stream().anyMatch(contact -> {
-            CodingDt relationship = contact.getRelationshipFirstRep().getCodingFirstRep();
-            HumanNameDt name = contact.getName();
+    private boolean containsRelation(ArrayList<IResource> relations, String code, String display, String givenName, String surName) {
+        return relations.stream().anyMatch(relation -> {
+            RelatedPerson relatedPerson = (RelatedPerson) relation;
+            CodingDt relationship = relatedPerson.getRelationship().getCodingFirstRep();
+            HumanNameDt name = relatedPerson.getName();
             return code.equals(relationship.getCode()) && display.equals(relationship.getDisplay()) &&
                     givenName.equals(name.getGivenFirstRep().getValue()) &&
                     surName.equals(name.getFamilyFirstRep().getValue());
@@ -310,6 +360,10 @@ public class PatientMapperTest {
         expectedPatient.setRuralWardId(ruralWardId);
         expectedPatient.setAddressLine(addressLine);
         return expectedPatient;
+    }
+
+    private static ArrayList<IResource> getResourceByType(String resourceName, Bundle bundle) {
+        return bundle.getEntry().stream().filter(entry -> resourceName.equals(entry.getResource().getResourceName())).map(Bundle.Entry::getResource).collect(Collectors.toCollection(ArrayList::new));
     }
 
 }

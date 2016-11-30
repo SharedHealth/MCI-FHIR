@@ -1,6 +1,7 @@
 package org.sharedhealth.mci.web.controller;
 
 
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.parser.DataFormatException;
 import org.apache.http.HttpStatus;
@@ -61,13 +62,13 @@ public class PatientController {
         }
         logAccessDetails(String.format("Find patient given (healthId) : %s", healthId), request.attribute(USER_DETAILS_KEY));
         logger.debug(String.format("find patient request by HID %s", healthId));
-        Patient patient = patientService.findPatientByHealthId(healthId);
+        Bundle patientBundle = patientService.findPatientByHealthId(healthId);
         response.status(200);
         response.type(ContentType.APPLICATION_XML.getMimeType());
-        return formatPatient(patient);
+        return formatPatient(patientBundle);
     }
 
-    private String formatPatient(Patient patient) {
-        return FhirContextHelper.encodeResource(patient);
+    private String formatPatient(Bundle patientBundle) {
+        return FhirContextHelper.encodeResource(patientBundle);
     }
 }

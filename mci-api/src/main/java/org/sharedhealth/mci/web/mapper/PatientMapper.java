@@ -1,15 +1,18 @@
 package org.sharedhealth.mci.web.mapper;
 
 import ca.uhn.fhir.model.api.ExtensionDt;
+import ca.uhn.fhir.model.api.ResourceMetadataKeyEnum;
+import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
+import ca.uhn.fhir.model.base.resource.ResourceMetadataMap;
 import ca.uhn.fhir.model.dstu2.composite.*;
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.dstu2.resource.RelatedPerson;
 import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
+import ca.uhn.fhir.model.dstu2.valueset.BundleTypeEnum;
 import ca.uhn.fhir.model.dstu2.valueset.ContactPointSystemEnum;
 import ca.uhn.fhir.model.dstu2.valueset.LinkTypeEnum;
-import ca.uhn.fhir.model.primitive.BooleanDt;
-import ca.uhn.fhir.model.primitive.DateDt;
-import ca.uhn.fhir.model.primitive.DateTimeDt;
-import ca.uhn.fhir.model.primitive.StringDt;
+import ca.uhn.fhir.model.primitive.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -19,13 +22,14 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
+import org.sharedhealth.mci.web.model.Relation;
 import org.sharedhealth.mci.web.repository.MasterDataRepository;
+import org.sharedhealth.mci.web.util.FHIRConstants;
 import org.sharedhealth.mci.web.util.MCIConstants;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -37,16 +41,13 @@ public class PatientMapper {
     private MCIProperties mciProperties;
     private MasterDataRepository masterDataRepository;
 
-    private static final String RELATION_KEY_TYPE = "type";
-    private static final String RELATION_KEY_SUR_NAME = "sur_name";
-    private static final String RELATION_KEY_GIVEN_NAME = "given_name";
     private static final String MASTER_DATA_EDUCATION_LEVEL_TYPE = "education_level";
     private static final String MASTER_DATA_OCCUPATION_TYPE = "occupation";
     private static final String MASTER_DATA_RELATION_TYPE = "relations";
 
     private final int ADDRESS_CODE_EACH_LEVEL_LENGTH = 2;
-    BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
-    Map<String, String> mciDOBTypeMap = new HashMap<>();
+    private BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
+    private Map<String, String> mciDOBTypeMap = new HashMap<>();
 
     public PatientMapper(MCIProperties mciProperties, MasterDataRepository masterDataRepository) {
         this.mciProperties = mciProperties;
@@ -61,19 +62,32 @@ public class PatientMapper {
         mciDOBTypeMap.put("3", "Estimated");
     }
 
-    public Patient mapToFHIRPatient(org.sharedhealth.mci.web.model.Patient mciPatient) {
+    public Bundle mapPatientToBundle(org.sharedhealth.mci.web.model.Patient mciPatient) {
+        Bundle bundle = new Bundle();
+        bundle.setType(BundleTypeEnum.COLLECTION);
+        bundle.setId(UUID.randomUUID().toString());
+        ResourceMetadataMap metadataMap = new ResourceMetadataMap();
+        metadataMap.put(ResourceMetadataKeyEnum.UPDATED, new InstantDt(TimeUuidUtil.getDateFromUUID(mciPatient.getUpdatedAt()), TemporalPrecisionEnum.MILLI));
+        bundle.setResourceMetadata(metadataMap);
+        mapPatientAndAddToBundle(mciPatient, bundle);
+        return bundle;
+    }
+
+    private void mapPatientAndAddToBundle(org.sharedhealth.mci.web.model.Patient mciPatient, Bundle bundle) {
         Patient fhirPatient = new Patient();
-        fhirPatient.addName(mapName(mciPatient));
+        String patientEntryUri = TimeUuidUtil.uuidForDate(new Date()).toString();
+        bundle.addEntry().setResource(fhirPatient).setFullUrl(createFullUrlFromUUID(patientEntryUri));
+
+        fhirPatient.addName(new HumanNameDt().addGiven(mciPatient.getGivenName()).addFamily(mciPatient.getSurName()));
         fhirPatient.setGender(mciToFhirGenderMap.get(mciPatient.getGender()));
         fhirPatient.setBirthDate(mapDateOfBirth(mciPatient));
         fhirPatient.addAddress(mapAddress(mciPatient));
         fhirPatient.addLink(mapPatientReferenceLink(mciPatient.getHealthId()));
 
-        mapAsIdIdentifier(fhirPatient, mciPatient.getHealthId(), MCI_IDENTIFIER_HID_CODE, mciPatient.getHealthId());
-        mapAsIdIdentifier(fhirPatient, mciPatient.getNationalId(), MCI_IDENTIFIER_NID_CODE, mciPatient.getHealthId());
-        mapAsIdIdentifier(fhirPatient, mciPatient.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, mciPatient.getHealthId());
-        mapAsIdIdentifier(fhirPatient, mciPatient.getHouseholdCode(), MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE, mciPatient.getHealthId());
-        mapRelationsToContacts(fhirPatient, mciPatient.getRelations());
+        mapAsIdentifier(fhirPatient, mciPatient.getHealthId(), MCI_IDENTIFIER_HID_CODE, mciPatient.getHealthId());
+        mapAsIdentifier(fhirPatient, mciPatient.getNationalId(), MCI_IDENTIFIER_NID_CODE, mciPatient.getHealthId());
+        mapAsIdentifier(fhirPatient, mciPatient.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, mciPatient.getHealthId());
+        mapAsIdentifier(fhirPatient, mciPatient.getHouseholdCode(), MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE, mciPatient.getHealthId());
 
         if (StringUtils.isNotBlank(mciPatient.getPhoneNo())) {
             fhirPatient.addTelecom().setSystem(ContactPointSystemEnum.PHONE).setValue(mciPatient.getPhoneNo());
@@ -85,18 +99,26 @@ public class PatientMapper {
         ExtensionDt confidentiality = new ExtensionDt().setUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME))
                 .setValue(new BooleanDt(mciPatient.getConfidential()));
         fhirPatient.addUndeclaredExtension(confidentiality);
-        mapCodingExtensionFor(MASTER_DATA_EDUCATION_LEVEL_TYPE, mciPatient.getEducationLevel(), MCI_PATIENT_EDUCATION_DETAILS_VALUESET, EDUCATION_DETAILS_EXTENSION_NAME, fhirPatient);
-        mapCodingExtensionFor(MASTER_DATA_OCCUPATION_TYPE, mciPatient.getOccupation(), MCI_PATIENT_OCCUPATION_VALUESET, OCCUPATION_EXTENSION_NAME, fhirPatient);
+        mapCodeableConceptExtensionFor(MASTER_DATA_EDUCATION_LEVEL_TYPE, mciPatient.getEducationLevel(), MCI_PATIENT_EDUCATION_DETAILS_VALUESET, EDUCATION_DETAILS_EXTENSION_NAME, fhirPatient);
+        mapCodeableConceptExtensionFor(MASTER_DATA_OCCUPATION_TYPE, mciPatient.getOccupation(), MCI_PATIENT_OCCUPATION_VALUESET, OCCUPATION_EXTENSION_NAME, fhirPatient);
 
         String dobType = mciPatient.getDobType();
         CodingDt dobTypeCoding = new CodingDt(getMCIValuesetURI(mciProperties.getMciBaseUrl(), MCI_PATIENT_DOB_TYPE_VALUESET), dobType);
         dobTypeCoding.setDisplay(mciDOBTypeMap.get(dobType));
-        ExtensionDt dobTypeExtension = new ExtensionDt().setUrl(getFhirExtensionUrl(DOB_TYPE_EXTENSION_NAME)).setValue(dobTypeCoding);
+        ExtensionDt dobTypeExtension = new ExtensionDt()
+                .setUrl(getFhirExtensionUrl(DOB_TYPE_EXTENSION_NAME))
+                .setValue(new CodeableConceptDt().addCoding(dobTypeCoding));
         fhirPatient.addUndeclaredExtension(dobTypeExtension);
-        return fhirPatient;
+
+        mapRelationsAndAddToBundle(mciPatient.getRelations(), bundle, patientEntryUri);
+    }
+
+    private String createFullUrlFromUUID(String patientEntryUri) {
+        return "urn:uuid:" + patientEntryUri;
     }
 
     private void mapDeceased(Patient fhirPatient, org.sharedhealth.mci.web.model.Patient mciPatient) {
+        if (PATIENT_STATUS_UNKNOWN.equals(mciPatient.getStatus())) return;
         if (PATIENT_STATUS_ALIVE.equals(mciPatient.getStatus())) {
             fhirPatient.setDeceased(new BooleanDt(false));
             return;
@@ -110,43 +132,50 @@ public class PatientMapper {
         }
     }
 
-    private void mapCodingExtensionFor(String masterDataType, String masterDataKey, String valuesetName, String extensionName, Patient fhirPatient) {
+    private void mapCodeableConceptExtensionFor(String masterDataType, String masterDataKey, String valuesetName, String extensionName, Patient fhirPatient) {
         if (StringUtils.isBlank(masterDataKey)) return;
         ExtensionDt extension = new ExtensionDt();
         CodingDt coding = new CodingDt(getMCIValuesetURI(mciProperties.getMciBaseUrl(), valuesetName), masterDataKey);
         coding.setDisplay(masterDataRepository.findByTypeAndKey(masterDataType, masterDataKey).getValue());
-        extension.setUrl(getFhirExtensionUrl(extensionName)).setValue(coding);
+        extension.setUrl(getFhirExtensionUrl(extensionName)).setValue(new CodeableConceptDt().addCoding(coding));
         fhirPatient.addUndeclaredExtension(extension);
     }
 
-    private void mapRelationsToContacts(Patient fhirPatient, String relationsString) {
+    private void mapRelationsAndAddToBundle(String relationsString, Bundle bundle, String patientEntryUri) {
         if (StringUtils.isBlank(relationsString)) return;
         ObjectMapper objectMapper = new ObjectMapper();
-        List<Map> relations;
+        List<Relation> relations;
         try {
-            relations = objectMapper.readValue(relationsString, objectMapper.getTypeFactory().constructCollectionType(List.class, Map.class));
+            relations = objectMapper.readValue(relationsString,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Relation.class));
         } catch (IOException e) {
             throw new RuntimeException("Can not parse patient relations", e);
         }
         if (CollectionUtils.isEmpty(relations)) return;
-        String system = getMCIValuesetURI(mciProperties.getMciBaseUrl(), MCI_PATIENT_CONTACT_RELATIONSHIP_VALUESET);
-        for (Map relation : relations) {
-            String relationType = (String) relation.get(RELATION_KEY_TYPE);
-            CodingDt relationCoding = new CodingDt(system, relationType);
-            relationCoding.setDisplay(masterDataRepository.findByTypeAndKey(MASTER_DATA_RELATION_TYPE, relationType).getValue());
-            fhirPatient.addContact().setName(getName(relation)).addRelationship().addCoding(relationCoding);
-        }
-    }
+        for (Relation relation : relations) {
+            RelatedPerson relatedPerson = new RelatedPerson().setPatient(new ResourceReferenceDt(createFullUrlFromUUID(patientEntryUri)));
 
-    private HumanNameDt getName(Map relation) {
-        String givenName = (String) relation.get(RELATION_KEY_GIVEN_NAME);
-        Object surName = relation.get(RELATION_KEY_SUR_NAME);
-        HumanNameDt humanName = new HumanNameDt();
-        humanName.addGiven(givenName);
-        if (surName == null) return humanName;
-        String familyName = (String) surName;
-        if (StringUtils.isBlank(familyName)) return humanName;
-        return humanName.addFamily(familyName);
+            mapAsIdentifier(relatedPerson, relation.getNationalId(), MCI_IDENTIFIER_NID_CODE, relation.getHealthId());
+            mapAsIdentifier(relatedPerson, relation.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, relation.getHealthId());
+            mapAsIdentifier(relatedPerson, relation.getUid(), MCI_IDENTIFIER_UID_CODE, relation.getHealthId());
+            mapAsIdentifier(relatedPerson, relation.getHealthId(), MCI_IDENTIFIER_HID_CODE, relation.getHealthId());
+
+            String type = relation.getType();
+            CodeableConceptDt relationship = new CodeableConceptDt();
+            relationship.addCoding()
+                    .setSystem(FHIR_RELATED_PERSON_RELATIONSHIP_VALUESET_URL)
+                    .setCode(type)
+                    .setDisplay(masterDataRepository.findByTypeAndKey(MASTER_DATA_RELATION_TYPE, type).getValue());
+
+            relatedPerson.setRelationship(relationship);
+
+            relatedPerson.setName(new HumanNameDt().addFamily(relation.getSurName()).addGiven(relation.getGivenName()));
+            ExtensionDt extensionDt = new ExtensionDt()
+                    .setUrl(FHIRConstants.getFhirExtensionUrl(RELATED_PERSON_ID_EXTENSION_NAME))
+                    .setValue(new StringDt(relation.getId()));
+            relatedPerson.addUndeclaredExtension(extensionDt);
+            bundle.addEntry().setFullUrl(TimeUuidUtil.uuidForDate(new Date()).toString()).setResource(relatedPerson);
+        }
     }
 
     public org.sharedhealth.mci.web.model.Patient mapToMCIPatient(Patient fhirPatient) {
@@ -228,20 +257,29 @@ public class PatientMapper {
     }
 
     private Patient.Link mapPatientReferenceLink(String healthId) {
-        Patient.Link link = new Patient.Link();
-        link.setType(LinkTypeEnum.SEE_ALSO);
         String patientLinkUri = ensureSuffix(mciProperties.getPatientLinkUri(), URL_SEPARATOR);
         ResourceReferenceDt patientReference = new ResourceReferenceDt(String.format("%s%s", patientLinkUri, healthId));
-        link.setOther(patientReference);
-        return link;
+        return new Patient.Link().setType(LinkTypeEnum.SEE_ALSO).setOther(patientReference);
     }
 
-    private void mapAsIdIdentifier(Patient fhirPatient, String value, String identifierTypeCode, String healthId) {
+    private void mapAsIdentifier(Patient fhirPatient, String value, String identifierTypeCode, String healthId) {
         if (StringUtils.isBlank(value)) return;
-        String mciPatientURI = getMCIPatientURI(mciProperties.getMciBaseUrl());
-        String system = String.format("%s%s", mciPatientURI, healthId);
-        IdentifierDt identifierDt = fhirPatient.addIdentifier().setValue(value).setSystem(system);
+        fhirPatient.addIdentifier(createIdentifier(value, identifierTypeCode, healthId));
+    }
+
+    private void mapAsIdentifier(RelatedPerson relation, String value, String identifierTypeCode, String healthId) {
+        if (StringUtils.isBlank(value)) return;
+        relation.addIdentifier(createIdentifier(value, identifierTypeCode, healthId));
+    }
+
+    private IdentifierDt createIdentifier(String value, String identifierTypeCode, String healthId) {
+        IdentifierDt identifierDt = new IdentifierDt().setValue(value);
+        if (StringUtils.isNotBlank(healthId)) {
+            String mciPatientURI = getMCIPatientURI(mciProperties.getMciBaseUrl());
+            identifierDt.setSystem(String.format("%s%s", mciPatientURI, healthId));
+        }
         setIdentifierType(identifierDt, identifierTypeCode);
+        return identifierDt;
     }
 
     @SuppressWarnings("unchecked")
@@ -250,13 +288,6 @@ public class PatientMapper {
         String system = getMCIValuesetURI(mciProperties.getMciBaseUrl(), MCI_PATIENT_IDENTIFIERS_VALUESET);
         identifierType.addCoding(new CodingDt(system, identifierCode));
         identifierDt.setType(identifierType);
-    }
-
-    private HumanNameDt mapName(org.sharedhealth.mci.web.model.Patient mciPatient) {
-        HumanNameDt name = new HumanNameDt();
-        name.addGiven(mciPatient.getGivenName());
-        name.addFamily(mciPatient.getSurName());
-        return name;
     }
 
     private AddressDt mapAddress(org.sharedhealth.mci.web.model.Patient mciPatient) {

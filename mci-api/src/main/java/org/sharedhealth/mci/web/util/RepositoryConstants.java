@@ -10,6 +10,12 @@ public class RepositoryConstants {
 
 
     public static final String HID = "hid";
+    public static final String NID = "nid";
+    public static final String UID = "uid";
+    public static final String NAME_BANGLA = "name_bangla";
+    public static final String RELATIONAL_STATUS = "relational_status";
+    public static final String MARRIAGE_ID = "marriage_id";
+
     public static final String HEALTH_ID = "health_id";
     public static final String NATIONAL_ID = "national_id";
     public static final String BIN_BRN = "bin_brn";

@@ -6,6 +6,7 @@ import static org.sharedhealth.mci.web.util.StringUtils.removePrefix;
 public class MCIConstants {
     public static final String PATIENT_STATUS_ALIVE = "1";
     public static final String PATIENT_STATUS_DEAD = "2";
+    public static final String PATIENT_STATUS_UNKNOWN = "3";
 
     public static final String API_VERSION = "/api/v2";
     public static final String PATIENT_URI_PATH = "/patients";
