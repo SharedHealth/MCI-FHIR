@@ -174,7 +174,8 @@ public class PatientMapper {
                     .setUrl(FHIRConstants.getFhirExtensionUrl(RELATED_PERSON_ID_EXTENSION_NAME))
                     .setValue(new StringDt(relation.getId()));
             relatedPerson.addUndeclaredExtension(extensionDt);
-            bundle.addEntry().setFullUrl(TimeUuidUtil.uuidForDate(new Date()).toString()).setResource(relatedPerson);
+            String fullUrl = TimeUuidUtil.uuidForDate(new Date()).toString();
+            bundle.addEntry().setFullUrl(createFullUrlFromUUID(fullUrl)).setResource(relatedPerson);
         }
     }
 
