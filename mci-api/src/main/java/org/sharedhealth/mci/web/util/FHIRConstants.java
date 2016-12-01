@@ -7,8 +7,6 @@ public class FHIRConstants {
     private static final String MCI_VALUESET_URI_BASE_PATH = "api/v2/vs/";
     private static final String FHIR_EXTENSION_URL = "https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions";
 
-    public static final String FHIR_RELATED_PERSON_RELATIONSHIP_VALUESET_URL = "http://hl7.org/fhir/ValueSet/relatedperson-relationshiptype";
-
     public static final String MCI_PATIENT_IDENTIFIERS_VALUESET = "patient-identifiers";
     public static final String MCI_PATIENT_EDUCATION_DETAILS_VALUESET = "patient-education-details";
     public static final String MCI_PATIENT_OCCUPATION_VALUESET = "patient-occupation";

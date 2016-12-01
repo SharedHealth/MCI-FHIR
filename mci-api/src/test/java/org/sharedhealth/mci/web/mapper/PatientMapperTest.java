@@ -338,7 +338,8 @@ public class PatientMapperTest {
             RelatedPerson relatedPerson = (RelatedPerson) relation;
             CodingDt relationship = relatedPerson.getRelationship().getCodingFirstRep();
             HumanNameDt name = relatedPerson.getName();
-            return code.equals(relationship.getCode()) && display.equals(relationship.getDisplay()) &&
+            return "http://hl7.org/fhir/v3/RoleCode".equals(relationship.getSystem())
+                    && code.equals(relationship.getCode()) && display.equals(relationship.getDisplay()) &&
                     givenName.equals(name.getGivenFirstRep().getValue()) &&
                     surName.equals(name.getFamilyFirstRep().getValue());
         });

@@ -20,6 +20,10 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hl7.fhir.instance.model.valuesets.PatientContactRelationship;
+import org.hl7.fhir.instance.model.valuesets.V3RoleCode;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
 import org.sharedhealth.mci.web.model.Relation;
@@ -41,9 +45,10 @@ public class PatientMapper {
     private MCIProperties mciProperties;
     private MasterDataRepository masterDataRepository;
 
+    private static final Logger logger = LogManager.getLogger(PatientMapper.class);
+
     private static final String MASTER_DATA_EDUCATION_LEVEL_TYPE = "education_level";
     private static final String MASTER_DATA_OCCUPATION_TYPE = "occupation";
-    private static final String MASTER_DATA_RELATION_TYPE = "relations";
 
     private final int ADDRESS_CODE_EACH_LEVEL_LENGTH = 2;
     private BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
@@ -159,15 +164,7 @@ public class PatientMapper {
             mapAsIdentifier(relatedPerson, relation.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, relation.getHealthId());
             mapAsIdentifier(relatedPerson, relation.getUid(), MCI_IDENTIFIER_UID_CODE, relation.getHealthId());
             mapAsIdentifier(relatedPerson, relation.getHealthId(), MCI_IDENTIFIER_HID_CODE, relation.getHealthId());
-
-            String type = relation.getType();
-            CodeableConceptDt relationship = new CodeableConceptDt();
-            relationship.addCoding()
-                    .setSystem(FHIR_RELATED_PERSON_RELATIONSHIP_VALUESET_URL)
-                    .setCode(type)
-                    .setDisplay(masterDataRepository.findByTypeAndKey(MASTER_DATA_RELATION_TYPE, type).getValue());
-
-            relatedPerson.setRelationship(relationship);
+            mapRelationshipType(relation.getType(), relatedPerson);
 
             relatedPerson.setName(new HumanNameDt().addFamily(relation.getSurName()).addGiven(relation.getGivenName()));
             ExtensionDt extensionDt = new ExtensionDt()
@@ -176,6 +173,33 @@ public class PatientMapper {
             relatedPerson.addUndeclaredExtension(extensionDt);
             String fullUrl = TimeUuidUtil.uuidForDate(new Date()).toString();
             bundle.addEntry().setFullUrl(createFullUrlFromUUID(fullUrl)).setResource(relatedPerson);
+        }
+    }
+
+    private void mapRelationshipType(String type, RelatedPerson relatedPerson) {
+        try {
+            PatientContactRelationship relationship = PatientContactRelationship.fromCode(type);
+            CodeableConceptDt codeableConceptDt = new CodeableConceptDt();
+            codeableConceptDt.addCoding()
+                    .setSystem(relationship.getSystem())
+                    .setCode(type)
+                    .setDisplay(relationship.getDisplay());
+            relatedPerson.setRelationship(codeableConceptDt);
+            return;
+        } catch (Exception e) {
+            logger.info("Relationship type {} not found in Patient-Contact-Relationship valueset", type);
+        }
+        try {
+            V3RoleCode v3RoleCode = V3RoleCode.fromCode(type);
+            CodeableConceptDt codeableConceptDt = new CodeableConceptDt();
+            codeableConceptDt.addCoding()
+                    .setSystem(v3RoleCode.getSystem())
+                    .setCode(type)
+                    .setDisplay(v3RoleCode.getDisplay());
+            relatedPerson.setRelationship(codeableConceptDt);
+        } catch (Exception e) {
+            String message = String.format("Relationship type %s in Patient-Contact-Relationship or V3RoleCode valuesets.", type);
+            throw new RuntimeException(message);
         }
     }
 
