@@ -43,6 +43,9 @@ public class Application {
     private static final Logger logger = LogManager.getLogger(Application.class);
     public static final String IDENTITY_PROVIDER_CACHE = "identityProviderUserCache";
 
+    private static final int ENOENT_NO_SUCH_FILE_OR_DIR_ERROR_CODE = 2;
+    private static final int ENOENT_BAD_FILE_FORMAT_ERROR_CODE = 59;
+
     private static PatientRepository patientRepository;
     private static MasterDataRepository masterDataRepository;
     private static MCIProperties mciProperties;
@@ -74,7 +77,13 @@ public class Application {
 
         instantiateMappers();
 
-        fhirPatientValidator = new FhirPatientValidator(mciProperties);
+        try {
+            fhirPatientValidator = new FhirPatientValidator(mciProperties);
+        } catch (Exception e) {
+            logger.error("Unable to create FHIR Patient Validator", e);
+            Spark.stop();
+            System.exit(ENOENT_NO_SUCH_FILE_OR_DIR_ERROR_CODE);
+        }
 
         identityStore = new IdentityStore();
         mciHealthIdStore = MciHealthIdStore.getInstance();
@@ -108,6 +117,7 @@ public class Application {
         } catch (IOException e) {
             logger.error("Unable to create health id file.");
             Spark.stop();
+            System.exit(ENOENT_BAD_FILE_FORMAT_ERROR_CODE);
         }
         //instantiate a scheduler to replenish healthIds
         createHealthIdReplenishScheduler();

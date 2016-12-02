@@ -25,9 +25,9 @@ public class FhirPatientValidatorTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        fhirPatientValidator = new FhirPatientValidator(mciProperties);
         String path = this.getClass().getResource("/profiles/").getPath();
         when(mciProperties.getProfilesFolderPath()).thenReturn(path);
+        fhirPatientValidator = new FhirPatientValidator(mciProperties);
     }
 
     @Test

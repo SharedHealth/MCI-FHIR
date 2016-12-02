@@ -184,7 +184,7 @@ public class MCIPatientMapper {
             relatedPerson.setRelationship(codeableConceptDt);
             return;
         } catch (Exception e) {
-            logger.info("Relationship type {} not found in Patient-Contact-Relationship valueset", type);
+            logger.debug("Relationship type {} not found in Patient-Contact-Relationship valueset", type);
         }
         try {
             V3RoleCode v3RoleCode = V3RoleCode.fromCode(type);

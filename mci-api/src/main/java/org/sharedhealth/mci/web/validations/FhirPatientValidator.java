@@ -28,10 +28,11 @@ public class FhirPatientValidator {
     public FhirPatientValidator(MCIProperties mciProperties) {
         this.mciProperties = mciProperties;
         this.patientFieldErrors.add(Pattern.compile("/f:Patient/f:gender"));
+        validatorInstance();
     }
 
     public MCIValidationResult validate(Patient patient) {
-        ValidationResult validationResult = validatorInstance().validateWithResult(patient);
+        ValidationResult validationResult = fhirValidator.validateWithResult(patient);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
         return mciValidationResult;
@@ -54,19 +55,13 @@ public class FhirPatientValidator {
         });
     }
 
-
-    private FhirValidator validatorInstance() {
+    private void validatorInstance() {
         if (fhirValidator == null) {
-            synchronized (FhirValidator.class) {
-                if (fhirValidator == null) {
-                    fhirValidator = fhirContext.newValidator();
-                    FhirInstanceValidator validator = new FhirInstanceValidator();
-                    validator.setStructureDefintion(loadProfileOrReturnNull(mciProperties, PATIENT_PROFILE_FILE_PREFIX));
-                    fhirValidator.registerValidatorModule(validator);
-                }
-            }
+            fhirValidator = fhirContext.newValidator();
+            FhirInstanceValidator validator = new FhirInstanceValidator();
+            validator.setStructureDefintion(loadProfileOrReturnNull(mciProperties, PATIENT_PROFILE_FILE_PREFIX));
+            fhirValidator.registerValidatorModule(validator);
         }
-        return fhirValidator;
     }
 
     private static StructureDefinition loadProfileOrReturnNull(MCIProperties mciProperties, String profileName) {
