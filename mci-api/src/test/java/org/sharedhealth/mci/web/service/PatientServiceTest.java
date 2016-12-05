@@ -16,7 +16,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
-import org.sharedhealth.mci.web.mapper.PatientMapper;
+import org.sharedhealth.mci.web.mapper.FHIRBundleMapper;
+import org.sharedhealth.mci.web.mapper.MCIPatientMapper;
 import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
@@ -43,7 +44,9 @@ public class PatientServiceTest {
     @Mock
     private PatientRepository patientRepository;
     @Mock
-    private PatientMapper patientMapper;
+    private MCIPatientMapper mciPatientMapper;
+    @Mock
+    private FHIRBundleMapper fhirBundleMapper;
     @Mock
     private HealthIdService healthIdService;
     @Mock
@@ -66,7 +69,7 @@ public class PatientServiceTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        patientService = new PatientService(patientMapper, healthIdService, patientRepository, fhirPatientValidator);
+        patientService = new PatientService(mciPatientMapper, fhirBundleMapper, healthIdService, patientRepository, fhirPatientValidator);
     }
 
     @Test
@@ -74,15 +77,15 @@ public class PatientServiceTest {
         Patient mciPatient = new Patient();
         Bundle expectedFHIRBundle = new Bundle();
         when(patientRepository.findByHealthId(healthId)).thenReturn(mciPatient);
-        when(patientMapper.mapPatientToBundle(mciPatient)).thenReturn(expectedFHIRBundle);
+        when(mciPatientMapper.mapPatientToBundle(mciPatient)).thenReturn(expectedFHIRBundle);
 
         Bundle bundle = patientService.findPatientByHealthId(healthId);
 
         assertNotNull(bundle);
         assertSame(expectedFHIRBundle, bundle);
-        InOrder inOrder = inOrder(patientRepository, patientMapper);
+        InOrder inOrder = inOrder(patientRepository, mciPatientMapper);
         inOrder.verify(patientRepository).findByHealthId(healthId);
-        inOrder.verify(patientMapper).mapPatientToBundle(mciPatient);
+        inOrder.verify(mciPatientMapper).mapPatientToBundle(mciPatient);
     }
 
     @Test(expected = PatientNotFoundException.class)
@@ -113,7 +116,7 @@ public class PatientServiceTest {
         when(mockValidationResult.isSuccessful()).thenReturn(true);
 
         when(healthIdService.getNextHealthId()).thenReturn(mciHealthId);
-        when(patientMapper.mapToMCIPatient(fhirPatient)).thenReturn(mciPatient);
+        when(fhirBundleMapper.mapToMCIPatient(fhirPatient)).thenReturn(mciPatient);
         when(patientRepository.createPatient(mciPatient)).thenReturn(response);
         UserInfo userInfo = getUserInfo();
         MCIResponse mciResponse = patientService.createPatient(fhirPatient, userInfo);
@@ -131,8 +134,8 @@ public class PatientServiceTest {
         assertEquals(expectedCreatedBy, patientToBeCreated.getUpdatedBy());
         assertEquals(healthId, patientToBeCreated.getHealthId());
 
-        InOrder inOrder = inOrder(patientMapper, healthIdService, patientRepository);
-        inOrder.verify(patientMapper).mapToMCIPatient(fhirPatient);
+        InOrder inOrder = inOrder(fhirBundleMapper, healthIdService, patientRepository);
+        inOrder.verify(fhirBundleMapper).mapToMCIPatient(fhirPatient);
         inOrder.verify(healthIdService).getNextHealthId();
         inOrder.verify(patientRepository).createPatient(patientToBeCreated);
     }

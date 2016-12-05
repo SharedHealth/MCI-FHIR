@@ -48,7 +48,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
     @Test
     public void shouldRetrievePatientByHealthID() throws Exception {
-        Patient expectedPatient = createMCIPatient();
+        Patient expectedPatient = createMCIPatientWithAllFields();
         patientDBMapper.save(expectedPatient);
 
         Patient patient = patientRepository.findByHealthId(healthId);
@@ -59,7 +59,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
     @Test
     public void shouldCreatePatientInDatabase() throws Exception {
-        Patient patient = createMCIPatient();
+        Patient patient = createMCIPatientWithAllFields();
 
         MCIResponse mciResponse = patientRepository.createPatient(patient);
 

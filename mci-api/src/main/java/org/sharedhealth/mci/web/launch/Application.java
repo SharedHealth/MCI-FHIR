@@ -15,7 +15,8 @@ import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.controller.GlobalExceptionHandler;
 import org.sharedhealth.mci.web.controller.MCIRoutes;
 import org.sharedhealth.mci.web.controller.PatientController;
-import org.sharedhealth.mci.web.mapper.PatientMapper;
+import org.sharedhealth.mci.web.mapper.FHIRBundleMapper;
+import org.sharedhealth.mci.web.mapper.MCIPatientMapper;
 import org.sharedhealth.mci.web.model.IdentityStore;
 import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.repository.MasterDataRepository;
@@ -45,7 +46,8 @@ public class Application {
     private static PatientRepository patientRepository;
     private static MasterDataRepository masterDataRepository;
     private static MCIProperties mciProperties;
-    private static PatientMapper patientMapper;
+    private static MCIPatientMapper mciPatientMapper;
+    private static FHIRBundleMapper fhirBundleMapper;
     private static FhirPatientValidator fhirPatientValidator;
     private static IdentityStore identityStore;
     private static IdentityProviderService identityProviderService;
@@ -82,7 +84,7 @@ public class Application {
         healthIdService = new HealthIdService
                 (identityProviderService, mciHealthIdStore, mciProperties);
 
-        patientService = new PatientService(patientMapper, healthIdService, patientRepository, fhirPatientValidator);
+        patientService = new PatientService(mciPatientMapper, fhirBundleMapper, healthIdService, patientRepository, fhirPatientValidator);
         //instantiate all services/mappers/ here
 
         instantiateControllers();
@@ -117,7 +119,8 @@ public class Application {
     }
 
     private static void instantiateMappers() {
-        patientMapper = new PatientMapper(mciProperties, masterDataRepository);
+        mciPatientMapper = new MCIPatientMapper(mciProperties, masterDataRepository);
+        fhirBundleMapper = new FHIRBundleMapper();
     }
 
     private static void instantiateDao() {
@@ -144,8 +147,12 @@ public class Application {
         return patientController;
     }
 
-    public static PatientMapper getPatientMapper() {
-        return patientMapper;
+    public static MCIPatientMapper getMciPatientMapper() {
+        return mciPatientMapper;
+    }
+
+    public static FHIRBundleMapper getFHIRBundleMapper() {
+        return fhirBundleMapper;
     }
 
     public static PatientRepository getPatientRepository() {

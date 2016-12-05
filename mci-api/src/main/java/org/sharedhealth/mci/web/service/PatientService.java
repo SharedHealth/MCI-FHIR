@@ -6,7 +6,8 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.exception.PatientNotFoundException;
-import org.sharedhealth.mci.web.mapper.PatientMapper;
+import org.sharedhealth.mci.web.mapper.FHIRBundleMapper;
+import org.sharedhealth.mci.web.mapper.MCIPatientMapper;
 import org.sharedhealth.mci.web.model.Error;
 import org.sharedhealth.mci.web.model.MCIResponse;
 import org.sharedhealth.mci.web.model.MciHealthId;
@@ -24,15 +25,18 @@ import java.util.UUID;
 import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 
 public class PatientService {
-    private PatientMapper patientMapper;
+    private MCIPatientMapper mciPatientMapper;
+    private FHIRBundleMapper fhirBundleMapper;
     private PatientRepository patientRepository;
     private HealthIdService healthIdService;
     private FhirPatientValidator fhirPatientValidator;
 
     private static final Logger logger = LogManager.getLogger(PatientService.class);
 
-    public PatientService(PatientMapper patientMapper, HealthIdService healthIdService, PatientRepository patientRepository, FhirPatientValidator fhirPatientValidator) {
-        this.patientMapper = patientMapper;
+    public PatientService(MCIPatientMapper mciPatientMapper, FHIRBundleMapper fhirBundleMapper, HealthIdService healthIdService,
+                          PatientRepository patientRepository, FhirPatientValidator fhirPatientValidator) {
+        this.mciPatientMapper = mciPatientMapper;
+        this.fhirBundleMapper = fhirBundleMapper;
         this.healthIdService = healthIdService;
         this.patientRepository = patientRepository;
         this.fhirPatientValidator = fhirPatientValidator;
@@ -43,7 +47,7 @@ public class PatientService {
         if (null == mciPatient) {
             throw new PatientNotFoundException("No patient found with health id: " + healthId);
         }
-        return patientMapper.mapPatientToBundle(mciPatient);
+        return mciPatientMapper.mapPatientToBundle(mciPatient);
     }
 
     public MCIResponse createPatient(Patient fhirPatient, UserInfo userInfo) throws AccessDeniedException {
@@ -51,7 +55,7 @@ public class PatientService {
         if (!validate.isSuccessful()) {
             return createMCIResponseForValidationFailure(validate);
         }
-        org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(fhirPatient);
+        org.sharedhealth.mci.web.model.Patient mciPatient = fhirBundleMapper.mapToMCIPatient(fhirPatient);
         MciHealthId healthId;
         healthId = healthIdService.getNextHealthId();
         mciPatient.setHealthId(healthId.getHid());

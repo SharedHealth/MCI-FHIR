@@ -12,7 +12,6 @@ import ca.uhn.fhir.model.dstu2.valueset.ContactPointSystemEnum;
 import ca.uhn.fhir.model.dstu2.valueset.IdentifierTypeCodesEnum;
 import ca.uhn.fhir.model.dstu2.valueset.LinkTypeEnum;
 import ca.uhn.fhir.model.primitive.BooleanDt;
-import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.StringDt;
 import org.junit.Before;
@@ -38,19 +37,19 @@ import static org.sharedhealth.mci.web.util.FHIRConstants.*;
 import static org.sharedhealth.mci.web.util.MCIConstants.*;
 import static org.sharedhealth.mci.web.util.PatientFactory.*;
 
-public class PatientMapperTest {
+public class MCIPatientMapperTest {
     @Mock
     private MCIProperties mciProperties;
     @Mock
     private MasterDataRepository masterDataRepository;
-    private PatientMapper patientMapper;
+    private MCIPatientMapper mciPatientMapper;
 
     private final String healthId = "HID123";
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        patientMapper = new PatientMapper(mciProperties, masterDataRepository);
+        mciPatientMapper = new MCIPatientMapper(mciProperties, masterDataRepository);
     }
 
     @Test
@@ -68,7 +67,7 @@ public class PatientMapperTest {
         UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setUpdatedAt(updatedAt);
         mciPatient.setCreatedAt(updatedAt);
-        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        Bundle patientBundle = mciPatientMapper.mapPatientToBundle(mciPatient);
         assertNotNull(patientBundle);
         Patient patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 
@@ -104,7 +103,7 @@ public class PatientMapperTest {
     }
 
     @Test
-    public void shouldMapMCIPatientToFHIRPatientWithAllFields() throws Exception {
+    public void shouldMapMCIPatientToFHIRBundleWithAllFields() throws Exception {
         String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
@@ -128,12 +127,12 @@ public class PatientMapperTest {
         when(masterDataRepository.findByTypeAndKey(relationsKey, "MTH")).thenReturn(new MasterData(relationsKey, "MTH", motherDisplay));
         when(masterDataRepository.findByTypeAndKey(relationsKey, "FTH")).thenReturn(new MasterData(relationsKey, "FTH", fatherDisplay));
 
-        org.sharedhealth.mci.web.model.Patient mciPatient = PatientFactory.createMCIPatient();
+        org.sharedhealth.mci.web.model.Patient mciPatient = PatientFactory.createMCIPatientWithAllFields();
         mciPatient.setHealthId(healthId);
         UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setUpdatedAt(updatedAt);
         mciPatient.setCreatedAt(updatedAt);
-        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        Bundle patientBundle = mciPatientMapper.mapPatientToBundle(mciPatient);
         assertNotNull(patientBundle);
         Patient fhirPatient = (Patient) getResourceByType(new Patient().getResourceName(), patientBundle).get(0);
 
@@ -202,7 +201,7 @@ public class PatientMapperTest {
     }
 
     @Test
-    public void shouldMapADeadPatient() throws Exception {
+    public void shouldMapADeadMCIPatient() throws Exception {
         String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
@@ -219,7 +218,7 @@ public class PatientMapperTest {
         mciPatient.setCreatedAt(updatedAt);
         Date date = new Date();
         mciPatient.setDateOfDeath(date);
-        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        Bundle patientBundle = mciPatientMapper.mapPatientToBundle(mciPatient);
         assertNotNull(patientBundle);
         Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
         assertNotNull(fhirPatient);
@@ -244,7 +243,7 @@ public class PatientMapperTest {
         UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setUpdatedAt(updatedAt);
         mciPatient.setCreatedAt(updatedAt);
-        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        Bundle patientBundle = mciPatientMapper.mapPatientToBundle(mciPatient);
         assertNotNull(patientBundle);
         Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
         IDatatype deceased = fhirPatient.getDeceased();
@@ -268,7 +267,7 @@ public class PatientMapperTest {
         UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setUpdatedAt(updatedAt);
         mciPatient.setCreatedAt(updatedAt);
-        Bundle patientBundle = patientMapper.mapPatientToBundle(mciPatient);
+        Bundle patientBundle = mciPatientMapper.mapPatientToBundle(mciPatient);
         assertNotNull(patientBundle);
         Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
         assertNotNull(fhirPatient);
@@ -276,44 +275,6 @@ public class PatientMapperTest {
         assertNull(deceased);
     }
 
-    @Test
-    public void shouldMapFHIRPatientToMCIPatient() throws Exception {
-        org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(createFHIRPatient(true));
-        assertEquals(createMCIPatientWithMandatoryFields(), mciPatient);
-    }
-
-    @Test
-    public void shouldMapFhirPatientNotHavingBirthTime() throws Exception {
-        Patient fhirPatient = createFHIRPatient(false);
-        org.sharedhealth.mci.web.model.Patient mciPatient = patientMapper.mapToMCIPatient(fhirPatient);
-        org.sharedhealth.mci.web.model.Patient expectedMCIPatient = createMCIPatientWithMandatoryFields();
-        expectedMCIPatient.setDateOfBirth(dateOfBirth);
-        assertEquals(expectedMCIPatient, mciPatient);
-    }
-
-    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient(boolean timeOfBirthIncluded) {
-        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
-        patient.addName().addGiven(givenName).addFamily(surName);
-        patient.setGender(AdministrativeGenderEnum.MALE);
-
-        if (timeOfBirthIncluded) {
-            DateDt date = new DateDt(dateOfBirth);
-            ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
-            date.addUndeclaredExtension(extensionDt);
-            patient.setBirthDate(date);
-        } else {
-            patient.setBirthDate(new DateDt(dateOfBirth));
-        }
-
-        AddressDt addressDt = new AddressDt().addLine(addressLine);
-        addressDt.setCountry(countryCode);
-        String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
-        ExtensionDt addressCodeExtension = new ExtensionDt().
-                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
-        addressDt.addUndeclaredExtension(addressCodeExtension);
-        patient.addAddress(addressDt);
-        return patient;
-    }
 
     private void assertCoding(CodingDt education, String system, String code, String display) {
         assertEquals(system, education.getSystem());
@@ -343,24 +304,6 @@ public class PatientMapperTest {
                     givenName.equals(name.getGivenFirstRep().getValue()) &&
                     surName.equals(name.getFamilyFirstRep().getValue());
         });
-    }
-
-
-    private org.sharedhealth.mci.web.model.Patient createMCIPatientWithMandatoryFields() {
-        org.sharedhealth.mci.web.model.Patient expectedPatient = new org.sharedhealth.mci.web.model.Patient();
-        expectedPatient.setGivenName(givenName);
-        expectedPatient.setSurName(surName);
-        expectedPatient.setGender(gender);
-        expectedPatient.setDateOfBirth(dateOfBirth);
-        expectedPatient.setCountryCode(countryCode);
-        expectedPatient.setDivisionId(divisionId);
-        expectedPatient.setDistrictId(districtId);
-        expectedPatient.setUpazilaId(upazilaId);
-        expectedPatient.setCityCorporationId(cityId);
-        expectedPatient.setUnionOrUrbanWardId(urbanWardId);
-        expectedPatient.setRuralWardId(ruralWardId);
-        expectedPatient.setAddressLine(addressLine);
-        return expectedPatient;
     }
 
     private static ArrayList<IResource> getResourceByType(String resourceName, Bundle bundle) {

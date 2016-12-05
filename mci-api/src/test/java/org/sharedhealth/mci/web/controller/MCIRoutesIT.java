@@ -98,7 +98,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
 
     @Test
     public void shouldGetThePatient() throws Exception {
-        Patient mciPatient = PatientFactory.createMCIPatient();
+        Patient mciPatient = PatientFactory.createMCIPatientWithAllFields();
         UUID createdAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setCreatedAt(createdAt);
         mciPatient.setUpdatedAt(createdAt);
