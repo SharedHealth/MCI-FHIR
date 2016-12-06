@@ -130,7 +130,7 @@ public class Application {
 
     private static void instantiateMappers() {
         mciPatientMapper = new MCIPatientMapper(mciProperties, masterDataRepository);
-        fhirBundleMapper = new FHIRBundleMapper();
+        fhirBundleMapper = new FHIRBundleMapper(mciProperties);
     }
 
     private static void instantiateDao() {
