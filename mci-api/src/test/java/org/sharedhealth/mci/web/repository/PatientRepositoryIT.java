@@ -21,7 +21,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.DateUtil.*;
 import static org.sharedhealth.mci.web.util.JsonMapper.readValue;
-import static org.sharedhealth.mci.web.util.PatientFactory.*;
+import static org.sharedhealth.mci.web.util.PatientTestFactory.*;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
 public class PatientRepositoryIT extends BaseIntegrationTest {

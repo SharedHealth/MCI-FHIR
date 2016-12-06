@@ -21,7 +21,7 @@ import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MasterData;
 import org.sharedhealth.mci.web.repository.MasterDataRepository;
 import org.sharedhealth.mci.web.util.FHIRConstants;
-import org.sharedhealth.mci.web.util.PatientFactory;
+import org.sharedhealth.mci.web.util.PatientTestFactory;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
 import static org.sharedhealth.mci.web.util.MCIConstants.*;
-import static org.sharedhealth.mci.web.util.PatientFactory.*;
+import static org.sharedhealth.mci.web.util.PatientTestFactory.*;
 
 public class MCIPatientMapperTest {
     @Mock
@@ -54,7 +54,6 @@ public class MCIPatientMapperTest {
 
     @Test
     public void shouldMapMCIPatientWithJustMandatoryFieldsToFHIRBundleWithPatient() throws Exception {
-        String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
@@ -104,7 +103,6 @@ public class MCIPatientMapperTest {
 
     @Test
     public void shouldMapMCIPatientToFHIRBundleWithAllFields() throws Exception {
-        String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
         String educationLevelKey = "education_level";
@@ -121,13 +119,13 @@ public class MCIPatientMapperTest {
 
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
         when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
-        when(masterDataRepository.findByTypeAndKey(educationLevelKey, PatientFactory.educationLevel)).thenReturn(educationMasterData);
-        when(masterDataRepository.findByTypeAndKey(occupationKey, PatientFactory.occupation)).thenReturn(occupationMasterData);
+        when(masterDataRepository.findByTypeAndKey(educationLevelKey, PatientTestFactory.educationLevel)).thenReturn(educationMasterData);
+        when(masterDataRepository.findByTypeAndKey(occupationKey, PatientTestFactory.occupation)).thenReturn(occupationMasterData);
         when(masterDataRepository.findByTypeAndKey(relationsKey, "SPS")).thenReturn(new MasterData(relationsKey, "SPS", spouseDisplay));
         when(masterDataRepository.findByTypeAndKey(relationsKey, "MTH")).thenReturn(new MasterData(relationsKey, "MTH", motherDisplay));
         when(masterDataRepository.findByTypeAndKey(relationsKey, "FTH")).thenReturn(new MasterData(relationsKey, "FTH", fatherDisplay));
 
-        org.sharedhealth.mci.web.model.Patient mciPatient = PatientFactory.createMCIPatientWithAllFields();
+        org.sharedhealth.mci.web.model.Patient mciPatient = PatientTestFactory.createMCIPatientWithAllFields();
         mciPatient.setHealthId(healthId);
         UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setUpdatedAt(updatedAt);
@@ -202,7 +200,6 @@ public class MCIPatientMapperTest {
 
     @Test
     public void shouldMapADeadMCIPatient() throws Exception {
-        String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
@@ -229,7 +226,6 @@ public class MCIPatientMapperTest {
 
     @Test
     public void shouldMapADeadPatientWhenDateOfDeathIsUnknown() throws Exception {
-        String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
@@ -253,7 +249,6 @@ public class MCIPatientMapperTest {
 
     @Test
     public void shouldMapAPatientWithUnknownStatus() throws Exception {
-        String mciBaseUrl = "https://mci-registry.com/";
         String patientLinkUri = "https://mci.com/api/v1/patients/";
 
         when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
@@ -283,7 +278,6 @@ public class MCIPatientMapperTest {
     }
 
     private boolean containsIdentifier(List<IdentifierDt> identifiers, String value, String code) {
-        String mciBaseUrl = mciProperties.getMciBaseUrl();
         String mciValuesetURI = FHIRConstants.getMCIValuesetURI(mciBaseUrl, MCI_PATIENT_IDENTIFIERS_VALUESET);
         return identifiers.stream().anyMatch(identifierDt -> {
             CodingDt coding = identifierDt.getType().getCodingFirstRep();

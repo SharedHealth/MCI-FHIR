@@ -55,7 +55,8 @@ public class PatientService {
         if (!validate.isSuccessful()) {
             return createMCIResponseForValidationFailure(validate);
         }
-        org.sharedhealth.mci.web.model.Patient mciPatient = fhirBundleMapper.mapToMCIPatient(fhirPatient);
+        org.sharedhealth.mci.web.model.Patient mciPatient = new org.sharedhealth.mci.web.model.Patient();
+//        mciPatient = fhirBundleMapper.mapToMCIPatient(fhirPatient);
         MciHealthId healthId;
         healthId = healthIdService.getNextHealthId();
         mciPatient.setHealthId(healthId.getHid());

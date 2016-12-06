@@ -29,7 +29,7 @@ import org.sharedhealth.mci.web.model.MciHealthIdStore;
 import org.sharedhealth.mci.web.model.Patient;
 import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.util.DateUtil;
-import org.sharedhealth.mci.web.util.PatientFactory;
+import org.sharedhealth.mci.web.util.PatientTestFactory;
 import org.sharedhealth.mci.web.util.TestUtil;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import spark.Spark;
@@ -98,7 +98,7 @@ public class MCIRoutesIT extends BaseIntegrationTest {
 
     @Test
     public void shouldGetThePatient() throws Exception {
-        Patient mciPatient = PatientFactory.createMCIPatientWithAllFields();
+        Patient mciPatient = PatientTestFactory.createMCIPatientWithAllFields();
         UUID createdAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setCreatedAt(createdAt);
         mciPatient.setUpdatedAt(createdAt);
