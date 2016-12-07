@@ -110,7 +110,7 @@ public class PatientServiceTest {
         when(mockValidationResult.isSuccessful()).thenReturn(true);
 
         when(healthIdService.getNextHealthId()).thenReturn(mciHealthId);
-        when(fhirBundleMapper.mapToMCIPatient(new Bundle())).thenReturn(mciPatient);
+        when(fhirBundleMapper.mapToMCIPatient(bundle)).thenReturn(mciPatient);
         when(patientRepository.createPatient(mciPatient)).thenReturn(response);
         UserInfo userInfo = getUserInfo();
         MCIResponse mciResponse = patientService.createPatient(bundle, userInfo);
@@ -129,7 +129,7 @@ public class PatientServiceTest {
         assertEquals(healthId, patientToBeCreated.getHealthId());
 
         InOrder inOrder = inOrder(fhirBundleMapper, healthIdService, patientRepository);
-        inOrder.verify(fhirBundleMapper).mapToMCIPatient(new Bundle());
+        inOrder.verify(fhirBundleMapper).mapToMCIPatient(bundle);
         inOrder.verify(healthIdService).getNextHealthId();
         inOrder.verify(patientRepository).createPatient(patientToBeCreated);
     }

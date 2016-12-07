@@ -24,12 +24,9 @@ import org.sharedhealth.mci.web.config.MCICassandraConfig;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.launch.Application;
 import org.sharedhealth.mci.web.model.Error;
-import org.sharedhealth.mci.web.model.MCIResponse;
-import org.sharedhealth.mci.web.model.MciHealthIdStore;
-import org.sharedhealth.mci.web.model.Patient;
+import org.sharedhealth.mci.web.model.*;
 import org.sharedhealth.mci.web.security.UserInfo;
 import org.sharedhealth.mci.web.util.DateUtil;
-import org.sharedhealth.mci.web.util.PatientTestFactory;
 import org.sharedhealth.mci.web.util.TestUtil;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 import spark.Spark;
@@ -43,20 +40,17 @@ import static org.sharedhealth.mci.web.launch.Application.*;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.parseResource;
 import static org.sharedhealth.mci.web.util.FileUtil.asString;
 import static org.sharedhealth.mci.web.util.HttpUtil.*;
+import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 import static org.sharedhealth.mci.web.util.MCIConstants.API_VERSION;
 import static org.sharedhealth.mci.web.util.MCIConstants.PATIENT_URI_PATH;
+import static org.sharedhealth.mci.web.util.PatientTestFactory.createMCIPatientWithAllFields;
+import static org.sharedhealth.mci.web.util.PatientTestFactory.healthId;
 
 public class MCIRoutesIT extends BaseIntegrationTest {
     private static final String GET = "GET";
     private static final String HOST_NAME = "http://localhost:9990";
     private static final String POST = "post";
     private static CloseableHttpClient httpClient;
-    private Mapper<Patient> patientMapper;
-
-    @Rule
-    public WireMockRule idpService = new WireMockRule(9997);
-
-    private final String healthId = "HID123";
     private final String givenName = "Bob the";
     private final String surName = "Builder";
     private final String gender = "M";
@@ -69,6 +63,9 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     private final String urbanWardId = "01";
     private final String ruralWardId = "04";
     private final String addressLine = "Will Street";
+    @Rule
+    public WireMockRule idpService = new WireMockRule(9997);
+    private Mapper<Patient> patientMapper;
 
     @BeforeClass
     public static void setupClass() throws Exception {
@@ -79,6 +76,41 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         Spark.stop();
+    }
+
+    private static UrlResponse doMethod(String requestMethod, String path, String body, Map<String, String> requestHeaders) throws Exception {
+        HttpResponse httpResponse = null;
+        if (requestMethod.equals(GET)) {
+            HttpGet httpGet = new HttpGet(HOST_NAME + API_VERSION + path);
+            addHeaders(requestHeaders, httpGet);
+            httpResponse = httpClient.execute(httpGet);
+        } else if (requestMethod.equals(POST)) {
+            HttpPost httpPost = new HttpPost(HOST_NAME + API_VERSION + path);
+            addHeaders(requestHeaders, httpPost);
+            httpPost.setEntity(new StringEntity(body));
+            httpResponse = httpClient.execute(httpPost);
+        }
+        UrlResponse urlResponse = new UrlResponse();
+        urlResponse.status = httpResponse.getStatusLine().getStatusCode();
+        HttpEntity entity = httpResponse.getEntity();
+        if (entity != null) {
+            urlResponse.body = EntityUtils.toString(entity);
+        } else {
+            urlResponse.body = "";
+        }
+        Map<String, String> responseHeaders = new HashMap<>();
+        Header[] allHeaders = httpResponse.getAllHeaders();
+        for (Header header : allHeaders) {
+            responseHeaders.put(header.getName(), header.getValue());
+        }
+        urlResponse.headers = responseHeaders;
+        return urlResponse;
+    }
+
+    private static void addHeaders(Map<String, String> requestHeaders, HttpRequestBase httpRequest) {
+        for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+            httpRequest.addHeader(entry.getKey(), entry.getValue());
+        }
     }
 
     @Before
@@ -98,10 +130,14 @@ public class MCIRoutesIT extends BaseIntegrationTest {
 
     @Test
     public void shouldGetThePatient() throws Exception {
-        Patient mciPatient = PatientTestFactory.createMCIPatientWithAllFields();
+        Patient mciPatient = createMCIPatientWithAllFields();
+        mciPatient.setHealthId(healthId);
         UUID createdAt = TimeUuidUtil.uuidForDate(new Date());
         mciPatient.setCreatedAt(createdAt);
         mciPatient.setUpdatedAt(createdAt);
+        Requester requester = new Requester("100067", null, null, null);
+        mciPatient.setCreatedBy(writeValueAsString(requester));
+        mciPatient.setUpdatedBy(writeValueAsString(requester));
         patientMapper.save(mciPatient);
 
         String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
@@ -282,47 +318,6 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         mciHealthIdStore.addMciHealthIds(getHIDs());
     }
 
-    private static UrlResponse doMethod(String requestMethod, String path, String body, Map<String, String> requestHeaders) throws Exception {
-        HttpResponse httpResponse = null;
-        if (requestMethod.equals(GET)) {
-            HttpGet httpGet = new HttpGet(HOST_NAME + API_VERSION + path);
-            addHeaders(requestHeaders, httpGet);
-            httpResponse = httpClient.execute(httpGet);
-        } else if (requestMethod.equals(POST)) {
-            HttpPost httpPost = new HttpPost(HOST_NAME + API_VERSION + path);
-            addHeaders(requestHeaders, httpPost);
-            httpPost.setEntity(new StringEntity(body));
-            httpResponse = httpClient.execute(httpPost);
-        }
-        UrlResponse urlResponse = new UrlResponse();
-        urlResponse.status = httpResponse.getStatusLine().getStatusCode();
-        HttpEntity entity = httpResponse.getEntity();
-        if (entity != null) {
-            urlResponse.body = EntityUtils.toString(entity);
-        } else {
-            urlResponse.body = "";
-        }
-        Map<String, String> responseHeaders = new HashMap<>();
-        Header[] allHeaders = httpResponse.getAllHeaders();
-        for (Header header : allHeaders) {
-            responseHeaders.put(header.getName(), header.getValue());
-        }
-        urlResponse.headers = responseHeaders;
-        return urlResponse;
-    }
-
-    private static void addHeaders(Map<String, String> requestHeaders, HttpRequestBase httpRequest) {
-        for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
-            httpRequest.addHeader(entry.getKey(), entry.getValue());
-        }
-    }
-
-    private static class UrlResponse {
-        public Map<String, String> headers;
-        private String body;
-        private int status;
-    }
-
     private Patient createMCIPatient() {
         Patient expectedPatient = new Patient();
         expectedPatient.setHealthId(healthId);
@@ -386,7 +381,6 @@ public class MCIRoutesIT extends BaseIntegrationTest {
         return new Gson().toJson(hidResponse);
     }
 
-
     private List<String> getHIDs() {
         return Lists.newArrayList("98000430630",
                 "98000429756",
@@ -398,6 +392,12 @@ public class MCIRoutesIT extends BaseIntegrationTest {
                 "98000430911",
                 "98000429061",
                 "98000430333");
+    }
+
+    private static class UrlResponse {
+        public Map<String, String> headers;
+        private String body;
+        private int status;
     }
 
 }

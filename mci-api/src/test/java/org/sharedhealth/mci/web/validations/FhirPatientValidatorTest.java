@@ -1,6 +1,6 @@
 package org.sharedhealth.mci.web.validations;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,15 +32,15 @@ public class FhirPatientValidatorTest {
 
     @Test
     public void shouldValidateAPatientResource() throws Exception {
-        Patient patient = createPatientFromFile("patients/valid_patient_with_mandatory_fields.xml");
-        MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
+        Bundle bundle = createPatientBundleFromFile("patients/valid_patient_with_mandatory_fields.xml");
+        MCIValidationResult validationResult = fhirPatientValidator.validate(bundle);
         assertTrue(validationResult.isSuccessful());
     }
 
     @Test
     public void shouldFailIfNotAValidGender() throws Exception {
-        Patient patient = createPatientFromFile("patients/patient_with_invalid_gender.xml");
-        MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
+        Bundle bundle = createPatientBundleFromFile("patients/patient_with_invalid_gender.xml");
+        MCIValidationResult validationResult = fhirPatientValidator.validate(bundle);
 
         assertFalse(validationResult.isSuccessful());
         SingleValidationMessage message = validationResult.getMessages().get(0);
@@ -50,8 +50,8 @@ public class FhirPatientValidatorTest {
 
     @Test
     public void shouldUseMentionedProfileForValidation() throws Exception {
-        Patient patient = createPatientFromFile("patients/invalid_patient_for_custom_profile.xml");
-        MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
+        Bundle bundle = createPatientBundleFromFile("patients/invalid_patient_for_custom_profile.xml");
+        MCIValidationResult validationResult = fhirPatientValidator.validate(bundle);
 
         assertFalse(validationResult.isSuccessful());
         assertTrue(containsError(validationResult.getMessages(), "/f:Patient", "Element '/f:Patient.name': minimum required = 1, but only found 0"));
@@ -65,7 +65,7 @@ public class FhirPatientValidatorTest {
                 && validationMessage.getMessage().equals(message));
     }
 
-    private Patient createPatientFromFile(String filePath) throws DataFormatException {
-        return (Patient) parseResource(FileUtil.asString(filePath));
+    private Bundle createPatientBundleFromFile(String filePath) throws DataFormatException {
+        return (Bundle) parseResource(FileUtil.asString(filePath));
     }
 }
