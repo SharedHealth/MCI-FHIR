@@ -165,7 +165,7 @@ public class MCIPatientMapper {
 
             relatedPerson.setName(new HumanNameDt().addFamily(relation.getSurName()).addGiven(relation.getGivenName()));
             ExtensionDt extensionDt = new ExtensionDt()
-                    .setUrl(FHIRConstants.getFhirExtensionUrl(RELATED_PERSON_ID_EXTENSION_NAME))
+                    .setUrl(FHIRConstants.getFhirExtensionUrl(RELATION_ID_EXTENSION_NAME))
                     .setValue(new StringDt(relation.getId()));
             relatedPerson.addUndeclaredExtension(extensionDt);
             String fullUrl = TimeUuidUtil.uuidForDate(new Date()).toString();

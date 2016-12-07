@@ -24,7 +24,7 @@ public class FHIRConstants {
     public static final String OCCUPATION_EXTENSION_NAME = "Occupation";
     public static final String CONFIDENTIALITY_EXTENSION_NAME = "Confidentiality";
     public static final String DOB_TYPE_EXTENSION_NAME = "DOBType";
-    public static final String RELATED_PERSON_ID_EXTENSION_NAME = "RelationId";
+    public static final String RELATION_ID_EXTENSION_NAME = "RelationId";
 
     public static String getFhirExtensionUrl(String extensionName) {
         return FHIR_EXTENSION_URL + "#" + extensionName;

@@ -52,6 +52,47 @@ public class PatientTestFactory {
     public static final String nid = "NID";
     public static final String householdCode = "12345";
     private static final String MASTER_DATA_EDUCATION_LEVEL_TYPE = "education_level";
+    private static final String fatherRelationId = "06941b0d-5f8a-487f-b1e0-f2777c2fbe44";
+    private static final String motherRelationId = "06941b0d-5f8a-487f-b5e0-f2777c2fbe44";
+    private static final String spouseRelationId = "6ab069a7-f3e9-4368-99c2-9896818e447f";
+
+    public static Patient createMCIPatientWithMandatoryFields() {
+        Patient patient = new Patient();
+        patient.setGivenName(givenName);
+        patient.setSurName(surName);
+        patient.setGender(gender);
+        patient.setDateOfBirth(dateOfBirth);
+        patient.setCountryCode(countryCode);
+        patient.setDivisionId(divisionId);
+        patient.setDistrictId(districtId);
+        patient.setUpazilaId(upazilaId);
+        patient.setCityCorporationId(cityId);
+        patient.setUnionOrUrbanWardId(urbanWardId);
+        patient.setRuralWardId(ruralWardId);
+        patient.setAddressLine(addressLine);
+        return patient;
+    }
+
+
+    public static Patient createMCIPatientWithAllFields() throws AccessDeniedException {
+        Patient patient = createMCIPatientWithMandatoryFields();
+        patient.setActive(true);
+        patient.setBirthRegistrationNumber(brn);
+        patient.setNationalId(nid);
+        patient.setRelations("[{\"type\":\"FTH\",\"hid\":\"fatherHID\",\"nid\":\"fatherNID\"," + "\"uid\":\"fatherUID\"," +
+                "\"bin_brn\":\"fatherBRN\",\"given_name\":\"Father\",\"sur_name\":\"Builder\"," + "\"id\":\"" + fatherRelationId + "" +
+                "\"},{\"type\":\"MTH\"," + "\"given_name\":\"Mother\"," + "\"sur_name\":\"Builder\"," + "\"id\":\"" + motherRelationId + "" +
+                "\"}," + "{\"type\":\"SPS\",\"given_name\":\"Spouse\"," + "\"sur_name\":\"Builder\",\"id\":\"" + spouseRelationId + "\"}]");
+        patient.setEducationLevel(educationLevel);
+        patient.setOccupation(occupation);
+        patient.setPhoneNo(phoneNo);
+        patient.setStatus(PATIENT_STATUS_ALIVE);
+        patient.setDateOfDeath(dateOfDeath);
+        patient.setDobType(dobType);
+        patient.setHouseholdCode(householdCode);
+        patient.setConfidential(false);
+        return patient;
+    }
 
     public static Bundle createPatientBundleWithMandatoryFields(boolean timeOfBirthIncluded) {
         Bundle bundle = new Bundle();
@@ -85,7 +126,7 @@ public class PatientTestFactory {
         return patient;
     }
 
-    public static Bundle createFHIRPatientWithAllFields() throws Exception {
+    public static Bundle createPatientBundleWithAllFields() throws Exception {
         ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = createFhirPatientWithMandatoryFields(true);
         Bundle bundle = new Bundle();
         bundle.setId(UUID.randomUUID().toString());
@@ -110,24 +151,30 @@ public class PatientTestFactory {
         fhirPatient.setActive(true);
         fhirPatient.setDeceased(new BooleanDt(false));
 
+        RelatedPerson relationPersonFather = createRelationPerson(patientEntryFullUrl, fatherName, "FTH", fatherRelationId);
+        setIdentifierType(relationPersonFather.addIdentifier().setValue("fatherNID"), MCI_IDENTIFIER_NID_CODE);
+        setIdentifierType(relationPersonFather.addIdentifier().setValue("fatherBRN"), MCI_IDENTIFIER_BRN_CODE);
+        setIdentifierType(relationPersonFather.addIdentifier().setValue("fatherUID"), MCI_IDENTIFIER_UID_CODE);
+        setIdentifierType(relationPersonFather.addIdentifier().setValue("fatherHID"), MCI_IDENTIFIER_HID_CODE);
+
+        bundle.addEntry().setFullUrl("urn:uuid" + UUID.randomUUID().toString()).setResource(relationPersonFather);
         bundle.addEntry().setFullUrl("urn:uuid" + UUID.randomUUID().toString()).setResource(
-                createRelationPerson(patientEntryFullUrl, fatherName, "FTH")
+                createRelationPerson(patientEntryFullUrl, motherName, "MTH", motherRelationId)
         );
         bundle.addEntry().setFullUrl("urn:uuid" + UUID.randomUUID().toString()).setResource(
-                createRelationPerson(patientEntryFullUrl, motherName, "MTH")
-        );
-        bundle.addEntry().setFullUrl("urn:uuid" + UUID.randomUUID().toString()).setResource(
-                createRelationPerson(patientEntryFullUrl, spouseName, "SPS")
+                createRelationPerson(patientEntryFullUrl, spouseName, "SPS", spouseRelationId)
         );
 
         return bundle;
     }
 
-    private static RelatedPerson createRelationPerson(String patientEntryFullUrl, String givenName, String relationCode) throws Exception {
+    private static RelatedPerson createRelationPerson(String patientEntryFullUrl, String givenName, String relationCode, String relationId) throws Exception {
         RelatedPerson relatedPerson = new RelatedPerson();
         relatedPerson.setName(new HumanNameDt().addFamily(surName).addGiven(givenName)).setPatient(new ResourceReferenceDt(patientEntryFullUrl));
         V3RoleCode relation = V3RoleCode.fromCode(relationCode);
         relatedPerson.setRelationship(new CodeableConceptDt().addCoding(createCodingDt(relation.getSystem(), relation.toCode(), relation.getDisplay())));
+        ExtensionDt relationIdExtension = new ExtensionDt().setUrl(getFhirExtensionUrl(RELATION_ID_EXTENSION_NAME)).setValue(new StringDt(relationId));
+        relatedPerson.addUndeclaredExtension(relationIdExtension);
         return relatedPerson;
     }
 
@@ -155,48 +202,6 @@ public class PatientTestFactory {
         String system = getMCIValuesetURI(mciBaseUrl, MCI_PATIENT_IDENTIFIERS_VALUESET);
         identifierType.addCoding(new CodingDt(system, identifierCode));
         identifierDt.setType(identifierType);
-    }
-
-    public static Patient createMCIPatientWithMandatoryFields() {
-        Patient patient = new Patient();
-        patient.setGivenName(givenName);
-        patient.setSurName(surName);
-        patient.setGender(gender);
-        patient.setDateOfBirth(dateOfBirth);
-        patient.setCountryCode(countryCode);
-        patient.setDivisionId(divisionId);
-        patient.setDistrictId(districtId);
-        patient.setUpazilaId(upazilaId);
-        patient.setCityCorporationId(cityId);
-        patient.setUnionOrUrbanWardId(urbanWardId);
-        patient.setRuralWardId(ruralWardId);
-        patient.setAddressLine(addressLine);
-        return patient;
-    }
-
-
-    public static Patient createMCIPatientWithAllFields() throws AccessDeniedException {
-        Patient patient = createMCIPatientWithMandatoryFields();
-        patient.setActive(true);
-        patient.setBirthRegistrationNumber(brn);
-        patient.setNationalId(nid);
-        patient.setRelations("[{\"type\":\"FTH\",\"given_name\":\"Father\",\"sur_name\":\"Builder\"," +
-                "\"id\":\"06941b0d-5f8a-487f-b1e0-f2777c2fbe44\"},{\"type\":\"MTH\",\"given_name\":\"Mother\",\"sur_name\":\"Builder\"," +
-                "\"id\":\"06941b0d-5f8a-487f-b5e0-f2777c2fbe44\"},{\"type\":\"SPS\",\"given_name\":\"Spouse\"," +
-                "\"sur_name\":\"Builder\",\"id\":\"6ab069a7-f3e9-4368-99c2-9896818e447f\"}]");
-        patient.setEducationLevel(educationLevel);
-        patient.setOccupation(occupation);
-        patient.setPhoneNo(phoneNo);
-        patient.setStatus(PATIENT_STATUS_ALIVE);
-        patient.setDateOfDeath(dateOfDeath);
-        patient.setDobType(dobType);
-        patient.setHouseholdCode(householdCode);
-        patient.setConfidential(false);
-        return patient;
-    }
-
-    private static Requester getRequester() throws AccessDeniedException {
-        return new Requester("100067", null, null, null);
     }
 
 }
