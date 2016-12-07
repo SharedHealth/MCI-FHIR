@@ -1,12 +1,6 @@
 package org.sharedhealth.mci.web.service;
 
-import ca.uhn.fhir.model.api.ExtensionDt;
-import ca.uhn.fhir.model.dstu2.composite.AddressDt;
 import ca.uhn.fhir.model.dstu2.resource.Bundle;
-import ca.uhn.fhir.model.dstu2.valueset.AdministrativeGenderEnum;
-import ca.uhn.fhir.model.primitive.DateDt;
-import ca.uhn.fhir.model.primitive.DateTimeDt;
-import ca.uhn.fhir.model.primitive.StringDt;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import org.apache.http.HttpStatus;
@@ -37,21 +31,9 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.security.UserInfo.HRM_MCI_USER_GROUP;
-import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.util.PatientTestFactory.createPatientBundleWithAllFields;
 
 public class PatientServiceTest {
-    private PatientService patientService;
-    @Mock
-    private PatientRepository patientRepository;
-    @Mock
-    private MCIPatientMapper mciPatientMapper;
-    @Mock
-    private FHIRBundleMapper fhirBundleMapper;
-    @Mock
-    private HealthIdService healthIdService;
-    @Mock
-    private FhirPatientValidator fhirPatientValidator;
-
     private final String healthId = "HID";
     private final String givenName = "Bob the";
     private final String surName = "Builder";
@@ -65,6 +47,17 @@ public class PatientServiceTest {
     private final String urbanWardId = "01";
     private final String ruralWardId = "04";
     private final String addressLine = "Will Street";
+    private PatientService patientService;
+    @Mock
+    private PatientRepository patientRepository;
+    @Mock
+    private MCIPatientMapper mciPatientMapper;
+    @Mock
+    private FHIRBundleMapper fhirBundleMapper;
+    @Mock
+    private HealthIdService healthIdService;
+    @Mock
+    private FhirPatientValidator fhirPatientValidator;
 
     @Before
     public void setUp() throws Exception {
@@ -108,18 +101,19 @@ public class PatientServiceTest {
         response.setId(healthId);
 
         MciHealthId mciHealthId = new MciHealthId(healthId);
-        ca.uhn.fhir.model.dstu2.resource.Patient fhirPatient = createFHIRPatient();
+        Bundle bundle = createPatientBundleWithAllFields();
+
         Patient mciPatient = new Patient();
 
         MCIValidationResult mockValidationResult = mock(MCIValidationResult.class);
-        when(fhirPatientValidator.validate(fhirPatient)).thenReturn(mockValidationResult);
+        when(fhirPatientValidator.validate(bundle)).thenReturn(mockValidationResult);
         when(mockValidationResult.isSuccessful()).thenReturn(true);
 
         when(healthIdService.getNextHealthId()).thenReturn(mciHealthId);
         when(fhirBundleMapper.mapToMCIPatient(new Bundle())).thenReturn(mciPatient);
         when(patientRepository.createPatient(mciPatient)).thenReturn(response);
         UserInfo userInfo = getUserInfo();
-        MCIResponse mciResponse = patientService.createPatient(fhirPatient, userInfo);
+        MCIResponse mciResponse = patientService.createPatient(bundle, userInfo);
         assertEquals(response, mciResponse);
 
         ArgumentCaptor<Patient> argumentCaptor = ArgumentCaptor.forClass(Patient.class);
@@ -150,11 +144,11 @@ public class PatientServiceTest {
         List<SingleValidationMessage> validationMessages = asList(createMessage(invalidGender, genderLocation), createMessage(invalidDOB, dobLocation));
         MCIValidationResult mockValidationResult = mock(MCIValidationResult.class);
 
-        when(fhirPatientValidator.validate(fhirPatient)).thenReturn(mockValidationResult);
+        when(fhirPatientValidator.validate(any(Bundle.class))).thenReturn(mockValidationResult);
         when(mockValidationResult.isSuccessful()).thenReturn(false);
         when(mockValidationResult.getMessages()).thenReturn(validationMessages);
 
-        MCIResponse mciResponse = patientService.createPatient(fhirPatient, getUserInfo());
+        MCIResponse mciResponse = patientService.createPatient(new Bundle(), getUserInfo());
 
         assertNotNull(mciResponse);
         assertEquals(HttpStatus.SC_UNPROCESSABLE_ENTITY, mciResponse.getHttpStatus());
@@ -170,26 +164,6 @@ public class PatientServiceTest {
         singleValidationMessage.setLocationString(locationString);
         singleValidationMessage.setSeverity(ResultSeverityEnum.ERROR);
         return singleValidationMessage;
-    }
-
-    private ca.uhn.fhir.model.dstu2.resource.Patient createFHIRPatient() {
-        ca.uhn.fhir.model.dstu2.resource.Patient patient = new ca.uhn.fhir.model.dstu2.resource.Patient();
-        patient.addName().addGiven(givenName).addFamily(surName);
-        patient.setGender(AdministrativeGenderEnum.MALE);
-
-        DateDt date = new DateDt(dateOfBirth);
-        ExtensionDt extensionDt = new ExtensionDt().setUrl(BIRTH_TIME_EXTENSION_URL).setValue(new DateTimeDt(dateOfBirth));
-        date.addUndeclaredExtension(extensionDt);
-        patient.setBirthDate(date);
-
-        AddressDt addressDt = new AddressDt().addLine(addressLine);
-        addressDt.setCountry(countryCode);
-        String addressCode = String.format("%s%s%s%s%s%s", divisionId, districtId, upazilaId, cityId, urbanWardId, ruralWardId);
-        ExtensionDt addressCodeExtension = new ExtensionDt().
-                setUrl(getFhirExtensionUrl(ADDRESS_CODE_EXTENSION_NAME)).setValue(new StringDt(addressCode));
-        addressDt.addUndeclaredExtension(addressCodeExtension);
-        patient.addAddress(addressDt);
-        return patient;
     }
 
     private UserInfo getUserInfo() {

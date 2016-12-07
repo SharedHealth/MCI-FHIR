@@ -12,26 +12,30 @@ import ca.uhn.fhir.model.dstu2.valueset.ContactPointSystemEnum;
 import ca.uhn.fhir.model.primitive.BooleanDt;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.StringDt;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.Relation;
 import org.sharedhealth.mci.web.util.MCIConstants;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.*;
 
 import static org.sharedhealth.mci.web.util.FHIRConstants.*;
+import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 import static org.sharedhealth.mci.web.util.MCIConstants.*;
 
 public class FHIRBundleMapper {
+    private static final Logger logger = LogManager.getLogger(MCIPatientMapper.class);
     private final int ADDRESS_CODE_EACH_LEVEL_LENGTH = 2;
+
     private MCIProperties mciProperties;
     private BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
 
@@ -51,15 +55,7 @@ public class FHIRBundleMapper {
         mciPatient.setGivenName(name.getGivenFirstRep().getValue());
         mciPatient.setSurName(name.getFamilyFirstRep().getValue());
         mciPatient.setGender(mciToFhirGenderMap.getKey(fhirPatient.getGenderElement().getValueAsEnum()));
-
-        List<ExtensionDt> birthExtensions = fhirPatient.getBirthDateElement().getUndeclaredExtensionsByUrl(BIRTH_TIME_EXTENSION_URL);
-        DateTimeDt birthTime;
-        if (CollectionUtils.isEmpty(birthExtensions)) {
-            birthTime = new DateTimeDt(fhirPatient.getBirthDate());
-        } else {
-            birthTime = (DateTimeDt) birthExtensions.get(0).getValue();
-        }
-        mciPatient.setDateOfBirth(birthTime.getValue());
+        setDateOfBirth(mciPatient, fhirPatient);
 
         AddressDt address = fhirPatient.getAddressFirstRep();
         mciPatient.setAddressLine(address.getLineFirstRep().getValue());
@@ -76,21 +72,23 @@ public class FHIRBundleMapper {
         setUnionWard(mciPatient, addressLevels);
         setRuralWard(mciPatient, addressLevels);
 
-        fhirPatient.getIdentifier().forEach(mapIdentifiersToFields(mciPatient));
+        Map<String, String> patientIdentifiersMap = getMapForIdentifiers(fhirPatient.getIdentifier());
+        mciPatient.setNationalId(patientIdentifiersMap.get(MCI_IDENTIFIER_NID_CODE));
+        mciPatient.setHouseholdCode(patientIdentifiersMap.get(MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE));
+        mciPatient.setBirthRegistrationNumber(patientIdentifiersMap.get(MCI_IDENTIFIER_BRN_CODE));
 
         String educationLevel = findCodeFromExtension(fhirPatient, EDUCATION_DETAILS_EXTENSION_NAME);
-        if (StringUtils.isNoneEmpty(educationLevel)) {
+        if (StringUtils.isNotEmpty(educationLevel)) {
             mciPatient.setEducationLevel(educationLevel);
         }
         String occupation = findCodeFromExtension(fhirPatient, OCCUPATION_EXTENSION_NAME);
-        if (StringUtils.isNoneEmpty(occupation)) {
+        if (StringUtils.isNotEmpty(occupation)) {
             mciPatient.setOccupation(occupation);
         }
         String dobType = findCodeFromExtension(fhirPatient, DOB_TYPE_EXTENSION_NAME);
-        if (StringUtils.isNoneEmpty(dobType)) {
+        if (StringUtils.isNotEmpty(dobType)) {
             mciPatient.setDobType(dobType);
         }
-
         List<ExtensionDt> confidentialityExtensions = fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME));
         if (CollectionUtils.isNotEmpty(confidentialityExtensions)) {
             BooleanDt booleanDt = (BooleanDt) confidentialityExtensions.get(0).getValue();
@@ -103,19 +101,61 @@ public class FHIRBundleMapper {
         if (phoneNumber.isPresent() && StringUtils.isNotEmpty(phoneNumber.get().getValue())) {
             mciPatient.setPhoneNo(phoneNumber.get().getValue());
         }
-        mciPatient.setActive(fhirPatient.getActive());
 
+        mciPatient.setActive(fhirPatient.getActive());
         IDatatype deceased = fhirPatient.getDeceased();
         mapStatusAndDateOfDeath(mciPatient, deceased);
+        mapRelatedPeopleAsRelations(fhirPatientBundle, mciPatient);
+        return mciPatient;
+    }
 
+    private void setDateOfBirth(org.sharedhealth.mci.web.model.Patient mciPatient, Patient fhirPatient) {
+        List<ExtensionDt> birthExtensions = fhirPatient.getBirthDateElement().getUndeclaredExtensionsByUrl(BIRTH_TIME_EXTENSION_URL);
+        DateTimeDt birthTime;
+        if (CollectionUtils.isEmpty(birthExtensions)) {
+            birthTime = new DateTimeDt(fhirPatient.getBirthDate());
+        } else {
+            birthTime = (DateTimeDt) birthExtensions.get(0).getValue();
+        }
+        mciPatient.setDateOfBirth(birthTime.getValue());
+    }
+
+    private void mapRelatedPeopleAsRelations(Bundle fhirPatientBundle, org.sharedhealth.mci.web.model.Patient mciPatient) {
         List<RelatedPerson> relatedPersonList = getAllRelatedPerson(fhirPatientBundle);
+        if (CollectionUtils.isEmpty(relatedPersonList)) return;
+        List<Relation> patientRelations = new ArrayList<>();
         for (RelatedPerson relatedPerson : relatedPersonList) {
             Relation relation = new Relation();
-            String code = relatedPerson.getRelationship().getCodingFirstRep().getCode();
-            relation.setType(code);
+            relation.setType(relatedPerson.getRelationship().getCodingFirstRep().getCode());
+            HumanNameDt relatedPersonName = relatedPerson.getName();
+            relation.setGivenName(relatedPersonName.getGivenFirstRep().getValue());
+            relation.setSurName(relatedPersonName.getFamilyFirstRep().getValue());
+            List<ExtensionDt> relationId = relatedPerson.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(RELATION_ID_EXTENSION_NAME));
+            if (CollectionUtils.isNotEmpty(relationId)) {
+                relation.setId(((StringDt) relationId.get(0).getValue()).getValue());
+            }
+            Map<String, String> relationIdentifiersMap = getMapForIdentifiers(relatedPerson.getIdentifier());
+            relation.setBirthRegistrationNumber(relationIdentifiersMap.get(MCI_IDENTIFIER_BRN_CODE));
+            relation.setNationalId(relationIdentifiersMap.get(MCI_IDENTIFIER_NID_CODE));
+            relation.setUid(relationIdentifiersMap.get(MCI_IDENTIFIER_UID_CODE));
+            relation.setHealthId(relationIdentifiersMap.get(MCI_IDENTIFIER_HID_CODE));
+            patientRelations.add(relation);
         }
+        mciPatient.setRelations(writeValueAsString(patientRelations));
+    }
 
-        return mciPatient;
+    private Map<String, String> getMapForIdentifiers(List<IdentifierDt> identifiers) {
+        Map<String, String> identifiersMap = new HashMap<>();
+        identifiers.forEach((IdentifierDt identifierDt) -> {
+            CodingDt coding = identifierDt.getType().getCodingFirstRep();
+            String mciValuesetURI = getMCIValuesetURI(mciProperties.getMciBaseUrl(), MCI_PATIENT_IDENTIFIERS_VALUESET);
+            /*
+                todo : once profiles are introduced, we should remove the check for system, as fhir itself should validate
+            */
+            if (!mciValuesetURI.equals(coding.getSystem())) return;
+            identifiersMap.put(coding.getCode(), identifierDt.getValue());
+        });
+        return identifiersMap;
     }
 
     private Patient getPatientResource(Bundle fhirPatientBundle) {
@@ -155,26 +195,6 @@ public class FHIRBundleMapper {
             return ((CodeableConceptDt) educationExtensions.get(0).getValue()).getCodingFirstRep().getCode();
         }
         return null;
-    }
-
-    private Consumer<IdentifierDt> mapIdentifiersToFields(org.sharedhealth.mci.web.model.Patient mciPatient) {
-        return (IdentifierDt identifierDt) -> {
-            CodingDt coding = identifierDt.getType().getCodingFirstRep();
-            String mciValuesetURI = getMCIValuesetURI(mciProperties.getMciBaseUrl(), MCI_PATIENT_IDENTIFIERS_VALUESET);
-            /*
-                todo : once profiles are introduced, we should remove the check for system, as fhir itself should validate
-            */
-            if (!mciValuesetURI.equals(coding.getSystem())) return;
-            if (MCI_IDENTIFIER_NID_CODE.equals(coding.getCode())) {
-                mciPatient.setNationalId(identifierDt.getValue());
-            }
-            if (MCI_IDENTIFIER_BRN_CODE.equals(coding.getCode())) {
-                mciPatient.setBirthRegistrationNumber(identifierDt.getValue());
-            }
-            if (MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE.equals(coding.getCode())) {
-                mciPatient.setHouseholdCode(identifierDt.getValue());
-            }
-        };
     }
 
     private void setRuralWard(org.sharedhealth.mci.web.model.Patient mciPatient, List<String> addressLevels) {

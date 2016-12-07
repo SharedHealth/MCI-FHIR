@@ -1,7 +1,6 @@
 package org.sharedhealth.mci.web.service;
 
 import ca.uhn.fhir.model.dstu2.resource.Bundle;
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,13 +24,12 @@ import java.util.UUID;
 import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 
 public class PatientService {
+    private static final Logger logger = LogManager.getLogger(PatientService.class);
     private MCIPatientMapper mciPatientMapper;
     private FHIRBundleMapper fhirBundleMapper;
     private PatientRepository patientRepository;
     private HealthIdService healthIdService;
     private FhirPatientValidator fhirPatientValidator;
-
-    private static final Logger logger = LogManager.getLogger(PatientService.class);
 
     public PatientService(MCIPatientMapper mciPatientMapper, FHIRBundleMapper fhirBundleMapper, HealthIdService healthIdService,
                           PatientRepository patientRepository, FhirPatientValidator fhirPatientValidator) {
@@ -50,13 +48,13 @@ public class PatientService {
         return mciPatientMapper.mapPatientToBundle(mciPatient);
     }
 
-    public MCIResponse createPatient(Patient fhirPatient, UserInfo userInfo) throws AccessDeniedException {
-        MCIValidationResult validate = fhirPatientValidator.validate(fhirPatient);
+    public MCIResponse createPatient(Bundle bundle, UserInfo userInfo) throws AccessDeniedException {
+        MCIValidationResult validate = fhirPatientValidator.validate(bundle);
         if (!validate.isSuccessful()) {
             return createMCIResponseForValidationFailure(validate);
         }
         org.sharedhealth.mci.web.model.Patient mciPatient = new org.sharedhealth.mci.web.model.Patient();
-//        mciPatient = fhirBundleMapper.mapToMCIPatient(fhirPatient);
+        mciPatient = fhirBundleMapper.mapToMCIPatient(bundle);
         MciHealthId healthId;
         healthId = healthIdService.getNextHealthId();
         mciPatient.setHealthId(healthId.getHid());

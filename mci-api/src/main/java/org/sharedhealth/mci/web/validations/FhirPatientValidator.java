@@ -1,6 +1,6 @@
 package org.sharedhealth.mci.web.validations;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationResult;
@@ -31,15 +31,27 @@ public class FhirPatientValidator {
         validatorInstance();
     }
 
-    public MCIValidationResult validate(Patient patient) {
-        ValidationResult validationResult = fhirValidator.validateWithResult(patient);
+    private static StructureDefinition loadProfileOrReturnNull(MCIProperties mciProperties, String profileName) {
+        String profileText;
+        try {
+            String pathToProfile = mciProperties.getProfilesFolderPath() + profileName.toLowerCase() + ".profile.xml";
+            profileText = IOUtils.toString(new FileInputStream(pathToProfile), "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException("No profile found for patient");
+        }
+        return fhirHL7Context.newXmlParser().parseResource(StructureDefinition.class,
+                profileText);
+    }
+
+    public MCIValidationResult validate(Bundle bundle) {
+        ValidationResult validationResult = fhirValidator.validateWithResult(bundle);
         MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
         changeWarningToErrorIfNeeded(mciValidationResult);
         return mciValidationResult;
     }
 
     private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {
-        validationResult.getMessages().stream().forEach(validationMessage -> {
+        validationResult.getMessages().forEach(validationMessage -> {
             if (isPossiblePatientFieldError(validationMessage.getLocationString())) {
                 if (validationMessage.getSeverity().ordinal() <= ResultSeverityEnum.WARNING.ordinal()) {
                     validationMessage.setSeverity(ResultSeverityEnum.ERROR);
@@ -62,18 +74,6 @@ public class FhirPatientValidator {
             validator.setStructureDefintion(loadProfileOrReturnNull(mciProperties, PATIENT_PROFILE_FILE_PREFIX));
             fhirValidator.registerValidatorModule(validator);
         }
-    }
-
-    private static StructureDefinition loadProfileOrReturnNull(MCIProperties mciProperties, String profileName) {
-        String profileText;
-        try {
-            String pathToProfile = mciProperties.getProfilesFolderPath() + profileName.toLowerCase() + ".profile.xml";
-            profileText = IOUtils.toString(new FileInputStream(pathToProfile), "UTF-8");
-        } catch (IOException e) {
-            throw new RuntimeException("No profile found for patient");
-        }
-        return fhirHL7Context.newXmlParser().parseResource(StructureDefinition.class,
-                profileText);
     }
 
 }

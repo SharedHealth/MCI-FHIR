@@ -1,6 +1,6 @@
 package org.sharedhealth.mci.web.controller;
 
-import ca.uhn.fhir.model.dstu2.resource.Patient;
+import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
@@ -17,15 +17,10 @@ import spark.Response;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.mci.web.security.AuthorizationFilter.USER_DETAILS_KEY;
 import static org.sharedhealth.mci.web.security.UserInfo.HRM_MCI_USER_GROUP;
@@ -53,7 +48,7 @@ public class PatientControllerTest {
 
         when(request.body()).thenReturn(content);
         UserInfo userInfo = getUserInfo();
-        when(patientService.createPatient(any(Patient.class), eq(userInfo))).thenReturn(mciResponse);
+        when(patientService.createPatient(any(Bundle.class), eq(userInfo))).thenReturn(mciResponse);
         when(request.attribute(USER_DETAILS_KEY)).thenReturn(userInfo);
 
         String result = patientController.createPatient(request, response);
@@ -61,7 +56,7 @@ public class PatientControllerTest {
         assertNotNull(result);
         assertEquals(result, mciResponse.toString());
 
-        verify(patientService).createPatient(any(Patient.class), eq(userInfo));
+        verify(patientService).createPatient(any(Bundle.class), eq(userInfo));
         verify(response).status(HttpStatus.SC_CREATED);
     }
 
@@ -80,7 +75,7 @@ public class PatientControllerTest {
         assertTrue(mciResponse.getMessage().contains("Unknown element 'newElement' found during parse"));
 
         verify(response).status(SC_UNPROCESSABLE_ENTITY);
-        verify(patientService, never()).createPatient(any(Patient.class), eq(userInfo));
+        verify(patientService, never()).createPatient(any(Bundle.class), eq(userInfo));
     }
 
     @Test
@@ -89,7 +84,7 @@ public class PatientControllerTest {
         UserInfo userInfo = getUserInfo();
         when(request.body()).thenReturn(content);
         when(request.attribute(USER_DETAILS_KEY)).thenReturn(userInfo);
-        
+
         String result = patientController.createPatient(request, response);
         assertFalse(isBlank(result));
 
@@ -99,7 +94,7 @@ public class PatientControllerTest {
         assertTrue(mciResponse.getMessage().contains("Unknown attribute 'newAttribute' found during parse"));
 
         verify(response).status(SC_UNPROCESSABLE_ENTITY);
-        verify(patientService, never()).createPatient(any(Patient.class), eq(userInfo));
+        verify(patientService, never()).createPatient(any(Bundle.class), eq(userInfo));
     }
 
     @Test
@@ -118,7 +113,7 @@ public class PatientControllerTest {
         assertTrue(mciResponse.getMessage().contains("Multiple repetitions of non-repeatable element 'birthDate' found during parse"));
 
         verify(response).status(SC_UNPROCESSABLE_ENTITY);
-        verify(patientService, never()).createPatient(any(Patient.class), eq(userInfo));
+        verify(patientService, never()).createPatient(any(Bundle.class), eq(userInfo));
     }
 
     private UserInfo getUserInfo() {

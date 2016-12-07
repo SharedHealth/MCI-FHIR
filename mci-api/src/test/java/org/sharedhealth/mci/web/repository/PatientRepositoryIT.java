@@ -9,18 +9,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sharedhealth.mci.web.BaseIntegrationTest;
 import org.sharedhealth.mci.web.config.MCICassandraConfig;
-import org.sharedhealth.mci.web.model.MCIResponse;
-import org.sharedhealth.mci.web.model.Patient;
-import org.sharedhealth.mci.web.model.PatientAuditLog;
-import org.sharedhealth.mci.web.model.PatientUpdateLog;
+import org.sharedhealth.mci.web.model.*;
 import org.sharedhealth.mci.web.util.TestUtil;
+import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
+import java.nio.file.AccessDeniedException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 import static org.sharedhealth.mci.web.util.DateUtil.*;
 import static org.sharedhealth.mci.web.util.JsonMapper.readValue;
+import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 import static org.sharedhealth.mci.web.util.PatientTestFactory.*;
 import static org.sharedhealth.mci.web.util.RepositoryConstants.*;
 
@@ -29,8 +31,6 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
     private static Mapper<Patient> patientDBMapper;
     private static Mapper<PatientUpdateLog> patientUpdateLogDBMapper;
     private static Mapper<PatientAuditLog> patientAuditLogDBMapper;
-
-    private static final String healthId = "HID123";
 
     @Before
     public void setUp() throws Exception {
@@ -48,7 +48,7 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
 
     @Test
     public void shouldRetrievePatientByHealthID() throws Exception {
-        Patient expectedPatient = createMCIPatientWithAllFields();
+        Patient expectedPatient = createPatient();
         patientDBMapper.save(expectedPatient);
 
         Patient patient = patientRepository.findByHealthId(healthId);
@@ -57,10 +57,13 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(expectedPatient, patient);
     }
 
+    private static Requester getRequester() throws AccessDeniedException {
+        return new Requester("100067", null, null, null);
+    }
+
     @Test
     public void shouldCreatePatientInDatabase() throws Exception {
-        Patient patient = createMCIPatientWithAllFields();
-
+        Patient patient = createPatient();
         MCIResponse mciResponse = patientRepository.createPatient(patient);
 
         Patient byHealthId = patientDBMapper.get(patient.getHealthId());
@@ -69,6 +72,17 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertEquals(HttpStatus.SC_CREATED, mciResponse.getHttpStatus());
         assertPatientAuditLog(patient);
         assertPatientUpdateLog(patient);
+    }
+
+    private Patient createPatient() throws AccessDeniedException {
+        Patient expectedPatient = createMCIPatientWithAllFields();
+        expectedPatient.setHealthId(healthId);
+        UUID createdAt = TimeUuidUtil.uuidForDate(new Date());
+        expectedPatient.setCreatedAt(createdAt);
+        expectedPatient.setUpdatedAt(createdAt);
+        expectedPatient.setCreatedBy(writeValueAsString(getRequester()));
+        expectedPatient.setUpdatedBy(writeValueAsString(getRequester()));
+        return expectedPatient;
     }
 
     private void assertPatientAuditLog(Patient patient) {
@@ -88,7 +102,6 @@ public class PatientRepositoryIT extends BaseIntegrationTest {
         assertChangeSet(changeSetAsMap, PRESENT_ADDRESS, getPresentAddress());
         assertChangeSet(changeSetAsMap, GIVEN_NAME, givenName);
         assertChangeSet(changeSetAsMap, SUR_NAME, surName);
-
     }
 
     private void assertPatientUpdateLog(Patient patient) {

@@ -32,9 +32,9 @@ public class PatientController {
         logAccessDetails("Creating a new patient", request.attribute(USER_DETAILS_KEY));
         logger.debug("Create patient request");
 
-        Patient patient;
+        Bundle bundle;
         try {
-            patient = (Patient) FhirContextHelper.parseResource(request.body());
+            bundle = (Bundle) FhirContextHelper.parseResource(request.body());
         } catch (DataFormatException e) {
             logger.error("Can not parse", e);
             MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_UNPROCESSABLE_ENTITY);
@@ -43,7 +43,7 @@ public class PatientController {
             return mciResponse.toString();
         }
         UserInfo userInfo = request.attribute(USER_DETAILS_KEY);
-        MCIResponse mciResponse = patientService.createPatient(patient, userInfo);
+        MCIResponse mciResponse = patientService.createPatient(bundle, userInfo);
         response.status(mciResponse.getHttpStatus());
         response.type(ContentType.APPLICATION_JSON.getMimeType());
         return mciResponse.toString();
