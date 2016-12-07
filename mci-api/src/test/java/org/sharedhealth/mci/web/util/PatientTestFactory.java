@@ -14,7 +14,6 @@ import org.hl7.fhir.instance.model.api.IBaseDatatype;
 import org.hl7.fhir.instance.model.valuesets.V3RoleCode;
 import org.sharedhealth.mci.web.model.MCIIdentifierEnumBinder;
 import org.sharedhealth.mci.web.model.Patient;
-import org.sharedhealth.mci.web.model.Requester;
 
 import java.nio.file.AccessDeniedException;
 import java.util.Date;

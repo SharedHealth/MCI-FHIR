@@ -2,7 +2,6 @@ package org.sharedhealth.mci.web.controller;
 
 
 import ca.uhn.fhir.model.dstu2.resource.Bundle;
-import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.parser.DataFormatException;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;

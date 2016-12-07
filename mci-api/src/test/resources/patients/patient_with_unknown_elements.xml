@@ -1,20 +1,32 @@
-<Patient xmlns="http://hl7.org/fhir">
-    <name>
-        <family value="Raichand"/>
-        <given value="Nandini"/>
-    </name>
-    <gender value="female"/>
-    <newElement value="Someval"/>
-    <birthDate value="1975-01-12">
-        <extension url="http://hl7.org/fhir/StructureDefinition/patient-birthTime">
-            <valueDateTime value="1975-01-12T16:50:00+05:30"/>
-        </extension>
-    </birthDate>
-    <address>
-        <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
-            <valueString value="201918991101"/>
-        </extension>
-        <line value="3rd lane"/>
-        <country value="050"/>
-    </address>
-</Patient>
+<Bundle xmlns="http://hl7.org/fhir">
+    <id value="76088ddd-83fe-43de-a167-06a14d71ba8a"/>
+    <meta>
+        <lastUpdated value="2016-07-07T17:11:02.829+05:30"/>
+    </meta>
+    <type value="collection"/>
+    <entry>
+        <fullUrl value="urn:uuid:c4764df0-bac5-11e6-b601-00505682085f"/>
+        <resource>
+            <Patient xmlns="http://hl7.org/fhir">
+                <name>
+                    <family value="Raichand"/>
+                    <given value="Nandini"/>
+                </name>
+                <gender value="female"/>
+                <newElement value="Someval"/>
+                <birthDate value="1975-01-12">
+                    <extension url="http://hl7.org/fhir/StructureDefinition/patient-birthTime">
+                        <valueDateTime value="1975-01-12T16:50:00+05:30"/>
+                    </extension>
+                </birthDate>
+                <address>
+                    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
+                        <valueString value="201918991101"/>
+                    </extension>
+                    <line value="3rd lane"/>
+                    <country value="050"/>
+                </address>
+            </Patient>
+        </resource>
+    </entry>
+</Bundle>
