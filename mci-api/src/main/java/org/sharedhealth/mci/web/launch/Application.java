@@ -62,7 +62,7 @@ public class Application {
     private static CacheManager cacheManager;
 
     public static void main(String[] args) {
-        logger.info("Starting MCI Registry");
+        logger.info("Starting MCI-FHIR");
         String mci_port = getenv().get("MCI_PORT");
         port(Integer.parseInt(mci_port));
 

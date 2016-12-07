@@ -1,2 +1,2 @@
-# MCI-Registry
+# MCI-FHIR
 MCI with FHIR patient profile.

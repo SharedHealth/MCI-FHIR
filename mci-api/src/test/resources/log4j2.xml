@@ -4,23 +4,30 @@
         <Console name="console-log" target="SYSTEM_OUT">
             <PatternLayout pattern="%-5p %c{1} - %m%n"/>
         </Console>
-        <RollingFile name="VAR_LOG" fileName="/var/log/mci-registry/mci-registry.log"
-                     filePattern="/var/log/mci-registry/mci-registry.log.%d{dd-MM-yyyy}">
+        <RollingFile name="VAR_LOG" fileName="/var/log/mci-fhir/mci-fhir.log"
+                     filePattern="/var/log/mci-fhir/mci-fhir.log.%d{dd-MM-yyyy}">
             <PatternLayout>
                 <pattern>%d{dd-MM-yyyy HH:mm:ss} [%-5p] %c{1} - %m%n</pattern>
             </PatternLayout>
             <Policies>
-                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
+        <RollingFile name="ACCESS_LOG" fileName="/var/log/mci-fhir/access.log"
+                     filePattern="/var/log/mci-fhir/access.log.%d{dd-MM-yyyy}">
+            <RegexFilter regex="^ACCESS:.*" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <pattern>%d{dd-MM-yyyy HH:mm:ss} [%-5p] %c{1} - %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
             </Policies>
         </RollingFile>
     </Appenders>
     <Loggers>
         <Logger name="org.sharedhealth.mci" level="INFO" additivity="false">
-            <appender-ref ref="VAR_LOG"/>
+            <AppenderRef ref="VAR_LOG"/>
+            <AppenderRef ref="ACCESS_LOG"/>
         </Logger>
-        <Root>
-            <level value ="ERROR" />
-            <appender-ref ref="VAR_LOG" />
-        </Root>
     </Loggers>
 </Configuration>

@@ -4,8 +4,8 @@
         <Console name="console-log" target="SYSTEM_OUT">
             <PatternLayout pattern="%-5p %c{1} - %m%n"/>
         </Console>
-        <RollingFile name="VAR_LOG" fileName="/var/log/mci-registry/mci-registry.log"
-                     filePattern="/var/log/mci-registry/mci-registry.log.%d{dd-MM-yyyy}">
+        <RollingFile name="VAR_LOG" fileName="/var/log/mci-fhir/mci-fhir.log"
+                     filePattern="/var/log/mci-fhir/mci-fhir.log.%d{dd-MM-yyyy}">
             <PatternLayout>
                 <pattern>%d{dd-MM-yyyy HH:mm:ss} [%-5p] %c{1} - %m%n</pattern>
             </PatternLayout>
@@ -13,8 +13,8 @@
                 <TimeBasedTriggeringPolicy />
             </Policies>
         </RollingFile>
-        <RollingFile name="ACCESS_LOG" fileName="/var/log/mci-registry/access.log"
-                     filePattern="/var/log/mci-registry/access.log.%d{dd-MM-yyyy}">
+        <RollingFile name="ACCESS_LOG" fileName="/var/log/mci-fhir/access.log"
+                     filePattern="/var/log/mci-fhir/access.log.%d{dd-MM-yyyy}">
             <RegexFilter regex="^ACCESS:.*" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout>
                 <pattern>%d{dd-MM-yyyy HH:mm:ss} [%-5p] %c{1} - %m%n</pattern>

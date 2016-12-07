@@ -56,7 +56,7 @@ configurations {
 }
 
 jar {
-    baseName = 'mci-registry'
+    baseName = 'mci-fhir'
     version = '2.5-SNAPSHOT'
 }
 
@@ -71,7 +71,7 @@ task assembly(dependsOn: 'build') << {
 }
 
 task exportProperties(dependsOn: 'assembly') << {
-    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/mci-registry")));
+    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/mci-fhir")));
     Properties properties = loadConfig()
     properties.each { prop, val ->
         output.println("export " + prop + "=" + val)
@@ -80,13 +80,13 @@ task exportProperties(dependsOn: 'assembly') << {
 
 task dist(dependsOn: ['exportProperties'],
         type: Rpm) {
-    packageName = 'mci-registry'
+    packageName = 'mci-fhir'
     version = '2.5'
     release = project.hasProperty('release') ? project.release : '1'
     arch = NOARCH
     os = LINUX
 
-    into '/opt/mci-registry'
+    into '/opt/mci-fhir'
 
     postInstall = file('scripts/utils/postInstall.sh')
     preUninstall = file('scripts/utils/preUninstall.sh')
@@ -114,7 +114,7 @@ task dist(dependsOn: ['exportProperties'],
     from("scripts/rpm") {
         fileMode = 0755
         createDirectoryEntry true
-        exclude 'mci-registry'
+        exclude 'mci-fhir'
         exclude 'start.sh'
         into 'var'
     }
@@ -128,7 +128,7 @@ war {
     }
     /*should be removed once we start using as web-server*/
     exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
-    baseName = 'mci-registry'
+    baseName = 'mci-fhir'
     from sourceSets.main.resources
     manifest {
         attributes('Main-Class': mainClassName)
