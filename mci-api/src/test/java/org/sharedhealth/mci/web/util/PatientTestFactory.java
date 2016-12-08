@@ -132,12 +132,11 @@ public class PatientTestFactory {
         String patientEntryFullUrl = "urn:uuid:" + UUID.randomUUID();
         bundle.addEntry().setFullUrl(patientEntryFullUrl).setResource(fhirPatient);
 
-
         setIdentifierType(fhirPatient.addIdentifier().setValue(nid), MCI_IDENTIFIER_NID_CODE);
         setIdentifierType(fhirPatient.addIdentifier().setValue(brn), MCI_IDENTIFIER_BRN_CODE);
-        setIdentifierType(fhirPatient.addIdentifier().setValue(householdCode), MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE);
 
         fhirPatient.addUndeclaredExtension(createExtension(CONFIDENTIALITY_EXTENSION_NAME, new BooleanDt(false)));
+        fhirPatient.addUndeclaredExtension(createExtension(HOUSE_HOLD_CODE_EXTENSION_NAME, new StringDt(householdCode)));
         fhirPatient.addUndeclaredExtension(createExtension(EDUCATION_DETAILS_EXTENSION_NAME,
                 createCodeableConcept(MCI_PATIENT_EDUCATION_DETAILS_VALUESET, educationLevel, "Higher Secondary")));
         fhirPatient.addUndeclaredExtension(createExtension(OCCUPATION_EXTENSION_NAME,

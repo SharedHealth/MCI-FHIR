@@ -89,17 +89,22 @@ public class MCIPatientMapper {
         mapAsIdentifier(fhirPatient, mciPatient.getHealthId(), MCI_IDENTIFIER_HID_CODE, mciPatient.getHealthId());
         mapAsIdentifier(fhirPatient, mciPatient.getNationalId(), MCI_IDENTIFIER_NID_CODE, mciPatient.getHealthId());
         mapAsIdentifier(fhirPatient, mciPatient.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, mciPatient.getHealthId());
-        mapAsIdentifier(fhirPatient, mciPatient.getHouseholdCode(), MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE, mciPatient.getHealthId());
 
         if (StringUtils.isNotBlank(mciPatient.getPhoneNo())) {
             fhirPatient.addTelecom().setSystem(ContactPointSystemEnum.PHONE).setValue(mciPatient.getPhoneNo());
         }
 
         mapDeceased(fhirPatient, mciPatient);
-        fhirPatient.setActive(mciPatient.getActive());
+        fhirPatient.setActive(mciPatient.isActive());
+
+        if (StringUtils.isNotBlank(mciPatient.getHouseholdCode())) {
+            ExtensionDt houseHoldExtension = new ExtensionDt().setUrl(getFhirExtensionUrl(HOUSE_HOLD_CODE_EXTENSION_NAME))
+                    .setValue(new StringDt(mciPatient.getHouseholdCode()));
+            fhirPatient.addUndeclaredExtension(houseHoldExtension);
+        }
 
         ExtensionDt confidentiality = new ExtensionDt().setUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME))
-                .setValue(new BooleanDt(mciPatient.getConfidential()));
+                .setValue(new BooleanDt(mciPatient.isConfidential()));
         fhirPatient.addUndeclaredExtension(confidentiality);
         mapCodeableConceptExtensionFor(MASTER_DATA_EDUCATION_LEVEL_TYPE, mciPatient.getEducationLevel(), MCI_PATIENT_EDUCATION_DETAILS_VALUESET, EDUCATION_DETAILS_EXTENSION_NAME, fhirPatient);
         mapCodeableConceptExtensionFor(MASTER_DATA_OCCUPATION_TYPE, mciPatient.getOccupation(), MCI_PATIENT_OCCUPATION_VALUESET, OCCUPATION_EXTENSION_NAME, fhirPatient);

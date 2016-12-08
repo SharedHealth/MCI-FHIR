@@ -333,7 +333,7 @@ public class Patient {
         this.educationLevel = educationLevel;
     }
 
-    public Boolean getConfidential() {
+    public Boolean isConfidential() {
         return confidential;
     }
 
@@ -341,7 +341,7 @@ public class Patient {
         this.confidential = confidential;
     }
 
-    public Boolean getActive() {
+    public Boolean isActive() {
         return active;
     }
 

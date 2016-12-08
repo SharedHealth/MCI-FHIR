@@ -135,11 +135,10 @@ public class MCIPatientMapperTest {
         Patient fhirPatient = (Patient) getResourceByType(new Patient().getResourceName(), patientBundle).get(0);
 
         List<IdentifierDt> identifiers = fhirPatient.getIdentifier();
-        assertEquals(4, identifiers.size());
-        containsIdentifier(identifiers, healthId, MCI_IDENTIFIER_HID_CODE);
-        containsIdentifier(identifiers, nid, MCI_IDENTIFIER_NID_CODE);
-        containsIdentifier(identifiers, brn, MCI_IDENTIFIER_BRN_CODE);
-        containsIdentifier(identifiers, householdCode, MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE);
+        assertEquals(3, identifiers.size());
+        assertTrue(containsIdentifier(identifiers, healthId, MCI_IDENTIFIER_HID_CODE));
+        assertTrue(containsIdentifier(identifiers, nid, MCI_IDENTIFIER_NID_CODE));
+        assertTrue(containsIdentifier(identifiers, brn, MCI_IDENTIFIER_BRN_CODE));
 
         IdentifierDt hidIdentifier = identifiers.get(0);
         assertEquals(healthId, hidIdentifier.getValue());
@@ -179,6 +178,9 @@ public class MCIPatientMapperTest {
 
         BooleanDt confidentiality = (BooleanDt) fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME)).get(0).getValue();
         assertFalse(confidentiality.getValue());
+
+        StringDt houseHoldCodeDt = (StringDt) fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(HOUSE_HOLD_CODE_EXTENSION_NAME)).get(0).getValue();
+        assertEquals(householdCode, houseHoldCodeDt.getValue());
 
         CodingDt educationCoding = ((CodeableConceptDt) fhirPatient.getUndeclaredExtensionsByUrl(
                 getFhirExtensionUrl(EDUCATION_DETAILS_EXTENSION_NAME)).get(0).getValue()).getCodingFirstRep();
@@ -269,7 +271,6 @@ public class MCIPatientMapperTest {
         IDatatype deceased = fhirPatient.getDeceased();
         assertNull(deceased);
     }
-
 
     private void assertCoding(CodingDt education, String system, String code, String display) {
         assertEquals(system, education.getSystem());

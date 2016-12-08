@@ -3,6 +3,7 @@ package org.sharedhealth.mci.web.validations;
 import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
+import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirContext;
 import static org.sharedhealth.mci.web.util.FhirContextHelper.fhirHL7Context;
@@ -45,12 +47,18 @@ public class FhirPatientValidator {
 
     public MCIValidationResult validate(Bundle bundle) {
         ValidationResult validationResult = fhirValidator.validateWithResult(bundle);
-        MCIValidationResult mciValidationResult = new MCIValidationResult(fhirContext, validationResult.getMessages());
-        changeWarningToErrorIfNeeded(mciValidationResult);
-        return mciValidationResult;
+        changeWarningToErrorIfNeeded(validationResult);
+        List<SingleValidationMessage> errorMessages = filterWarningsAndInformation(validationResult);
+        return new MCIValidationResult(fhirContext, errorMessages);
     }
 
-    private void changeWarningToErrorIfNeeded(MCIValidationResult validationResult) {
+    private List<SingleValidationMessage> filterWarningsAndInformation(ValidationResult validationResult) {
+        return validationResult.getMessages().stream().filter(
+                singleValidationMessage -> singleValidationMessage.getSeverity().ordinal() > ResultSeverityEnum.WARNING.ordinal()
+        ).collect(Collectors.toList());
+    }
+
+    private void changeWarningToErrorIfNeeded(ValidationResult validationResult) {
         validationResult.getMessages().forEach(validationMessage -> {
             if (isPossiblePatientFieldError(validationMessage.getLocationString())) {
                 if (validationMessage.getSeverity().ordinal() <= ResultSeverityEnum.WARNING.ordinal()) {
