@@ -18,8 +18,6 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.Relation;
 import org.sharedhealth.mci.web.util.MCIConstants;
@@ -31,8 +29,8 @@ import static org.sharedhealth.mci.web.util.JsonMapper.writeValueAsString;
 import static org.sharedhealth.mci.web.util.MCIConstants.*;
 
 public class FHIRBundleMapper {
-    private static final Logger logger = LogManager.getLogger(MCIPatientMapper.class);
     private final int ADDRESS_CODE_EACH_LEVEL_LENGTH = 2;
+    private final String DEFAULT_DOB_TYPE = "1";
 
     private MCIProperties mciProperties;
     private BidiMap<String, AdministrativeGenderEnum> mciToFhirGenderMap = new DualHashBidiMap<>();
@@ -72,7 +70,6 @@ public class FHIRBundleMapper {
 
         Map<String, String> patientIdentifiersMap = getMapForIdentifiers(fhirPatient.getIdentifier());
         mciPatient.setNationalId(patientIdentifiersMap.get(MCI_IDENTIFIER_NID_CODE));
-        mciPatient.setHouseholdCode(patientIdentifiersMap.get(MCI_IDENTIFIER_HOUSE_HOLD_NUMBER_CODE));
         mciPatient.setBirthRegistrationNumber(patientIdentifiersMap.get(MCI_IDENTIFIER_BRN_CODE));
 
         String educationLevel = findCodeFromExtension(fhirPatient, EDUCATION_DETAILS_EXTENSION_NAME);
@@ -86,11 +83,22 @@ public class FHIRBundleMapper {
         String dobType = findCodeFromExtension(fhirPatient, DOB_TYPE_EXTENSION_NAME);
         if (StringUtils.isNotEmpty(dobType)) {
             mciPatient.setDobType(dobType);
+        } else {
+            mciPatient.setDobType(DEFAULT_DOB_TYPE);
         }
+
         List<ExtensionDt> confidentialityExtensions = fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(CONFIDENTIALITY_EXTENSION_NAME));
         if (CollectionUtils.isNotEmpty(confidentialityExtensions)) {
             BooleanDt booleanDt = (BooleanDt) confidentialityExtensions.get(0).getValue();
             mciPatient.setConfidential(booleanDt.getValue());
+        } else {
+            mciPatient.setConfidential(false);
+        }
+
+        List<ExtensionDt> houseHoldCodeExtn = fhirPatient.getUndeclaredExtensionsByUrl(getFhirExtensionUrl(HOUSE_HOLD_CODE_EXTENSION_NAME));
+        if (CollectionUtils.isNotEmpty(houseHoldCodeExtn)) {
+            StringDt houseHoldCode = (StringDt) houseHoldCodeExtn.get(0).getValue();
+            mciPatient.setHouseholdCode(houseHoldCode.getValue());
         }
 
         Optional<ContactPointDt> phoneNumber = fhirPatient.getTelecom().stream().filter(
@@ -100,7 +108,8 @@ public class FHIRBundleMapper {
             mciPatient.setPhoneNo(phoneNumber.get().getValue());
         }
 
-        mciPatient.setActive(fhirPatient.getActive());
+        boolean active = fhirPatient.getActive() != null ? fhirPatient.getActive() : true;
+        mciPatient.setActive(active);
         IDatatype deceased = fhirPatient.getDeceased();
         mapStatusAndDateOfDeath(mciPatient, deceased);
         mapRelatedPeopleAsRelations(fhirPatientBundle, mciPatient);

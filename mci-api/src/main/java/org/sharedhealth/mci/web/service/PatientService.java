@@ -88,7 +88,7 @@ public class PatientService {
     private MCIResponse createMCIResponseForValidationFailure(MCIValidationResult validationResult) {
         MCIResponse mciResponse = new MCIResponse(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         mciResponse.setMessage("Validation Failed");
-        validationResult.getMessages().stream().forEach(message ->
+        validationResult.getMessages().forEach(message ->
                 mciResponse.addError(new Error(message.getLocationString(), message.getSeverity().getCode(), message.getMessage()))
         );
         return mciResponse;
