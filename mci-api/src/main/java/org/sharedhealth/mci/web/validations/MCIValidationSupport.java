@@ -14,8 +14,14 @@ public class MCIValidationSupport extends DefaultProfileValidationSupport {
 
     @Override
     public <T extends IBaseResource> T fetchResource(FhirContext theContext, Class<T> theClass, String theUri) {
-        String sharedHealthUriPrefix = "https://sharedhealth.atlassian.net/wiki/display/docs/fhir-";
-        if (theUri.startsWith(sharedHealthUriPrefix)) {
+        String sharedHealthExtensionUriPrefix = "https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions";
+        String sharedHealthProfilesUriPrefix = "https://sharedhealth.atlassian.net/wiki/display/docs/fhir-profiles/";
+        if (theUri.startsWith(sharedHealthExtensionUriPrefix)) {
+            String[] parts = theUri.split("/");
+            String extensionName = parts[parts.length - 1].toLowerCase();
+            return (T) FhirPatientValidator.loadProfileOrReturnNull(mciProperties, extensionName + ".extension.xml");
+        }
+        if (theUri.startsWith(sharedHealthProfilesUriPrefix)) {
             String[] parts = theUri.split("/");
             String profileName = parts[parts.length - 1].toLowerCase();
             return (T) FhirPatientValidator.loadProfileOrReturnNull(mciProperties, profileName + ".profile.xml");

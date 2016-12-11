@@ -58,10 +58,12 @@ public class FhirPatientValidatorMCIProfileTest {
         MCIValidationResult validationResult = fhirPatientValidator.validate(patient);
         assertFalse(validationResult.isSuccessful());
         List<SingleValidationMessage> validationMessages = validationResult.getMessages();
-        assertEquals(3, validationMessages.size());
+        assertEquals(5, validationMessages.size());
         assertTrue(containsError(validationMessages, "Patient.name", "Element 'Patient.name.family': minimum required = 1, but only found 0"));
         assertTrue(containsError(validationMessages, "Patient.name", "Element 'Patient.name.given': minimum required = 1, but only found 0"));
         assertTrue(containsError(validationMessages, "Patient.address", "Element 'Patient.address.extension[addressCode]': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationMessages, "Patient.address", "Element 'Patient.address.line': minimum required = 1, but only found 0"));
+        assertTrue(containsError(validationMessages, "Patient.address", "Element 'Patient.address.country': minimum required = 1, but only found 0"));
     }
 
     @Test
