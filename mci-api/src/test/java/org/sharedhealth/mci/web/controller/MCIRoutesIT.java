@@ -194,6 +194,28 @@ public class MCIRoutesIT extends BaseIntegrationTest {
     }
 
     @Test
+    public void shouldCreateAPatientWithRelatedPerson() throws Exception {
+        setupStubForHealthIdService();
+        String content = asString("patients/valid_patient_with_all_fields.xml");
+        String authToken = "d324fe7a-156b-449c-93b2-1c9871ee306c";
+        setUpValidClient(authToken, asString("idpClients/userWithFacilityGroup.json"));
+        Map<String, String> headers = getHeader(authToken, "facility@gmail.com", "18548");
+
+        addHidsToMciHealthIdStore();
+        UrlResponse urlResponse = doMethod(POST, PATIENT_URI_PATH, content, headers);
+
+        assertNotNull(urlResponse);
+        assertEquals(SC_CREATED, urlResponse.status);
+        String body = urlResponse.body;
+        assertNotNull(body);
+
+        MCIResponse mciResponse = new Gson().fromJson(body, MCIResponse.class);
+        assertNotNull(mciResponse.getId());
+        assertTrue(getHIDs().contains(mciResponse.getId()));
+        assertNull(mciResponse.getMessage());
+    }
+
+    @Test
     public void shouldThrowAnErrorWhenThereIsNoHIDLeft() throws Exception {
         String content = asString("patients/valid_patient_with_mandatory_fields.xml");
 

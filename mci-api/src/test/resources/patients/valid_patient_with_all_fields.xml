@@ -1,0 +1,221 @@
+<Bundle
+        xmlns="http://hl7.org/fhir">
+    <id value="cb996117-a197-419d-8ceb-b7f7fdac7812"/>
+    <meta>
+        <lastUpdated value="2016-12-01T15:58:56.766+05:30"/>
+    </meta>
+    <type value="collection"/>
+    <entry>
+        <fullUrl value="urn:uuid:d393ae20-c026-11e6-b601-00505682085f"/>
+        <resource>
+            <Patient
+                    xmlns="http://hl7.org/fhir">
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#Confidentiality">
+                    <valueBoolean value="false"/>
+                </extension>
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#HouseHoldCode">
+                    <valueString value="87654"/>
+                </extension>
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#EducationDetails">
+                    <valueCodeableConcept>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-education-details"/>
+                            <code value="02"/>
+                            <display value="২য় শ্রেনী"/>
+                        </coding>
+                    </valueCodeableConcept>
+                </extension>
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#Occupation">
+                    <valueCodeableConcept>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-occupation"/>
+                            <code value="02"/>
+                            <display value="ইঞ্জিনিয়ারিং ও স্থপতি"/>
+                        </coding>
+                    </valueCodeableConcept>
+                </extension>
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#DOBType">
+                    <valueCodeableConcept>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-dob-type"/>
+                            <code value="3"/>
+                            <display value="Estimated"/>
+                        </coding>
+                    </valueCodeableConcept>
+                </extension>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="Health Id"/>
+                        </coding>
+                    </type>
+                    <system value="http://172.18.46.109:8085/api/v2/patients/98001079691"/>
+                    <value value="98001079691"/>
+                </identifier>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="National Id"/>
+                        </coding>
+                    </type>
+                    <system value="http://172.18.46.109:8085/api/v2/patients/98001079691"/>
+                    <value value="8765423456789"/>
+                </identifier>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="Birth Registration Number"/>
+                        </coding>
+                    </type>
+                    <system value="http://172.18.46.109:8085/api/v2/patients/98001079691"/>
+                    <value value="87654234567895678"/>
+                </identifier>
+                <active value="true"/>
+                <name>
+                    <family value="Koka"/>
+                    <given value="Leeaaya"/>
+                </name>
+                <telecom>
+                    <system value="phone"/>
+                    <value value="08034567"/>
+                </telecom>
+                <gender value="female"/>
+                <birthDate value="1982-10-31">
+                    <extension url="http://hl7.org/fhir/StructureDefinition/patient-birthTime">
+                        <valueDateTime value="1982-10-31T06:00:00+05:30"/>
+                    </extension>
+                </birthDate>
+                <deceasedDateTime value="2016-12-19T15:28:53+05:30"/>
+                <address>
+                    <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#AddressCode">
+                        <valueString value="302602"/>
+                    </extension>
+                    <line value="124th school"/>
+                    <country value="050"/>
+                </address>
+                <link>
+                    <other>
+                        <reference value="http://172.18.46.56:8081/api/v1/patients/98001079691"/>
+                    </other>
+                    <type value="seealso"/>
+                </link>
+            </Patient>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:d3969450-c026-11e6-b601-00505682085f"/>
+        <resource>
+            <RelatedPerson
+                    xmlns="http://hl7.org/fhir">
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#RelatedPersonId">
+                    <valueString value="92068fc1-4b3e-46d3-88b9-29f77d1d6206"/>
+                </extension>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="National Id"/>
+                        </coding>
+                    </type>
+                    <system value="http://172.18.46.109:8085/api/v2/patients/98001379691"/>
+                    <value value="8765423455789"/>
+                </identifier>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="Health Id"/>
+                        </coding>
+                    </type>
+                    <system value="http://172.18.46.109:8085/api/v2/patients/98001379691"/>
+                    <value value="98001379691"/>
+                </identifier>
+                <patient>
+                    <reference value="urn:uuid:d393ae20-c026-11e6-b601-00505682085f"/>
+                </patient>
+                <relationship>
+                    <coding>
+                        <system value="http://hl7.org/fhir/v3/RoleCode"/>
+                        <code value="MTH"/>
+                        <display value="mother"/>
+                    </coding>
+                </relationship>
+                <name>
+                    <family value="Koka"/>
+                    <given value="Jen"/>
+                </name>
+            </RelatedPerson>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:d39757a0-c026-11e6-b601-00505682085f"/>
+        <resource>
+            <RelatedPerson
+                    xmlns="http://hl7.org/fhir">
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#RelatedPersonId">
+                    <valueString value="38907bf8-dcee-4aca-8b3e-65be592be141"/>
+                </extension>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="National Id"/>
+                        </coding>
+                    </type>
+                    <value value="8765423456769"/>
+                </identifier>
+                <patient>
+                    <reference value="urn:uuid:d393ae20-c026-11e6-b601-00505682085f"/>
+                </patient>
+                <relationship>
+                    <coding>
+                        <system value="http://hl7.org/fhir/v3/RoleCode"/>
+                        <code value="FTH"/>
+                        <display value="father"/>
+                    </coding>
+                </relationship>
+                <name>
+                    <family value="Koka"/>
+                    <given value="Jack"/>
+                </name>
+            </RelatedPerson>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:d3977eb0-c026-11e6-b601-00505682085f"/>
+        <resource>
+            <RelatedPerson
+                    xmlns="http://hl7.org/fhir">
+                <extension url="https://sharedhealth.atlassian.net/wiki/display/docs/fhir-extensions#RelatedPersonId">
+                    <valueString value="ccc13653-1863-4ad4-b812-90c000d84d2d"/>
+                </extension>
+                <identifier>
+                    <type>
+                        <coding>
+                            <system value="http://172.18.46.109:8085/api/v2/vs/patient-identifiers"/>
+                            <code value="National Id"/>
+                        </coding>
+                    </type>
+                    <value value="8765423456889"/>
+                </identifier>
+                <patient>
+                    <reference value="urn:uuid:d393ae20-c026-11e6-b601-00505682085f"/>
+                </patient>
+                <relationship>
+                    <coding>
+                        <system value="http://hl7.org/fhir/v3/RoleCode"/>
+                        <code value="SPS"/>
+                        <display value="spouse"/>
+                    </coding>
+                </relationship>
+                <name>
+                    <family value="Koka"/>
+                    <given value="Radesh"/>
+                </name>
+            </RelatedPerson>
+        </resource>
+    </entry>
+</Bundle>
