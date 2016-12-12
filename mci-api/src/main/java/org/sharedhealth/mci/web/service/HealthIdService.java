@@ -117,6 +117,6 @@ public class HealthIdService {
 
     private String getHidServiceNextBlockPath() {
         return String.format(mciProperties.getHidServiceNextBlockUrlPattern(),
-                mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
+                mciProperties.getMciOrgCode(), mciProperties.getHealthIdReplenishBlockSize());
     }
 }

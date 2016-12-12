@@ -15,6 +15,7 @@ public class MCIProperties {
     private String cassandraTimeout;
     private String cassandraVersion;
     private String mciBaseUrl;
+    private String mciOrgCode;
     private String patientLinkUri;
     private String profilesFolderPath;
     private String idpBaseUrl;
@@ -42,6 +43,7 @@ public class MCIProperties {
         this.cassandraTimeout = env.get("CASSANDRA_TIMEOUT");
         this.cassandraVersion = env.get("CASSANDRA_VERSION");
         this.mciBaseUrl = env.get("MCI_BASE_URL");
+        this.mciOrgCode = env.get("MCI_ORG_CODE");
         this.patientLinkUri = env.get("PATIENT_LINK_URI");
         this.profilesFolderPath = env.get("PROFILES_FOLDER_PATH");
         this.idpBaseUrl = env.get("IDP_BASE_URL");
@@ -160,6 +162,10 @@ public class MCIProperties {
 
     public String getIdpUserInfoUrl() {
         return idpUserInfoUrl;
+    }
+
+    public String getMciOrgCode() {
+        return mciOrgCode;
     }
 
     public void setIdpUserInfoUrl(String idpUserInfoUrl) {

@@ -82,7 +82,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         assertFalse(new File(mciProperties.getHidLocalStoragePath()).exists());
 
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
-                mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
+                mciProperties.getMciOrgCode(), mciProperties.getHealthIdReplenishBlockSize());
         List<String> expectedHIDs = getHIDs("9800043063", 10);
         String hidResponse = getHidResponse(expectedHIDs);
         UUID uuid = UUID.randomUUID();
@@ -110,7 +110,7 @@ public class HealthIdServiceIT extends BaseIntegrationTest {
         mciHealthIdStore.addMciHealthIds(healthIdBlock);
 
         String nextHIDBlockUrl = String.format("/healthIds/nextBlock/mci/%s?blockSize=%s",
-                mciProperties.getIdpClientId(), mciProperties.getHealthIdReplenishBlockSize());
+                mciProperties.getMciOrgCode(), mciProperties.getHealthIdReplenishBlockSize());
         List<String> newHealthIds = getHIDs("9800043063", 10);
         String hidResponse = getHidResponse(newHealthIds);
         UUID uuid = UUID.randomUUID();
