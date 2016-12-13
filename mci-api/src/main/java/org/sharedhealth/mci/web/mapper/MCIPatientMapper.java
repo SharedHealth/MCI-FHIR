@@ -84,16 +84,17 @@ public class MCIPatientMapper {
         fhirPatient.setGender(mciToFhirGenderMap.get(mciPatient.getGender()));
         fhirPatient.setBirthDate(mapDateOfBirth(mciPatient));
         fhirPatient.addAddress(mapAddress(mciPatient));
-        fhirPatient.addLink(mapPatientReferenceLink(mciPatient.getHealthId()));
+        fhirPatient.addLink(createSeeAlsoLink(mciPatient.getHealthId()));
 
-        mapAsIdentifier(fhirPatient, mciPatient.getHealthId(), MCI_IDENTIFIER_HID_CODE, mciPatient.getHealthId());
-        mapAsIdentifier(fhirPatient, mciPatient.getNationalId(), MCI_IDENTIFIER_NID_CODE, mciPatient.getHealthId());
-        mapAsIdentifier(fhirPatient, mciPatient.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, mciPatient.getHealthId());
+        mapAsIdentifierForPatient(fhirPatient, mciPatient.getHealthId(), MCI_IDENTIFIER_HID_CODE, mciPatient.getHealthId());
+        mapAsIdentifierForPatient(fhirPatient, mciPatient.getNationalId(), MCI_IDENTIFIER_NID_CODE, mciPatient.getHealthId());
+        mapAsIdentifierForPatient(fhirPatient, mciPatient.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, mciPatient.getHealthId());
 
         if (StringUtils.isNotBlank(mciPatient.getPhoneNo())) {
             fhirPatient.addTelecom().setSystem(ContactPointSystemEnum.PHONE).setValue(mciPatient.getPhoneNo());
         }
 
+        mapMergedWith(fhirPatient, mciPatient.getMergedWith());
         mapDeceased(fhirPatient, mciPatient);
         fhirPatient.setActive(mciPatient.isActive());
 
@@ -162,10 +163,10 @@ public class MCIPatientMapper {
         for (Relation relation : relations) {
             RelatedPerson relatedPerson = new RelatedPerson().setPatient(new ResourceReferenceDt(createFullUrlFromUUID(patientEntryUri)));
 
-            mapAsIdentifier(relatedPerson, relation.getNationalId(), MCI_IDENTIFIER_NID_CODE, relation.getHealthId());
-            mapAsIdentifier(relatedPerson, relation.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, relation.getHealthId());
-            mapAsIdentifier(relatedPerson, relation.getUid(), MCI_IDENTIFIER_UID_CODE, relation.getHealthId());
-            mapAsIdentifier(relatedPerson, relation.getHealthId(), MCI_IDENTIFIER_HID_CODE, relation.getHealthId());
+            mapAsIdentifierForRelatedPerson(relatedPerson, relation.getNationalId(), MCI_IDENTIFIER_NID_CODE, relation.getHealthId());
+            mapAsIdentifierForRelatedPerson(relatedPerson, relation.getBirthRegistrationNumber(), MCI_IDENTIFIER_BRN_CODE, relation.getHealthId());
+            mapAsIdentifierForRelatedPerson(relatedPerson, relation.getUid(), MCI_IDENTIFIER_UID_CODE, relation.getHealthId());
+            mapAsIdentifierForRelatedPerson(relatedPerson, relation.getHealthId(), MCI_IDENTIFIER_HID_CODE, relation.getHealthId());
             mapRelationshipType(relation.getType(), relatedPerson);
 
             relatedPerson.setName(new HumanNameDt().addFamily(relation.getSurName()).addGiven(relation.getGivenName()));
@@ -213,18 +214,26 @@ public class MCIPatientMapper {
         return dateOfBirth;
     }
 
-    private Patient.Link mapPatientReferenceLink(String healthId) {
+    private Patient.Link createSeeAlsoLink(String healthId) {
         String patientLinkUri = ensureSuffix(mciProperties.getPatientLinkUri(), URL_SEPARATOR);
         ResourceReferenceDt patientReference = new ResourceReferenceDt(String.format("%s%s", patientLinkUri, healthId));
         return new Patient.Link().setType(LinkTypeEnum.SEE_ALSO).setOther(patientReference);
     }
 
-    private void mapAsIdentifier(Patient fhirPatient, String value, String identifierTypeCode, String healthId) {
+    private void mapMergedWith(Patient fhirPatient, String mergedWith) {
+        if (StringUtils.isBlank(mergedWith)) return;
+        String mergedWithPatientUri = ensureSuffix(getMCIPatientURI(mciProperties.getMciBaseUrl()), URL_SEPARATOR);
+        ResourceReferenceDt mergedWithReference = new ResourceReferenceDt(String.format("%s%s", mergedWithPatientUri, mergedWith));
+        fhirPatient.addLink().setType(LinkTypeEnum.REPLACE).setOther(mergedWithReference);
+
+    }
+
+    private void mapAsIdentifierForPatient(Patient fhirPatient, String value, String identifierTypeCode, String healthId) {
         if (StringUtils.isBlank(value)) return;
         fhirPatient.addIdentifier(createIdentifier(value, identifierTypeCode, healthId));
     }
 
-    private void mapAsIdentifier(RelatedPerson relation, String value, String identifierTypeCode, String healthId) {
+    private void mapAsIdentifierForRelatedPerson(RelatedPerson relation, String value, String identifierTypeCode, String healthId) {
         if (StringUtils.isBlank(value)) return;
         relation.addIdentifier(createIdentifier(value, identifierTypeCode, healthId));
     }

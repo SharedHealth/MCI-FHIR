@@ -51,6 +51,7 @@ public class RepositoryConstants {
     public static final String EDU_LEVEL = "edu_level";
     public static final String CONFIDENTIAL = "confidential";
     public static final String ACTIVE = "active";
+    public static final String MERGED_WITH = "merged_with";
     public static final String PHONE_NO = "phone_no";
     public static final String PHONE_NUMBER_COUNTRY_CODE = "phone_number_country_code";
     public static final String PHONE_NUMBER_AREA_CODE = "phone_number_area_code";

@@ -21,6 +21,7 @@ import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.model.MasterData;
 import org.sharedhealth.mci.web.repository.MasterDataRepository;
 import org.sharedhealth.mci.web.util.FHIRConstants;
+import org.sharedhealth.mci.web.util.MCIConstants;
 import org.sharedhealth.mci.web.util.PatientTestFactory;
 import org.sharedhealth.mci.web.util.TimeUuidUtil;
 
@@ -270,6 +271,34 @@ public class MCIPatientMapperTest {
         assertNotNull(fhirPatient);
         IDatatype deceased = fhirPatient.getDeceased();
         assertNull(deceased);
+    }
+
+    @Test
+    public void shouldMapAMergedPatient() throws Exception {
+        String patientLinkUri = "https://mci.com/api/v1/patients/";
+        String mergedWith = "HID-2";
+
+        when(mciProperties.getMciBaseUrl()).thenReturn(mciBaseUrl);
+        when(mciProperties.getPatientLinkUri()).thenReturn(patientLinkUri);
+
+        org.sharedhealth.mci.web.model.Patient mciPatient = createMCIPatientWithMandatoryFields();
+        mciPatient.setActive(false);
+        mciPatient.setConfidential(false);
+        mciPatient.setHealthId(healthId);
+        mciPatient.setStatus(PATIENT_STATUS_ALIVE);
+        mciPatient.setMergedWith(mergedWith);
+        UUID updatedAt = TimeUuidUtil.uuidForDate(new Date());
+        mciPatient.setUpdatedAt(updatedAt);
+        mciPatient.setCreatedAt(updatedAt);
+        Bundle patientBundle = mciPatientMapper.mapPatientToBundle(mciPatient);
+        assertNotNull(patientBundle);
+        Patient fhirPatient = (Patient) patientBundle.getEntryFirstRep().getResource();
+        assertNotNull(fhirPatient);
+        Patient.Link link = fhirPatient.getLink().stream().filter(
+                l -> l.getType().equals(LinkTypeEnum.REPLACE.getCode())
+        ).findFirst().get();
+        String mciPatientURI = MCIConstants.getMCIPatientURI(mciBaseUrl);
+        assertEquals(mciPatientURI + mergedWith, link.getOther().getReference().getValue());
     }
 
     private void assertCoding(CodingDt education, String system, String code, String display) {

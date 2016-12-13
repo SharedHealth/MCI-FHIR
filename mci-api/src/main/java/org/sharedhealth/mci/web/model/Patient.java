@@ -50,26 +50,10 @@ public class Patient {
 
     @Column(name = COUNTRY_CODE)
     private String countryCode;
-
-    @Column(name = FATHERS_GIVEN_NAME)
-    private String fathersGivenName;
-    @Column(name = FATHERS_SUR_NAME)
-    private String fathersSurName;
-    @Column(name = MOTHERS_GIVEN_NAME)
-    private String mothersGivenName;
-    @Column(name = MOTHERS_SUR_NAME)
-    private String mothersSurName;
     @Column(name = RELATIONS)
     private String relations;
-
     @Column(name = PHONE_NO)
     private String phoneNo;
-    @Column(name = PHONE_NUMBER_COUNTRY_CODE)
-    private String phoneNumberCountryCode;
-    @Column(name = PHONE_NUMBER_AREA_CODE)
-    private String phoneNumberAreaCode;
-    @Column(name = PHONE_NUMBER_EXTENSION)
-    private String phoneNumberExtension;
 
     @Column(name = STATUS)
     private String status;
@@ -83,6 +67,9 @@ public class Patient {
     private Boolean confidential;
     @Column(name = ACTIVE)
     private Boolean active;
+
+    @Column(name = MERGED_WITH)
+    private String mergedWith;
 
     @Column(name = CREATED_AT)
     private UUID createdAt;
@@ -229,38 +216,6 @@ public class Patient {
         this.countryCode = countryCode;
     }
 
-    public String getFathersGivenName() {
-        return fathersGivenName;
-    }
-
-    public void setFathersGivenName(String fathersGivenName) {
-        this.fathersGivenName = fathersGivenName;
-    }
-
-    public String getFathersSurName() {
-        return fathersSurName;
-    }
-
-    public void setFathersSurName(String fathersSurName) {
-        this.fathersSurName = fathersSurName;
-    }
-
-    public String getMothersGivenName() {
-        return mothersGivenName;
-    }
-
-    public void setMothersGivenName(String mothersGivenName) {
-        this.mothersGivenName = mothersGivenName;
-    }
-
-    public String getMothersSurName() {
-        return mothersSurName;
-    }
-
-    public void setMothersSurName(String mothersSurName) {
-        this.mothersSurName = mothersSurName;
-    }
-
     public String getRelations() {
         return relations;
     }
@@ -275,30 +230,6 @@ public class Patient {
 
     public void setPhoneNo(String phoneNo) {
         this.phoneNo = phoneNo;
-    }
-
-    public String getPhoneNumberCountryCode() {
-        return phoneNumberCountryCode;
-    }
-
-    public void setPhoneNumberCountryCode(String phoneNumberCountryCode) {
-        this.phoneNumberCountryCode = phoneNumberCountryCode;
-    }
-
-    public String getPhoneNumberAreaCode() {
-        return phoneNumberAreaCode;
-    }
-
-    public void setPhoneNumberAreaCode(String phoneNumberAreaCode) {
-        this.phoneNumberAreaCode = phoneNumberAreaCode;
-    }
-
-    public String getPhoneNumberExtension() {
-        return phoneNumberExtension;
-    }
-
-    public void setPhoneNumberExtension(String phoneNumberExtension) {
-        this.phoneNumberExtension = phoneNumberExtension;
     }
 
     public String getStatus() {
@@ -381,6 +312,14 @@ public class Patient {
         this.updatedBy = updatedBy;
     }
 
+    public String getMergedWith() {
+        return mergedWith;
+    }
+
+    public void setMergedWith(String mergedWith) {
+        this.mergedWith = mergedWith;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -409,22 +348,8 @@ public class Patient {
         if (cityCorporationId != null ? !cityCorporationId.equals(patient.cityCorporationId) : patient.cityCorporationId != null)
             return false;
         if (countryCode != null ? !countryCode.equals(patient.countryCode) : patient.countryCode != null) return false;
-        if (fathersGivenName != null ? !fathersGivenName.equals(patient.fathersGivenName) : patient.fathersGivenName != null)
-            return false;
-        if (fathersSurName != null ? !fathersSurName.equals(patient.fathersSurName) : patient.fathersSurName != null)
-            return false;
-        if (mothersGivenName != null ? !mothersGivenName.equals(patient.mothersGivenName) : patient.mothersGivenName != null)
-            return false;
-        if (mothersSurName != null ? !mothersSurName.equals(patient.mothersSurName) : patient.mothersSurName != null)
-            return false;
         if (relations != null ? !relations.equals(patient.relations) : patient.relations != null) return false;
         if (phoneNo != null ? !phoneNo.equals(patient.phoneNo) : patient.phoneNo != null) return false;
-        if (phoneNumberCountryCode != null ? !phoneNumberCountryCode.equals(patient.phoneNumberCountryCode) : patient.phoneNumberCountryCode != null)
-            return false;
-        if (phoneNumberAreaCode != null ? !phoneNumberAreaCode.equals(patient.phoneNumberAreaCode) : patient.phoneNumberAreaCode != null)
-            return false;
-        if (phoneNumberExtension != null ? !phoneNumberExtension.equals(patient.phoneNumberExtension) : patient.phoneNumberExtension != null)
-            return false;
         if (status != null ? !status.equals(patient.status) : patient.status != null) return false;
         if (dateOfDeath != null ? !dateOfDeath.equals(patient.dateOfDeath) : patient.dateOfDeath != null) return false;
         if (occupation != null ? !occupation.equals(patient.occupation) : patient.occupation != null) return false;
@@ -433,10 +358,11 @@ public class Patient {
         if (confidential != null ? !confidential.equals(patient.confidential) : patient.confidential != null)
             return false;
         if (active != null ? !active.equals(patient.active) : patient.active != null) return false;
+        if (mergedWith != null ? !mergedWith.equals(patient.mergedWith) : patient.mergedWith != null) return false;
         if (createdAt != null ? !createdAt.equals(patient.createdAt) : patient.createdAt != null) return false;
         if (updatedAt != null ? !updatedAt.equals(patient.updatedAt) : patient.updatedAt != null) return false;
         if (createdBy != null ? !createdBy.equals(patient.createdBy) : patient.createdBy != null) return false;
-        return updatedBy != null ? updatedBy.equals(patient.updatedBy) : patient.updatedBy == null;
+        return !(updatedBy != null ? !updatedBy.equals(patient.updatedBy) : patient.updatedBy != null);
 
     }
 
@@ -459,21 +385,15 @@ public class Patient {
         result = 31 * result + (ruralWardId != null ? ruralWardId.hashCode() : 0);
         result = 31 * result + (cityCorporationId != null ? cityCorporationId.hashCode() : 0);
         result = 31 * result + (countryCode != null ? countryCode.hashCode() : 0);
-        result = 31 * result + (fathersGivenName != null ? fathersGivenName.hashCode() : 0);
-        result = 31 * result + (fathersSurName != null ? fathersSurName.hashCode() : 0);
-        result = 31 * result + (mothersGivenName != null ? mothersGivenName.hashCode() : 0);
-        result = 31 * result + (mothersSurName != null ? mothersSurName.hashCode() : 0);
         result = 31 * result + (relations != null ? relations.hashCode() : 0);
         result = 31 * result + (phoneNo != null ? phoneNo.hashCode() : 0);
-        result = 31 * result + (phoneNumberCountryCode != null ? phoneNumberCountryCode.hashCode() : 0);
-        result = 31 * result + (phoneNumberAreaCode != null ? phoneNumberAreaCode.hashCode() : 0);
-        result = 31 * result + (phoneNumberExtension != null ? phoneNumberExtension.hashCode() : 0);
         result = 31 * result + (status != null ? status.hashCode() : 0);
         result = 31 * result + (dateOfDeath != null ? dateOfDeath.hashCode() : 0);
         result = 31 * result + (occupation != null ? occupation.hashCode() : 0);
         result = 31 * result + (educationLevel != null ? educationLevel.hashCode() : 0);
         result = 31 * result + (confidential != null ? confidential.hashCode() : 0);
         result = 31 * result + (active != null ? active.hashCode() : 0);
+        result = 31 * result + (mergedWith != null ? mergedWith.hashCode() : 0);
         result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
         result = 31 * result + (updatedAt != null ? updatedAt.hashCode() : 0);
         result = 31 * result + (createdBy != null ? createdBy.hashCode() : 0);
