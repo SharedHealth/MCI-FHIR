@@ -32,6 +32,7 @@ public class MCIProperties {
     private String healthIdReplenishBlockSize;
     private String healthIdReplenishThreshold;
     private String hidLocalStoragePath;
+    private String disablePost;
 
     private MCIProperties() {
         Map<String, String> env = System.getenv();
@@ -60,6 +61,7 @@ public class MCIProperties {
         this.healthIdReplenishBlockSize = env.get("HID_REPLENISH_BLOCK_SIZE");
         this.healthIdReplenishThreshold = env.get("HID_REPLENISH_THRESHOLD");
         this.hidLocalStoragePath = env.get("HID_LOCAL_STORAGE_PATH");
+        this.disablePost = env.get("DISABLE_POST");
     }
 
     public static MCIProperties getInstance() {
@@ -168,7 +170,7 @@ public class MCIProperties {
         return mciOrgCode;
     }
 
-    public void setIdpUserInfoUrl(String idpUserInfoUrl) {
-        this.idpUserInfoUrl = idpUserInfoUrl;
+    public Boolean getDisablePost() {
+        return Boolean.valueOf(disablePost);
     }
 }

@@ -1,5 +1,6 @@
 package org.sharedhealth.mci.web.controller;
 
+import org.sharedhealth.mci.web.config.MCIProperties;
 import org.sharedhealth.mci.web.security.AuthorizationFilter;
 import org.sharedhealth.mci.web.security.TokenAuthenticationFilter;
 import org.sharedhealth.mci.web.util.MCIConstants;
@@ -15,8 +16,11 @@ public class MCIRoutes {
         before(authenticationFilter);
 
         String patientURIPath = String.format("%s%s", API_VERSION, PATIENT_URI_PATH);
-        before(patientURIPath, new AuthorizationFilter(asList(PROVIDER_GROUP, FACILITY_GROUP)));
-        post(patientURIPath, patientController::createPatient);
+
+        if(!MCIProperties.getInstance().getDisablePost()){
+            before(patientURIPath, new AuthorizationFilter(asList(PROVIDER_GROUP, FACILITY_GROUP)));
+            post(patientURIPath, patientController::createPatient);
+        }
 
         String hidParam = ":hid";
         String patientByHIDURIPath = String.format("%s%s%s", patientURIPath, MCIConstants.URL_SEPARATOR, hidParam);
