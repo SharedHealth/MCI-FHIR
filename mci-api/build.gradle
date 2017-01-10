@@ -81,7 +81,11 @@ task exportProperties(dependsOn: 'assembly') << {
 task dist(dependsOn: ['exportProperties'],
         type: Rpm) {
     packageName = 'mci-fhir'
+<<<<<<< 0cf5be2426ffa1741c7e00253eb4aa49478eaf15
     version = '2.6'
+=======
+    version = '2.5'
+>>>>>>> Neha | shr-1414 | changing name of service to mci-fhir.
     release = project.hasProperty('release') ? project.release : '1'
     arch = NOARCH
     os = LINUX
